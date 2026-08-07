@@ -4,6 +4,7 @@
 **Zone:** gearswipe.com
 **Cloudflare account:** Gold Shore Labs (`f77de112d2019e5456a3198a8bb50bd2`)
 **Status:** ⛔ **HALTED — no changes applied.** Two stop conditions were met.
+**Decision:** Option A — Cloudflare Pages (§9). Blocked on site code + a Pages build-config fix (§9.1).
 
 ---
 
@@ -455,4 +456,48 @@ The two `www` findings are worth reading together: `www` does not *redirect* to 
 6. **Provision a scoped Cloudflare API token** (Zone.DNS:Edit + Zone.Settings:Edit) so a full authoritative zone export can close the §1 enumeration gap.
 7. Then proceed to Tier 2 hardening and Tier 3 DNSSEC.
 
-**Do not point DNS at `50.87.146.6`.** It is a decommissioned HostGator origin that redirects to Cloudflare; using it causes an infinite redirect loop and a hard outage. It is also unnecessary — Pages already serves both hostnames.
+**On `50.87.146.6`:** do not point DNS at it *as currently configured* — it 301-redirects to `https://gearswipe.com/`, which would loop. That redirect is almost certainly an `.htaccess`/cPanel rule added during the Cloudflare migration; remove it on the HostGator side and the host becomes a usable origin. The "do not use" holds only while the redirect is live, not permanently.
+
+---
+
+## 9. Decision: Option A (Cloudflare Pages)
+
+**Chosen** to get the existing site visible fastest while API and Shopify proceed as independent background tracks.
+
+Rationale: `gearswipe-pages` is already bound to both hostnames, already auto-deploys on merge, and already produces PR previews — so the build can be eyeballed before it goes live. **It requires no DNS change whatsoever**, which means the deployment cannot affect the zone's email or verification records. Option B would require unbinding the Pages custom domain, removing the HostGator redirect, and a DNS cutover with the site down in between.
+
+The API lands separately on `api.gearswipe.com` as a Worker; that does not touch the web path under either option.
+
+### ⚠️ 9.1 BLOCKER — Pages is publishing the raw repository root
+
+Before any site code is merged, the Pages build configuration **must** be fixed.
+
+`gearswipe-pages` currently has **no build step** and an output directory of `/` (the repo root). Proof — it serves repository files verbatim, including files that no build output would ever contain:
+
+```
+GET https://gearswipe-pages.pages.dev/README.md          → 200, 15 bytes
+GET https://gearswipe-pages.pages.dev/LICENSE            → 200, 1,211 bytes
+GET https://gearswipe-pages.pages.dev/SECURITY.md        → 200, 959 bytes
+GET https://gearswipe-pages.pages.dev/.github/CODEOWNERS → 200, 136 bytes   ← the tell
+GET https://gearswipe-pages.pages.dev/index.html         → 404
+```
+
+`.github/CODEOWNERS` being publicly fetchable confirms the whole repo tree is the publish root.
+
+**Why this matters:** merging a real application under this config would publish the **source tree** to `gearswipe.com` — `package.json`, `src/`, build configs, lockfiles, and any secret committed by accident — rather than the built site. It would be simultaneously broken (no `index.html` at root for most frameworks) and a source-disclosure exposure.
+
+**Required before merge**, in the Pages project settings:
+
+| Setting | Current | Must become |
+|---|---|---|
+| Build command | none | e.g. `npm run build` |
+| Output directory | `/` | e.g. `dist` (Astro/Vite), `build` (CRA), `.vercel/output/static` (Next static) |
+| Root directory | `/` | unchanged, unless the app lives in a subfolder |
+
+The Cloudflare MCP server exposes no Pages endpoints, so this cannot be scripted from here — it is a dashboard change, or a `wrangler.toml` if the project is migrated to Workers static assets.
+
+### 9.2 Outstanding input needed
+
+The Replit build is **not** in this repository and could not be located from public URLs — `gearswipe.replit.app`, `gearswipe-marzton.replit.app`, `gearswipe.marzton.repl.co`, `gearswipe.marstonr6.repl.co`, and `gearswipe.replit.dev` all return Replit's 404 or do not resolve.
+
+To proceed, one of: the live Replit URL, a repo/branch where Codex placed the copy, or an export of the build.
