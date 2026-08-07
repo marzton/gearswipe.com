@@ -6,118 +6,83 @@ type Product = {
   name: string;
   category: string;
   price: string;
-  blurb: string;
+  copy: string;
   badge: string;
 };
 
-type AdminTab =
-  | "Licensing Outreach"
-  | "Document Uploads"
-  | "Business Verification"
-  | "Maintenance"
-  | "Store Items"
-  | "Subscribers"
-  | "Sales";
-
 const products: Product[] = [
   {
-    name: "Apex Elite RTX Build",
+    name: "Apex RTX Build",
     category: "PC Builds",
     price: "$1,899",
-    blurb:
-      "Prebuilt for creators and power users who want a premium launch-day option without warehouse drag.",
+    copy:
+      "A clean creator-ready desktop tuned for buyers who want performance without the warehouse overhead.",
     badge: "Featured",
   },
   {
-    name: "Bitdefender Total Security",
-    category: "Software",
-    price: "$14.99",
-    blurb:
-      "Digital checkout, instant handoff, and a clean support path for customers who need protection now.",
+    name: "Windows 11 Pro Key",
+    category: "Digital Licenses",
+    price: "$5.49",
+    copy:
+      "Instant checkout for the software lane that needs fast delivery and a low-touch support path.",
     badge: "Instant delivery",
   },
   {
-    name: "Precision Parts Rail",
-    category: "Components",
-    price: "$19.99",
-    blurb:
-      "Key components and add-ons grouped for fast browsing across inventory-light product lanes.",
+    name: "YubiKey 5 NFC",
+    category: "Security",
+    price: "$25",
+    copy:
+      "A compact trust item for teams that want security hardware with a simple, familiar buying flow.",
+    badge: "Trusted",
+  },
+  {
+    name: "Total Protection Suite",
+    category: "Software",
+    price: "$14.99",
+    copy:
+      "Antivirus, privacy, and device protection packaged for quick fulfillment and easy renewal.",
     badge: "Fast moving",
   },
   {
-    name: "Windows 11 Pro Key",
-    category: "Key Codes",
-    price: "$5.49",
-    blurb:
-      "Activation codes with a narrow support surface and a simple fulfillment story.",
-    badge: "Code product",
-  },
-  {
-    name: "YubiKey 5 NFC",
-    category: "Security Keys",
-    price: "$25.00",
-    blurb:
-      "A trust anchor for admins and teams that need practical security without extra ceremony.",
-    badge: "Trusted",
+    name: "Parts Rail",
+    category: "Components",
+    price: "$19.99",
+    copy:
+      "Accessories and upgrade parts organized for fast browsing across low-inventory product lanes.",
+    badge: "Builder pick",
   },
   {
     name: "Meta Glasses",
     category: "Wearables",
     price: "$299",
-    blurb:
-      "A wearable lane presented alongside the rest of the catalog, not a separate marketing story.",
+    copy:
+      "A premium consumer lane kept visually restrained so the product, not the page, does the talking.",
     badge: "Lifestyle",
   },
 ];
 
-const adminTabs: AdminTab[] = [
-  "Licensing Outreach",
-  "Document Uploads",
-  "Business Verification",
-  "Maintenance",
-  "Store Items",
-  "Subscribers",
-  "Sales",
-];
+const categories = ["All", ...new Set(products.map((product) => product.category))];
 
-const outreachQueue = [
+const trustCards = [
   {
-    name: "North Circuit Supply",
-    status: "Waiting on reply",
-    need: "Resale license confirmation",
+    title: "Fast delivery",
+    copy: "Codes, licenses, and digital goods can move without inventory drag.",
   },
   {
-    name: "Atlas Tech Wholesale",
-    status: "Docs attached",
-    need: "Vendor onboarding packet",
+    title: "Resale-ready",
+    copy: "Clear product lanes for builders, operators, and small teams.",
   },
   {
-    name: "Vertex Compliance",
-    status: "Ready to send",
-    need: "Business verification follow-up",
+    title: "Support separated",
+    copy: "The storefront stays customer-facing while ops stay compact and private.",
   },
 ];
 
-const documentSeed = [
-  "resale-certificate.pdf",
-  "business-registration.pdf",
-  "tax-id-letter.pdf",
-  "brand-guidelines.docx",
-];
-
-const maintenanceItems = [
-  "Refresh key-code inventory every 4 hours",
-  "Check checkout latency and payment retries",
-  "Confirm support macros match current offers",
-  "Audit product descriptions before new launches",
-];
-
-const salesPipeline = [
-  { label: "Digital keys", value: 78 },
-  { label: "PC builds", value: 64 },
-  { label: "Security", value: 52 },
-  { label: "Wearables", value: 39 },
-  { label: "Parts", value: 72 },
+const opsNotes = [
+  "Licensing outreach and vendor follow-up",
+  "Document uploads and business verification",
+  "Store maintenance and catalog refresh",
+  "Subscribers, sales, and fulfillment review",
 ];
 
 function Sparkline({ values }: { values: number[] }) {
@@ -128,7 +93,7 @@ function Sparkline({ values }: { values: number[] }) {
   return (
     <svg
       viewBox="0 0 110 72"
-      className="h-20 w-full text-cyan-300"
+      className="h-20 w-full text-[#1a8fff]"
       aria-hidden="true"
     >
       <polyline
@@ -146,54 +111,50 @@ function Sparkline({ values }: { values: number[] }) {
 export default function Home() {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
-  const [activeTab, setActiveTab] = useState<AdminTab>("Licensing Outreach");
-  const [documents, setDocuments] = useState(documentSeed);
-  const [verification, setVerification] = useState({
-    business: true,
-    payout: false,
-    domain: true,
-    support: false,
-  });
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
+      const searchText = [
+        product.name,
+        product.category,
+        product.copy,
+        product.badge,
+      ]
+        .join(" ")
+        .toLowerCase();
+
       const matchesQuery =
-        query.trim().length === 0 ||
-        [product.name, product.category, product.blurb, product.badge]
-          .join(" ")
-          .toLowerCase()
-          .includes(query.toLowerCase());
+        query.trim().length === 0 || searchText.includes(query.toLowerCase());
       const matchesCategory =
         activeCategory === "All" || product.category === activeCategory;
+
       return matchesQuery && matchesCategory;
     });
   }, [activeCategory, query]);
 
-  const categories = ["All", ...new Set(products.map((product) => product.category))];
-
   return (
-    <main className="min-h-screen bg-[#05070c] text-slate-100">
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-4 sm:px-6 lg:px-8">
-        <header className="sticky top-4 z-20 rounded-[1.5rem] border border-white/10 bg-[#070b12]/90 px-4 py-3 shadow-2xl shadow-black/20 backdrop-blur-xl">
-          <div className="grid gap-3 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
+    <main className="min-h-screen bg-[#080d14] text-[#f5f7fa]">
+      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8">
+        <header className="sticky top-3 z-20 border border-[#1e2d3d] bg-[#0d1520]/90 px-4 py-3 backdrop-blur-xl">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-300/35 bg-cyan-300/10 text-cyan-200">
-                <span className="text-xl font-semibold">G</span>
+              <div className="grid h-9 w-9 place-items-center border border-[#1e2d3d] bg-[#182433] text-sm font-semibold text-[#1a8fff]">
+                GS
               </div>
               <div>
-                <p className="text-[11px] uppercase tracking-[0.4em] text-cyan-200/70">
+                <p className="text-xs uppercase tracking-[0.45em] text-[#8fa3b8]">
                   Gearswipe
                 </p>
-                <p className="text-sm text-slate-300">
-                  Digital tech store + operations console
+                <p className="text-sm text-[#8fa3b8]">
+                  Tech store for builds, keys, security, and accessories
                 </p>
               </div>
             </div>
 
-            <label className="flex items-center gap-3 rounded-full border border-white/12 bg-slate-950/70 px-4 py-3 text-sm text-slate-300">
+            <label className="flex items-center gap-3 border border-[#182433] bg-[#141f2e] px-3 py-2 text-sm text-[#8fa3b8]">
               <svg
                 viewBox="0 0 24 24"
-                className="h-4 w-4 shrink-0 text-slate-400"
+                className="h-4 w-4 shrink-0 text-[#1a8fff]"
                 aria-hidden="true"
               >
                 <circle
@@ -214,196 +175,132 @@ export default function Home() {
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search products, brands, or lanes..."
-                className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
+                placeholder="Search products, categories, or brands"
+                className="w-full bg-transparent text-sm text-[#f5f7fa] outline-none placeholder:text-[#8fa3b8]"
                 aria-label="Search products"
               />
             </label>
 
-            <div className="flex items-center justify-between gap-3 text-sm text-slate-300 lg:justify-end">
-              <a className="hover:text-cyan-200" href="#catalog">
-                Catalog
-              </a>
-              <a className="hover:text-cyan-200" href="#operations">
-                Admin
+            <nav className="flex flex-wrap items-center gap-2 text-sm">
+              <a
+                href="#catalog"
+                className="border border-[#182433] px-3 py-2 text-[#e5eef8] transition hover:border-[#1a8fff] hover:text-white"
+              >
+                Browse
               </a>
               <a
                 href="#operations"
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 font-medium text-white transition hover:border-cyan-300/50 hover:bg-cyan-300/10"
+                className="border border-[#182433] px-3 py-2 text-[#e5eef8] transition hover:border-[#1a8fff] hover:text-white"
               >
-                <span>Cart</span>
-                <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-cyan-300 px-1.5 text-[11px] font-semibold text-slate-950">
-                  2
-                </span>
+                Operations
               </a>
-            </div>
+              <a
+                href="#catalog"
+                className="border border-[#1a8fff] bg-[#1a8fff] px-3 py-2 font-medium text-white transition hover:bg-[#2a95ff]"
+              >
+                Request quote
+              </a>
+            </nav>
           </div>
         </header>
 
-        <section className="grid gap-6 py-6 lg:grid-cols-[1.08fr_0.92fr] lg:py-8">
-          <div className="flex flex-col justify-between gap-8">
+        <section className="grid gap-6 py-6 lg:grid-cols-[1.12fr_0.88fr] lg:py-8">
+          <div className="flex flex-col justify-between gap-6">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.4em] text-cyan-200/70">
-                Digital products. Real margin.
+              <p className="text-xs uppercase tracking-[0.45em] text-[#8fa3b8]">
+                Digital products, clean margins
               </p>
-              <h1 className="mt-4 max-w-3xl text-5xl font-semibold leading-[0.9] tracking-[-0.06em] text-white sm:text-6xl lg:text-7xl">
-                Sell tech that
-                <span className="block bg-gradient-to-r from-cyan-300 to-sky-400 bg-clip-text text-transparent">
-                  ships without stock on hand.
+              <h1 className="mt-4 max-w-3xl text-5xl font-semibold leading-[0.94] tracking-[-0.05em] text-white sm:text-6xl lg:text-7xl">
+                Sell the tech people
+                <span className="block bg-gradient-to-r from-[#1a8fff] to-[#f5f7fa] bg-clip-text text-transparent">
+                  actually want to buy.
                 </span>
               </h1>
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-                Gearswipe is a storefront for PC builds, antivirus software,
-                parts, key codes, YubiKeys, Meta glasses, and related tech
-                goods — backed by a slim operations console for outreach,
-                verification, uploads, maintenance, and sales.
+              <p className="mt-5 max-w-2xl text-lg leading-8 text-[#b8c7d6]">
+                Gearswipe is a dark retail storefront for PC builds, digital
+                licenses, security hardware, wearables, and other low-friction
+                tech products that ship fast and stay easy to manage.
               </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <a
-                href="#catalog"
-                className="inline-flex items-center justify-center rounded-full bg-cyan-300 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200"
-              >
-                Shop products
-              </a>
-              <a
-                href="#operations"
-                className="inline-flex items-center justify-center rounded-full border border-white/12 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:border-cyan-300/40 hover:bg-cyan-300/10"
-              >
-                Open admin
-              </a>
-              <a
-                href="#support"
-                className="inline-flex items-center justify-center rounded-full border border-white/10 px-5 py-3 text-sm font-semibold text-slate-300 transition hover:border-white/20 hover:text-white"
-              >
-                Partner support
-              </a>
             </div>
 
             <div className="flex flex-wrap gap-3">
-              {[
-                ["Instant delivery", "Codes and software land immediately."],
-                ["No inventory burden", "Launch products without holding stock."],
-                ["Ops-ready", "Admin tools for store and compliance work."],
-              ].map(([title, text]) => (
+              {trustCards.map((item) => (
                 <div
-                  key={title}
-                  className="rounded-full border border-white/10 bg-white/4 px-4 py-3"
+                  key={item.title}
+                  className="border border-[#182433] bg-[#0d1520] px-4 py-3"
                 >
-                  <p className="text-sm font-medium text-white">{title}</p>
-                  <p className="mt-1 text-sm text-slate-400">{text}</p>
+                  <p className="text-sm font-medium text-white">{item.title}</p>
+                  <p className="mt-1 text-sm text-[#8fa3b8]">{item.copy}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <aside className="rounded-[2rem] border border-white/10 bg-[#070b12]/90 p-5 shadow-2xl shadow-black/30">
-            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div className="grid gap-4 border border-[#182433] bg-[#0d1520] p-4">
+            <div className="flex items-center justify-between border-b border-[#182433] pb-3">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.36em] text-slate-500">
-                  Storefront preview
+                <p className="text-xs uppercase tracking-[0.4em] text-[#8fa3b8]">
+                  Featured lanes
                 </p>
-                <p className="mt-2 text-lg font-medium text-white">
-                  Launch-day product desk
+                <p className="mt-1 text-lg font-medium text-white">
+                  Built for modern resale
                 </p>
               </div>
-              <div className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-[11px] uppercase tracking-[0.3em] text-emerald-200">
+              <span className="border border-[#1a8fff]/30 bg-[#1a8fff]/10 px-2 py-1 text-xs text-[#8ec2ff]">
                 Live
+              </span>
+            </div>
+            {[
+              ["PC builds", "Premium desktop offers with clear positioning."],
+              ["Digital keys", "Instant fulfillment and low support overhead."],
+              ["Security gear", "Hardware and protection products with trust."],
+            ].map(([label, copy]) => (
+              <div
+                key={label}
+                className="grid gap-2 border border-[#182433] bg-[#141f2e] p-3"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium text-white">{label}</p>
+                  <span className="text-xs uppercase tracking-[0.25em] text-[#1a8fff]">
+                    Ready
+                  </span>
+                </div>
+                <p className="text-sm text-[#b8c7d6]">{copy}</p>
+              </div>
+            ))}
+            <div className="border border-[#182433] bg-[#141f2e] p-3">
+              <Sparkline values={[34, 52, 58, 46, 73]} />
+              <div className="mt-3 flex items-center justify-between text-sm text-[#8fa3b8]">
+                <span>Sales momentum</span>
+                <span className="text-white">Upward</span>
               </div>
             </div>
-
-            <div className="mt-5 space-y-4">
-              <div className="rounded-[1.5rem] border border-cyan-300/15 bg-cyan-300/6 p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.36em] text-cyan-200/70">
-                      Featured lane
-                    </p>
-                    <h2 className="mt-2 text-2xl font-semibold text-white">
-                      Apex Elite RTX Build
-                    </h2>
-                    <p className="mt-2 max-w-md text-sm leading-6 text-slate-300">
-                      A polished hero build for creators and power users who
-                      want a premium purchase path without warehouse drag.
-                    </p>
-                  </div>
-                  <p className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-cyan-200">
-                    $1,899
-                  </p>
-                </div>
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  {[
-                    "Verified vendor intake",
-                    "Instant digital alternatives",
-                    "Flexible category bundles",
-                    "Compliance-first receipts",
-                  ].map((item) => (
-                    <div
-                      key={item}
-                      className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300"
-                    >
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                {[
-                  ["Orders today", "126", "+18%"],
-                  ["Digital margin", "72%", "+6%"],
-                  ["Open support tickets", "4", "-2"],
-                  ["Verification progress", "83%", "+11%"],
-                ].map(([label, value, delta]) => (
-                  <div
-                    key={label}
-                    className="rounded-[1.25rem] border border-white/10 bg-white/4 p-4"
-                  >
-                    <p className="text-xs uppercase tracking-[0.32em] text-slate-500">
-                      {label}
-                    </p>
-                    <div className="mt-3 flex items-end justify-between gap-4">
-                      <p className="text-2xl font-semibold text-white">
-                        {value}
-                      </p>
-                      <p className="text-sm text-emerald-300">{delta}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </aside>
+          </div>
         </section>
 
-        <section
-          id="catalog"
-          className="rounded-[2rem] border border-white/10 bg-white/4 p-5 shadow-2xl shadow-black/25 sm:p-6"
-        >
-          <div className="flex flex-col gap-4 border-b border-white/10 pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <section id="catalog" className="py-4">
+          <div className="flex flex-col gap-3 border-t border-[#182433] pt-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.4em] text-cyan-200/70">
+              <p className="text-xs uppercase tracking-[0.45em] text-[#8fa3b8]">
                 Catalog
               </p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white">
-                Products built for an inventory-light model.
+              <h2 className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-white">
+                A lean lineup of products that move.
               </h2>
             </div>
             <div className="flex flex-wrap gap-2">
-              {categories.map((group) => (
+              {categories.map((category) => (
                 <button
-                  key={group}
+                  key={category}
                   type="button"
-                  onClick={() => setActiveCategory(group)}
-                  aria-pressed={activeCategory === group}
-                  className={[
-                    "rounded-full border px-4 py-2 text-sm transition",
-                    activeCategory === group
-                      ? "border-cyan-300/60 bg-cyan-300 text-slate-950"
-                      : "border-white/10 bg-white/5 text-slate-300 hover:border-cyan-300/35 hover:text-white",
-                  ].join(" ")}
+                  onClick={() => setActiveCategory(category)}
+                  className={`border px-3 py-2 text-sm transition ${
+                    activeCategory === category
+                      ? "border-[#1a8fff] bg-[#1a8fff]/10 text-white"
+                      : "border-[#182433] bg-[#0d1520] text-[#b8c7d6] hover:border-[#1a8fff]/60 hover:text-white"
+                  }`}
                 >
-                  {group}
+                  {category}
                 </button>
               ))}
             </div>
@@ -413,37 +310,41 @@ export default function Home() {
             {filteredProducts.map((product) => (
               <article
                 key={product.name}
-                className="rounded-[1.6rem] border border-white/10 bg-slate-950/55 p-5 transition hover:border-cyan-300/30 hover:bg-slate-950/70"
+                className="flex h-full flex-col border border-[#182433] bg-[#0d1520] p-4"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.36em] text-slate-500">
-                      {product.category}
-                    </p>
-                    <h3 className="mt-3 text-xl font-semibold text-white">
-                      {product.name}
-                    </h3>
-                  </div>
-                  <p className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs uppercase tracking-[0.28em] text-cyan-200">
+                <div className="flex items-center justify-between gap-3 border-b border-[#182433] pb-3">
+                  <span className="border border-[#1a8fff]/30 bg-[#1a8fff]/10 px-2 py-1 text-[11px] uppercase tracking-[0.28em] text-[#8ec2ff]">
                     {product.badge}
-                  </p>
+                  </span>
+                  <span className="text-sm text-[#8fa3b8]">{product.category}</span>
                 </div>
 
-                <p className="mt-4 text-sm leading-7 text-slate-300">
-                  {product.blurb}
-                </p>
+                <div className="flex flex-1 flex-col justify-between gap-4 pt-4">
+                  <div>
+                    <h3 className="text-xl font-medium text-white">
+                      {product.name}
+                    </h3>
+                    <p className="mt-2 text-sm leading-7 text-[#b8c7d6]">
+                      {product.copy}
+                    </p>
+                  </div>
 
-                <div className="mt-6 flex items-center justify-between border-t border-white/8 pt-4">
-                  <p className="text-2xl font-semibold text-white">
-                    {product.price}
-                  </p>
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:border-cyan-300/40 hover:text-white"
-                  >
-                    Add to cart
-                    <span aria-hidden="true">→</span>
-                  </button>
+                  <div className="flex items-end justify-between gap-3 border-t border-[#182433] pt-4">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.35em] text-[#8fa3b8]">
+                        From
+                      </p>
+                      <p className="text-2xl font-semibold text-white">
+                        {product.price}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="border border-[#1a8fff] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#1a8fff] hover:text-white"
+                    >
+                      Get quote
+                    </button>
+                  </div>
                 </div>
               </article>
             ))}
@@ -452,468 +353,64 @@ export default function Home() {
 
         <section
           id="operations"
-          className="mt-6 rounded-[2rem] border border-white/10 bg-[#050810]/92 p-5 shadow-2xl shadow-black/30 sm:p-6"
+          className="mt-8 grid gap-4 border-t border-[#182433] py-6 lg:grid-cols-[0.92fr_1.08fr]"
         >
-          <div className="flex flex-col gap-3 border-b border-white/10 pb-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.4em] text-cyan-200/70">
-                Admin interface
-              </p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-white">
-                Licensing, uploads, verification, and sales in one place.
-              </h2>
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {[
-                ["Subscribers", "9,672"],
-                ["Sales", "$84.9k"],
-                ["Tickets", "4 open"],
-                ["Verification", "83%"],
-              ].map(([label, value]) => (
+          <div className="border border-[#182433] bg-[#0d1520] p-4">
+            <p className="text-xs uppercase tracking-[0.45em] text-[#8fa3b8]">
+              Operations
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold text-white">
+              A compact control surface behind the store.
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-[#b8c7d6]">
+              Licensing, uploads, verification, and maintenance stay available
+              without taking over the storefront narrative.
+            </p>
+            <div className="mt-5 grid gap-3">
+              {opsNotes.map((note) => (
                 <div
-                  key={label}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+                  key={note}
+                  className="border border-[#182433] bg-[#141f2e] px-3 py-2 text-sm text-white"
                 >
-                  <p className="text-[11px] uppercase tracking-[0.32em] text-slate-500">
-                    {label}
-                  </p>
-                  <p className="mt-2 text-lg font-semibold text-white">
-                    {value}
-                  </p>
+                  {note}
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="mt-5 grid gap-4 xl:grid-cols-[210px_minmax(0,1fr)_280px]">
-            <div className="rounded-[1.4rem] border border-white/10 bg-white/4 p-3">
-              <p className="px-3 py-2 text-[11px] uppercase tracking-[0.36em] text-slate-500">
-                Console lanes
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="border border-[#182433] bg-[#0d1520] p-4">
+              <p className="text-xs uppercase tracking-[0.45em] text-[#8fa3b8]">
+                Support
               </p>
-              <div className="space-y-1">
-                {adminTabs.map((tab) => (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => setActiveTab(tab)}
-                    aria-pressed={activeTab === tab}
-                    className={[
-                      "flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm transition",
-                      activeTab === tab
-                        ? "bg-cyan-300/10 text-cyan-200"
-                        : "text-slate-300 hover:bg-white/5 hover:text-white",
-                    ].join(" ")}
-                  >
-                    <span>{tab}</span>
-                    <span className="text-[11px] text-slate-500">→</span>
-                  </button>
-                ))}
-              </div>
+              <p className="mt-2 text-lg font-medium text-white">
+                Product-first, not overloaded.
+              </p>
+              <p className="mt-3 text-sm leading-7 text-[#b8c7d6]">
+                The page stays focused on what Gearswipe offers: practical tech
+                goods with a store flow that feels clear on mobile and desktop.
+              </p>
             </div>
 
-            <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/65 p-5">
-              {activeTab === "Licensing Outreach" && (
-                <div className="space-y-5">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.36em] text-cyan-200/70">
-                      Outreach composer
-                    </p>
-                    <h3 className="mt-3 text-2xl font-semibold text-white">
-                      Keep vendor conversations moving.
-                    </h3>
-                    <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-400">
-                      Draft follow-ups, track replies, and keep licensing
-                      conversations tied to product lanes that need approval or
-                      proof.
-                    </p>
-                  </div>
-
-                  <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
-                    <div className="rounded-[1.25rem] border border-white/10 bg-white/4 p-4">
-                      <label className="text-xs uppercase tracking-[0.32em] text-slate-500">
-                        Message
-                      </label>
-                      <textarea
-                        className="mt-3 h-36 w-full resize-none rounded-[1.15rem] border border-white/10 bg-slate-950/70 p-4 text-sm leading-7 text-white outline-none placeholder:text-slate-600"
-                        defaultValue="Hello, we’re building a retail lane around verified tech products and need confirmation on your reseller or distribution terms. Attached are our documents and current storefront context."
-                        aria-label="Licensing outreach message"
-                      />
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          className="rounded-full bg-cyan-300 px-4 py-2 text-sm font-semibold text-slate-950"
-                        >
-                          Send follow-up
-                        </button>
-                        <button
-                          type="button"
-                          className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200"
-                        >
-                          Save draft
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="rounded-[1.25rem] border border-white/10 bg-white/4 p-4">
-                      <p className="text-xs uppercase tracking-[0.32em] text-slate-500">
-                        Queue
-                      </p>
-                      <div className="mt-4 space-y-3">
-                        {outreachQueue.map((item) => (
-                          <div
-                            key={item.name}
-                            className="rounded-2xl border border-white/10 bg-slate-950/60 p-3"
-                          >
-                            <p className="text-sm font-medium text-white">
-                              {item.name}
-                            </p>
-                            <p className="mt-1 text-sm text-slate-400">
-                              {item.need}
-                            </p>
-                            <p className="mt-3 text-[11px] uppercase tracking-[0.28em] text-cyan-200/70">
-                              {item.status}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "Document Uploads" && (
-                <div className="space-y-5">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.36em] text-cyan-200/70">
-                      Upload center
-                    </p>
-                    <h3 className="mt-3 text-2xl font-semibold text-white">
-                      Store the paperwork that keeps the business moving.
-                    </h3>
-                  </div>
-
-                  <div className="rounded-[1.4rem] border border-dashed border-cyan-300/25 bg-cyan-300/6 p-5">
-                    <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-[1.25rem] border border-white/10 bg-slate-950/65 px-5 py-10 text-center">
-                      <span className="text-sm font-medium text-white">
-                        Drop files here or click to attach
-                      </span>
-                      <span className="text-sm text-slate-400">
-                        PDFs, images, and office docs for verification and
-                        vendor outreach.
-                      </span>
-                      <input
-                        type="file"
-                        multiple
-                        className="sr-only"
-                        onChange={(event) => {
-                          const files = Array.from(
-                            event.currentTarget.files ?? [],
-                          ).map((file) => file.name);
-                          if (files.length > 0) {
-                            setDocuments((current) => [...current, ...files]);
-                          }
-                        }}
-                        aria-label="Upload business documents"
-                      />
-                    </label>
-
-                    <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                      {documents.map((document) => (
-                        <div
-                          key={document}
-                          className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300"
-                        >
-                          {document}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "Business Verification" && (
-                <div className="space-y-5">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.36em] text-cyan-200/70">
-                      Verification checklist
-                    </p>
-                    <h3 className="mt-3 text-2xl font-semibold text-white">
-                      Show the store is legitimate before it scales.
-                    </h3>
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {(
-                      [
-                        ["business", "Business registration complete"],
-                        ["payout", "Payment method connected"],
-                        ["domain", "Domain and SSL confirmed"],
-                        ["support", "Support policy published"],
-                      ] as const
-                    ).map(([key, label]) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() =>
-                          setVerification((current) => ({
-                            ...current,
-                            [key]: !current[key],
-                          }))
-                        }
-                        className="flex items-start gap-3 rounded-[1.25rem] border border-white/10 bg-white/5 px-4 py-4 text-left"
-                      >
-                        <span
-                          className={[
-                            "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[11px]",
-                            verification[key]
-                              ? "border-emerald-400/30 bg-emerald-400/15 text-emerald-200"
-                              : "border-white/15 bg-slate-950 text-slate-500",
-                          ].join(" ")}
-                          aria-hidden="true"
-                        >
-                          {verification[key] ? "✓" : "•"}
-                        </span>
-                        <span className="text-sm leading-6 text-slate-200">
-                          {label}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "Maintenance" && (
-                <div className="space-y-5">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.36em] text-cyan-200/70">
-                      Maintenance queue
-                    </p>
-                    <h3 className="mt-3 text-2xl font-semibold text-white">
-                      Keep the store healthy and current.
-                    </h3>
-                  </div>
-                  <div className="grid gap-4 lg:grid-cols-[1fr_240px]">
-                    <div className="rounded-[1.25rem] border border-white/10 bg-white/4 p-4">
-                      <div className="space-y-3">
-                        {maintenanceItems.map((item, index) => (
-                          <div
-                            key={item}
-                            className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3"
-                          >
-                            <span className="text-sm text-slate-300">
-                              {index + 1}. {item}
-                            </span>
-                            <span className="text-[11px] uppercase tracking-[0.28em] text-emerald-200">
-                              Open
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="rounded-[1.25rem] border border-white/10 bg-white/4 p-4">
-                      <p className="text-xs uppercase tracking-[0.32em] text-slate-500">
-                        Status
-                      </p>
-                      <Sparkline values={[30, 44, 38, 54, 48, 63, 58]} />
-                      <p className="text-sm leading-7 text-slate-400">
-                        Checkout and maintenance signals are stable, with a
-                        recent bump in digital product activity.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "Store Items" && (
-                <div className="space-y-5">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.36em] text-cyan-200/70">
-                      Store catalog controls
-                    </p>
-                    <h3 className="mt-3 text-2xl font-semibold text-white">
-                      Edit offers, availability, and pricing.
-                    </h3>
-                  </div>
-
-                  <div className="overflow-hidden rounded-[1.25rem] border border-white/10">
-                    <div className="grid grid-cols-[1.6fr_0.8fr_0.8fr_0.8fr] bg-white/5 px-4 py-3 text-[11px] uppercase tracking-[0.3em] text-slate-500">
-                      <span>Item</span>
-                      <span>Status</span>
-                      <span>Price</span>
-                      <span>Action</span>
-                    </div>
-                    {filteredProducts.map((product) => (
-                      <div
-                        key={product.name}
-                        className="grid grid-cols-[1.6fr_0.8fr_0.8fr_0.8fr] items-center border-t border-white/10 px-4 py-4 text-sm"
-                      >
-                        <span className="text-slate-100">{product.name}</span>
-                        <span className="text-cyan-200">Active</span>
-                        <span className="text-slate-300">{product.price}</span>
-                        <button
-                          type="button"
-                          className="justify-self-start rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-200"
-                        >
-                          Edit
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "Subscribers" && (
-                <div className="space-y-5">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.36em] text-cyan-200/70">
-                      Audience
-                    </p>
-                    <h3 className="mt-3 text-2xl font-semibold text-white">
-                      Keep the list warm for drops and updates.
-                    </h3>
-                  </div>
-                  <div className="grid gap-4 lg:grid-cols-[1fr_260px]">
-                    <div className="rounded-[1.25rem] border border-white/10 bg-white/4 p-4">
-                      <p className="text-xs uppercase tracking-[0.32em] text-slate-500">
-                        Segments
-                      </p>
-                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                        {[
-                          "Prebuilt buyers",
-                          "Software repeat customers",
-                          "Business verification leads",
-                          "Accessory bundle watchers",
-                        ].map((segment) => (
-                          <div
-                            key={segment}
-                            className="rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-4 text-sm text-slate-300"
-                          >
-                            {segment}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="rounded-[1.25rem] border border-white/10 bg-slate-950/70 p-4">
-                      <p className="text-xs uppercase tracking-[0.32em] text-slate-500">
-                        Subscriber growth
-                      </p>
-                      <div className="mt-4 space-y-3">
-                        {[
-                          ["Jan", 46],
-                          ["Feb", 58],
-                          ["Mar", 61],
-                          ["Apr", 72],
-                          ["May", 84],
-                        ].map(([month, value]) => (
-                          <div key={month as string} className="flex items-center gap-3">
-                            <span className="w-8 text-xs text-slate-500">
-                              {month}
-                            </span>
-                            <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/8">
-                              <div
-                                className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-sky-500"
-                                style={{ width: `${value}%` }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === "Sales" && (
-                <div className="space-y-5">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.36em] text-cyan-200/70">
-                      Sales pulse
-                    </p>
-                    <h3 className="mt-3 text-2xl font-semibold text-white">
-                      Read what is moving and where margin sits.
-                    </h3>
-                  </div>
-                  <div className="grid gap-4 lg:grid-cols-[1fr_260px]">
-                    <div className="rounded-[1.25rem] border border-white/10 bg-white/4 p-4">
-                      <div className="space-y-4">
-                        {salesPipeline.map((item) => (
-                          <div key={item.label}>
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-slate-300">{item.label}</span>
-                              <span className="text-white">{item.value}%</span>
-                            </div>
-                            <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/8">
-                              <div
-                                className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-sky-500"
-                                style={{ width: `${item.value}%` }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="rounded-[1.25rem] border border-white/10 bg-slate-950/70 p-4">
-                      <p className="text-xs uppercase tracking-[0.32em] text-slate-500">
-                        Revenue mix
-                      </p>
-                      <div className="mt-4">
-                        <Sparkline values={[24, 30, 28, 42, 39, 52, 61]} />
-                      </div>
-                      <p className="text-sm leading-7 text-slate-400">
-                        Digital goods are carrying the highest velocity, with
-                        PC builds and parts showing the strongest upsell path.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div
-              id="support"
-              className="rounded-[1.5rem] border border-white/10 bg-white/4 p-4"
-            >
-              <p className="text-[11px] uppercase tracking-[0.36em] text-slate-500">
-                Support lane
+            <div className="border border-[#182433] bg-[#0d1520] p-4">
+              <p className="text-xs uppercase tracking-[0.45em] text-[#8fa3b8]">
+                Availability
               </p>
-              <h3 className="mt-3 text-lg font-semibold text-white">
-                For store setup, partner onboarding, and vendor follow-up.
-              </h3>
-              <p className="mt-3 text-sm leading-7 text-slate-400">
-                The admin surface stays visible but compact, so the storefront
-                remains the main story.
+              <p className="mt-2 text-lg font-medium text-white">
+                No-stock lanes, shipped cleanly.
               </p>
-              <div className="mt-4 space-y-2">
-                {[
-                  "Licensing outreach",
-                  "Business verification",
-                  "Document upload review",
-                  "Maintenance triage",
-                ].map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3 text-sm text-slate-300"
-                  >
-                    <span>{item}</span>
-                    <span className="text-emerald-300">Ready</span>
-                  </div>
-                ))}
-              </div>
+              <p className="mt-3 text-sm leading-7 text-[#b8c7d6]">
+                Inventory-light offers make the site easier to keep current and
+                easier to browse on the go.
+              </p>
             </div>
           </div>
         </section>
 
-        <footer className="mt-6 flex flex-col gap-3 rounded-[1.5rem] border border-white/10 bg-white/4 px-5 py-4 text-sm text-slate-400 sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            Gearswipe is a standalone storefront and operations surface, not a
-            routing hub for the rest of the portfolio.
-          </p>
-          <div className="flex flex-wrap gap-3 text-slate-300">
-            <a href="#catalog" className="hover:text-white">
-              Back to catalog
-            </a>
-            <span className="hidden text-slate-600 sm:inline">•</span>
-            <span>Gold Shore support context only</span>
+        <footer className="mt-auto border-t border-[#182433] py-5 text-sm text-[#8fa3b8]">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p>Gearswipe is a standalone store surface built for tech products.</p>
+            <p className="text-white">Gold Shore support context only.</p>
           </div>
         </footer>
       </div>
