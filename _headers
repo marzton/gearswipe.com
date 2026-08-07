@@ -1,0 +1,13 @@
+# Cloudflare Pages response headers.
+#
+# Strict-Transport-Security is deliberately NOT set yet. HSTS is cached by
+# browsers and cannot be withdrawn from clients that already received it, so
+# it should not be enabled until the real site is serving correctly over
+# HTTPS. Add it once the site is live and validated.
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  Cross-Origin-Opener-Policy: same-origin
