@@ -12,80 +12,80 @@ type Product = {
 
 const products: Product[] = [
   {
-    name: "Apex RTX Build",
-    category: "PC Builds",
-    price: "$1,899",
+    name: "Custom PC Build",
+    category: "Custom PCs",
+    price: "From $1,499",
     copy:
-      "A clean creator-ready desktop tuned for buyers who want performance without the warehouse overhead.",
+      "Performance-focused desktop builds for creators, gamers, and operators who want a clean buying path.",
     badge: "Featured",
   },
   {
     name: "Windows 11 Pro Key",
     category: "Digital Licenses",
-    price: "$5.49",
+    price: "From $5.49",
     copy:
-      "Instant checkout for the software lane that needs fast delivery and a low-touch support path.",
+      "Fast-moving activation keys for devices that need a quick setup without the warehouse overhead.",
     badge: "Instant delivery",
   },
   {
-    name: "YubiKey 5 NFC",
-    category: "Security",
-    price: "$25",
+    name: "Antivirus Software",
+    category: "Digital Licenses",
+    price: "From $14.99",
     copy:
-      "A compact trust item for teams that want security hardware with a simple, familiar buying flow.",
+      "Protection plans and device security bundles packaged for simple checkout and easy renewal.",
+    badge: "Protection",
+  },
+  {
+    name: "YubiKey 5 NFC",
+    category: "Security Hardware",
+    price: "From $25",
+    copy:
+      "A compact security lane for customers who want trusted hardware with low-friction fulfillment.",
     badge: "Trusted",
   },
   {
-    name: "Total Protection Suite",
-    category: "Software",
-    price: "$14.99",
+    name: "Upgrade Parts Rail",
+    category: "Parts",
+    price: "From $19.99",
     copy:
-      "Antivirus, privacy, and device protection packaged for quick fulfillment and easy renewal.",
-    badge: "Fast moving",
-  },
-  {
-    name: "Parts Rail",
-    category: "Components",
-    price: "$19.99",
-    copy:
-      "Accessories and upgrade parts organized for fast browsing across low-inventory product lanes.",
+      "Memory, storage, cables, and small parts for the kind of inventory that can be refreshed quickly.",
     badge: "Builder pick",
   },
   {
     name: "Meta Glasses",
     category: "Wearables",
-    price: "$299",
+    price: "From $299",
     copy:
-      "A premium consumer lane kept visually restrained so the product, not the page, does the talking.",
+      "A premium consumer lane kept sharp and minimal so the product stays at center stage.",
     badge: "Lifestyle",
   },
 ];
 
 const categories = ["All", ...new Set(products.map((product) => product.category))];
 
-const trustCards = [
+const storeNotes = [
   {
-    title: "Fast delivery",
-    copy: "Codes, licenses, and digital goods can move without inventory drag.",
+    title: "No-stock friendly",
+    copy: "Digital goods, fulfillment-light products, and curated hardware stay easy to keep current.",
   },
   {
-    title: "Resale-ready",
-    copy: "Clear product lanes for builders, operators, and small teams.",
+    title: "Serious presentation",
+    copy: "The storefront feels technical and direct without turning into a dashboard or a spec sheet.",
   },
   {
-    title: "Support separated",
-    copy: "The storefront stays customer-facing while ops stay compact and private.",
+    title: "Built to browse fast",
+    copy: "The layout stays clear on mobile, with sharp contrast and compact product rails.",
   },
 ];
 
-const opsNotes = [
-  "Licensing outreach and vendor follow-up",
-  "Document uploads and business verification",
-  "Store maintenance and catalog refresh",
-  "Subscribers, sales, and fulfillment review",
+const laneRows = [
+  ["PC builds", "Custom desktop offers for higher-ticket buyers."],
+  ["License keys", "Software activations with simple delivery."],
+  ["Security gear", "Trusted hardware and privacy tools."],
+  ["Upgrade parts", "Small components and add-ons with quick turnarounds."],
 ];
 
-function Sparkline({ values }: { values: number[] }) {
+function MiniWave({ values }: { values: number[] }) {
   const points = values
     .map((value, index) => `${index * 22},${72 - value}`)
     .join(" ");
@@ -100,8 +100,8 @@ function Sparkline({ values }: { values: number[] }) {
         fill="none"
         stroke="currentColor"
         strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        strokeLinecap="square"
+        strokeLinejoin="miter"
         points={points}
       />
     </svg>
@@ -135,23 +135,23 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#080d14] text-[#f5f7fa]">
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8">
-        <header className="sticky top-3 z-20 border border-[#1e2d3d] bg-[#0d1520]/90 px-4 py-3 backdrop-blur-xl">
+        <header className="sticky top-3 z-20 border border-[#1c2734] bg-[#0a1119] px-4 py-3">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-3">
-              <div className="grid h-9 w-9 place-items-center border border-[#1e2d3d] bg-[#182433] text-sm font-semibold text-[#1a8fff]">
+              <div className="grid h-11 w-11 place-items-center border border-[#1a8fff]/45 bg-[#0d1520] text-[10px] font-semibold tracking-[0.38em] text-[#f5f7fa]">
                 GS
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.45em] text-[#8fa3b8]">
+                <p className="text-xs uppercase tracking-[0.5em] text-[#8fa3b8]">
                   Gearswipe
                 </p>
-                <p className="text-sm text-[#8fa3b8]">
-                  Tech store for builds, keys, security, and accessories
+                <p className="text-sm text-[#b8c7d6]">
+                  A store for builds, keys, hardware, parts, and practical tech
                 </p>
               </div>
             </div>
 
-            <label className="flex items-center gap-3 border border-[#182433] bg-[#141f2e] px-3 py-2 text-sm text-[#8fa3b8]">
+            <label className="flex items-center gap-3 border border-[#182433] bg-[#0d1520] px-3 py-2 text-sm text-[#8fa3b8]">
               <svg
                 viewBox="0 0 24 24"
                 className="h-4 w-4 shrink-0 text-[#1a8fff]"
@@ -169,7 +169,7 @@ export default function Home() {
                   d="M16 16l4 4"
                   stroke="currentColor"
                   strokeWidth="1.75"
-                  strokeLinecap="round"
+                  strokeLinecap="square"
                 />
               </svg>
               <input
@@ -186,51 +186,53 @@ export default function Home() {
                 href="#catalog"
                 className="border border-[#182433] px-3 py-2 text-[#e5eef8] transition hover:border-[#1a8fff] hover:text-white"
               >
-                Browse
+                Shop
               </a>
               <a
-                href="#operations"
+                href="#details"
                 className="border border-[#182433] px-3 py-2 text-[#e5eef8] transition hover:border-[#1a8fff] hover:text-white"
               >
-                Operations
+                Details
               </a>
               <a
                 href="#catalog"
                 className="border border-[#1a8fff] bg-[#1a8fff] px-3 py-2 font-medium text-white transition hover:bg-[#2a95ff]"
               >
-                Request quote
+                Browse store
               </a>
             </nav>
           </div>
         </header>
 
-        <section className="grid gap-6 py-6 lg:grid-cols-[1.12fr_0.88fr] lg:py-8">
+        <section className="grid gap-6 py-6 lg:grid-cols-[1.08fr_0.92fr] lg:py-8">
           <div className="flex flex-col justify-between gap-6">
             <div>
-              <p className="text-xs uppercase tracking-[0.45em] text-[#8fa3b8]">
-                Digital products, clean margins
+              <p className="text-xs uppercase tracking-[0.5em] text-[#8fa3b8]">
+                Tech goods, no warehouse drama
               </p>
-              <h1 className="mt-4 max-w-3xl text-5xl font-semibold leading-[0.94] tracking-[-0.05em] text-white sm:text-6xl lg:text-7xl">
-                Sell the tech people
-                <span className="block bg-gradient-to-r from-[#1a8fff] to-[#f5f7fa] bg-clip-text text-transparent">
-                  actually want to buy.
+              <h1 className="mt-4 max-w-3xl text-5xl font-semibold leading-[0.92] tracking-[-0.06em] text-white sm:text-6xl lg:text-7xl">
+                A storefront for
+                <span className="block bg-gradient-to-r from-[#1a8fff] via-[#8ec2ff] to-[#f5f7fa] bg-clip-text text-transparent">
+                  tech that moves cleanly.
                 </span>
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-[#b8c7d6]">
-                Gearswipe is a dark retail storefront for PC builds, digital
-                licenses, security hardware, wearables, and other low-friction
-                tech products that ship fast and stay easy to manage.
+                Gearswipe sells custom PC builds, software licenses, security
+                hardware, upgrade parts, and other tech products that do not
+                need a warehouse full of stock to stay current.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              {trustCards.map((item) => (
+            <div className="grid gap-3 sm:grid-cols-3">
+              {storeNotes.map((item) => (
                 <div
                   key={item.title}
                   className="border border-[#182433] bg-[#0d1520] px-4 py-3"
                 >
                   <p className="text-sm font-medium text-white">{item.title}</p>
-                  <p className="mt-1 text-sm text-[#8fa3b8]">{item.copy}</p>
+                  <p className="mt-1 text-sm leading-6 text-[#8fa3b8]">
+                    {item.copy}
+                  </p>
                 </div>
               ))}
             </div>
@@ -240,39 +242,39 @@ export default function Home() {
             <div className="flex items-center justify-between border-b border-[#182433] pb-3">
               <div>
                 <p className="text-xs uppercase tracking-[0.4em] text-[#8fa3b8]">
-                  Featured lanes
+                  Storefront snapshot
                 </p>
                 <p className="mt-1 text-lg font-medium text-white">
-                  Built for modern resale
+                  Curated for quick browsing
                 </p>
               </div>
               <span className="border border-[#1a8fff]/30 bg-[#1a8fff]/10 px-2 py-1 text-xs text-[#8ec2ff]">
                 Live
               </span>
             </div>
-            {[
-              ["PC builds", "Premium desktop offers with clear positioning."],
-              ["Digital keys", "Instant fulfillment and low support overhead."],
-              ["Security gear", "Hardware and protection products with trust."],
-            ].map(([label, copy]) => (
-              <div
-                key={label}
-                className="grid gap-2 border border-[#182433] bg-[#141f2e] p-3"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium text-white">{label}</p>
-                  <span className="text-xs uppercase tracking-[0.25em] text-[#1a8fff]">
-                    Ready
-                  </span>
+
+            <div className="grid gap-3 border border-[#182433] bg-[#0a1119] p-3">
+              {laneRows.map(([label, copy]) => (
+                <div
+                  key={label}
+                  className="grid gap-2 border-b border-[#182433] pb-3 last:border-b-0 last:pb-0"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-white">{label}</p>
+                    <span className="text-xs uppercase tracking-[0.25em] text-[#1a8fff]">
+                      Ready
+                    </span>
+                  </div>
+                  <p className="text-sm leading-6 text-[#b8c7d6]">{copy}</p>
                 </div>
-                <p className="text-sm text-[#b8c7d6]">{copy}</p>
-              </div>
-            ))}
-            <div className="border border-[#182433] bg-[#141f2e] p-3">
-              <Sparkline values={[34, 52, 58, 46, 73]} />
+              ))}
+            </div>
+
+            <div className="border border-[#182433] bg-[#0a1119] p-3">
+              <MiniWave values={[34, 52, 58, 46, 73]} />
               <div className="mt-3 flex items-center justify-between text-sm text-[#8fa3b8]">
-                <span>Sales momentum</span>
-                <span className="text-white">Upward</span>
+                <span>Store signal</span>
+                <span className="text-white">Steady demand</span>
               </div>
             </div>
           </div>
@@ -281,11 +283,11 @@ export default function Home() {
         <section id="catalog" className="py-4">
           <div className="flex flex-col gap-3 border-t border-[#182433] pt-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.45em] text-[#8fa3b8]">
+              <p className="text-xs uppercase tracking-[0.5em] text-[#8fa3b8]">
                 Catalog
               </p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-white">
-                A lean lineup of products that move.
+              <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-white">
+                Built around products people actually buy.
               </h2>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -342,7 +344,7 @@ export default function Home() {
                       type="button"
                       className="border border-[#1a8fff] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#1a8fff] hover:text-white"
                     >
-                      Get quote
+                      View offer
                     </button>
                   </div>
                 </div>
@@ -352,56 +354,47 @@ export default function Home() {
         </section>
 
         <section
-          id="operations"
-          className="mt-8 grid gap-4 border-t border-[#182433] py-6 lg:grid-cols-[0.92fr_1.08fr]"
+          id="details"
+          className="mt-8 grid gap-4 border-t border-[#182433] py-6 lg:grid-cols-[0.95fr_1.05fr]"
         >
           <div className="border border-[#182433] bg-[#0d1520] p-4">
-            <p className="text-xs uppercase tracking-[0.45em] text-[#8fa3b8]">
-              Operations
+            <p className="text-xs uppercase tracking-[0.5em] text-[#8fa3b8]">
+              Why it works
             </p>
             <h2 className="mt-2 text-2xl font-semibold text-white">
-              A compact control surface behind the store.
+              Sharp enough to feel technical, simple enough to shop.
             </h2>
             <p className="mt-3 text-sm leading-7 text-[#b8c7d6]">
-              Licensing, uploads, verification, and maintenance stay available
-              without taking over the storefront narrative.
+              The layout stays product-first: clear category lanes, strong
+              contrast, and a compact presentation that works on desktop and
+              mobile without feeling like a spec sheet.
             </p>
-            <div className="mt-5 grid gap-3">
-              {opsNotes.map((note) => (
-                <div
-                  key={note}
-                  className="border border-[#182433] bg-[#141f2e] px-3 py-2 text-sm text-white"
-                >
-                  {note}
-                </div>
-              ))}
-            </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="border border-[#182433] bg-[#0d1520] p-4">
               <p className="text-xs uppercase tracking-[0.45em] text-[#8fa3b8]">
-                Support
+                Support context
               </p>
               <p className="mt-2 text-lg font-medium text-white">
-                Product-first, not overloaded.
+                Product-first, with back office kept light.
               </p>
               <p className="mt-3 text-sm leading-7 text-[#b8c7d6]">
-                The page stays focused on what Gearswipe offers: practical tech
-                goods with a store flow that feels clear on mobile and desktop.
+                Gearswipe can sit alongside the broader portfolio without
+                turning into a hub page or a router for other brands.
               </p>
             </div>
 
             <div className="border border-[#182433] bg-[#0d1520] p-4">
               <p className="text-xs uppercase tracking-[0.45em] text-[#8fa3b8]">
-                Availability
+                Portfolio note
               </p>
               <p className="mt-2 text-lg font-medium text-white">
-                No-stock lanes, shipped cleanly.
+                Standalone storefront, not the whole network.
               </p>
               <p className="mt-3 text-sm leading-7 text-[#b8c7d6]">
-                Inventory-light offers make the site easier to keep current and
-                easier to browse on the go.
+                Gold Shore remains background context only while Gearswipe keeps
+                its own shopping identity and tone.
               </p>
             </div>
           </div>
@@ -409,8 +402,8 @@ export default function Home() {
 
         <footer className="mt-auto border-t border-[#182433] py-5 text-sm text-[#8fa3b8]">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p>Gearswipe is a standalone store surface built for tech products.</p>
-            <p className="text-white">Gold Shore support context only.</p>
+            <p>Gearswipe sells tech products in a sharp, inventory-light storefront.</p>
+            <p className="text-white">Gold Shore context stays secondary.</p>
           </div>
         </footer>
       </div>

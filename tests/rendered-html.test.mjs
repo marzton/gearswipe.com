@@ -33,14 +33,14 @@ test("server-renders the Gearswipe landing page", async () => {
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, /<title>Gearswipe — Tech Store<\/title>/i);
+  assert.match(html, /<title>Gearswipe — Tech Storefront<\/title>/i);
   assert.match(
     html,
-    /Gearswipe is a dark retail storefront for PC builds, digital licenses,/i,
+    /Gearswipe is a sharp, inventory-light storefront for custom PC builds/i,
   );
-  assert.match(html, /Sell the tech people/i);
-  assert.match(html, /Request quote/i);
-  assert.match(html, /Gearswipe is a standalone store surface built for tech products/i);
+  assert.match(html, /A storefront for/i);
+  assert.match(html, /Browse store/i);
+  assert.match(html, /Gold Shore context stays secondary/i);
   assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape|AI Trading Intelligence|instruction/i);
 });
 
@@ -50,7 +50,7 @@ test("keeps the current site free of starter skeleton fixtures", async () => {
     readFile(layoutPath, "utf8"),
   ]);
 
-  assert.match(page, /Gearswipe is a dark retail storefront for PC builds, digital\s+licenses,/i);
-  assert.match(layout, /Gearswipe — Tech Store/i);
+  assert.match(page, /A storefront for/i);
+  assert.match(layout, /Gearswipe — Tech Storefront/i);
   await assert.rejects(access(new URL("../app/_sites-preview", templateRoot)));
 });

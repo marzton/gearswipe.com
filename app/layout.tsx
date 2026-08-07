@@ -13,9 +13,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Gearswipe — Tech Store",
+  title: "Gearswipe — Tech Storefront",
   description:
-    "Gearswipe is a dark retail storefront for PC builds, digital licenses, security hardware, wearables, and other inventory-light tech products.",
+    "Gearswipe is a sharp, inventory-light storefront for custom PC builds, license keys, security hardware, parts, and practical tech products.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

@@ -3,7 +3,7 @@
 :root {
   --background: #080d14;
   --foreground: #f5f7fa;
-  --radius: 0.25rem;
+  --radius: 0;
 }
 
 @theme inline {
@@ -15,6 +15,7 @@
 
 * {
   box-sizing: border-box;
+  border-radius: 0 !important;
 }
 
 html {
@@ -24,13 +25,14 @@ html {
 body {
   margin: 0;
   background:
-    linear-gradient(90deg, rgba(128, 128, 128, 0.07) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(128, 128, 128, 0.07) 1px, transparent 1px),
-    radial-gradient(circle at top, rgba(26, 143, 255, 0.1), transparent 36%),
+    linear-gradient(90deg, rgba(134, 151, 172, 0.06) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(134, 151, 172, 0.06) 1px, transparent 1px),
+    linear-gradient(135deg, rgba(26, 143, 255, 0.09), transparent 42%),
     var(--background);
   background-size: 28px 28px, 28px 28px, auto, auto;
   color: var(--foreground);
   font-family: var(--font-space-grotesk), Arial, Helvetica, sans-serif;
+  text-rendering: optimizeLegibility;
 }
 
 a {
