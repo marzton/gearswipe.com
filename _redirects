@@ -1,0 +1,20 @@
+# Cloudflare Pages routing rules.
+#
+# This project currently has NO build step, so its publish root is the
+# repository root — every committed file is fetchable over HTTPS. Until the
+# Pages build command and output directory are set (see
+# docs/cloudflare-deployment-audit.md section 9.1), these rules keep
+# repository content that is not part of the website from being served.
+#
+# Remove this file once a real build step exists and the output directory
+# contains only built assets.
+
+# Internal documentation — must not be served publicly.
+/docs/*             /404.html   404
+
+# Repository metadata and governance files.
+/.github/*          /404.html   404
+/LICENSE            /404.html   404
+/SECURITY.md        /404.html   404
+/README.md          /404.html   404
+/.gitignore         /404.html   404
