@@ -1,0 +1,7 @@
+# Default ownership
+* @marzton
+
+# Deployment and security-sensitive paths
+.github/ @marzton
+SECURITY.md @marzton
+wrangler.toml @marzton
