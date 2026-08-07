@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Gearswipe — AI Trading Intelligence",
+  title: "Gearswipe — Digital Tech Store",
   description:
-    "A product-first landing page for Gearswipe, an AI trading intelligence platform with a restrained portfolio note.",
+    "Gearswipe is a storefront for no-inventory tech products with an operations console for licensing, uploads, verification, maintenance, and sales.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
