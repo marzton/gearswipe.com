@@ -13,10 +13,16 @@ The deployment was halted before any DNS or configuration change was made.
 
 | # | Stop condition | Finding |
 |---|---|---|
-| 1 | **Nothing to deploy** | This repository contains no website. Every commit on every branch contains only `README.md`, `LICENSE`, `SECURITY.md`, and `.github/*`. There is no HTML, framework, build config, `wrangler.toml`, or Pages config anywhere in history. |
+| 1 | **Nothing to deploy** | This repository contains no website. Every commit on every branch contains only `README.md`, `LICENSE`, `SECURITY.md`, and `.github/*`. There is no HTML, framework, build config, or entry point anywhere in history. |
 | 2 | **Origin cannot be verified** | The only candidate origin (`50.87.146.6`) is a real HostGator host but is **not a valid origin** — it 301-redirects back to `https://gearswipe.com/`. Pointing DNS at it creates an infinite redirect loop. |
 
 A third, pre-existing production defect was found and is documented below (duplicate DMARC record). It was **not** corrected, because correcting it modifies an email record.
+
+### The good news
+
+The deployment infrastructure **already exists and already works.** Cloudflare Pages project `gearswipe-pages` is bound to both `gearswipe.com` and `www.gearswipe.com` and auto-deploys from this repository on every push and PR (§2). Nothing needs to be provisioned, and no DNS change is required to ship the site.
+
+Stop condition 1 is therefore the **sole root cause** of the outage: the pipeline is delivering an empty repository. Commit a real site here and it goes live automatically.
 
 ---
 
@@ -91,9 +97,37 @@ The MCP server does not expose Worker **route bindings**, so which Worker answer
 
 ## 2. Architecture determination
 
-**Neither Option A (Pages) nor Option B (HostGator). Production is Cloudflare Workers, and it is serving nothing.**
+**Option A. Production is Cloudflare Pages — project `gearswipe-pages`, already bound to both `gearswipe.com` and `www.gearswipe.com`, already auto-deploying from this repository.**
 
-Evidence:
+### Decisive evidence
+
+```
+GET https://gearswipe.com/README.md             → 200, 15 bytes
+GET https://www.gearswipe.com/README.md         → 200, 15 bytes
+GET https://gearswipe-pages.pages.dev/README.md → 200, 15 bytes
+```
+
+15 bytes is exactly the length of this repository's `README.md` (`# gearswipe.com`). **The apex is serving this repo's own files.** Response headers for apex and `gearswipe-pages.pages.dev` are byte-identical apart from `cf-cache-status`, which differs only because one is proxied and one is direct.
+
+The Pages project was surfaced by the `Cloudflare Pages` check run on PR #7, which builds and deploys on every pull request against this repository (project `gearswipe-pages`, account `f77de112d2019e5456a3198a8bb50bd2`).
+
+### Consequence — this simplifies the whole picture
+
+The site returns `404` on `/` for exactly one reason: **there is no `index.html` in this repository.** Pages is working correctly and serving what it was given, which is three governance files and no entry point.
+
+That means:
+
+- The deployment pipeline is **already built and already working.** It does not need to be created.
+- **Committing a real site to this repository will deploy it to production automatically.** No DNS change, no new Pages project, no custom-domain binding is required.
+- Stop condition 1 is not merely *a* blocker — it is the **sole root cause** of the outage. Every other layer (DNS, TLS, proxy, HTTP/2, HTTP/3, Pages build, custom domain binding) is healthy.
+
+### Correction to an earlier reading
+
+An earlier pass of this audit concluded production was Cloudflare Workers, inferred from `access-control-allow-origin: *` and `cache-control: no-store` on the `404`. That was wrong: those are Cloudflare Pages' own headers on its zero-byte 404, not a Worker signature. The error was inferring the backend from response headers without testing whether the apex served the repository's own files. The `/README.md` probe above settles it.
+
+The 23 Workers in the account are real and several were modified today (§1.2, §3.3), but **none of them is what answers `gearswipe.com/*`.**
+
+### Supporting evidence (path probes)
 
 ```
 GET https://gearswipe.com/            → 404, content-length: 0
@@ -119,9 +153,10 @@ alt-svc: h3=":443"; ma=86400
 
 Interpretation:
 
-- `cf-cache-status: DYNAMIC` + `access-control-allow-origin: *` + `cache-control: no-store` is a **Worker** response signature, not Pages static hosting and not an origin pull. Cloudflare Pages returns a styled 404 page with a body; this returns zero bytes.
-- **The 200 on `/robots.txt` is a false positive.** Its content is Cloudflare's *managed* robots.txt (the AI-crawler-control feature — `Content-Signal: search=yes,ai-train=no`, blocking GPTBot/ClaudeBot/CCBot etc.). It is injected by Cloudflare's edge, **not served by the site**. It is the only path that returns a body, which confirms there is no application behind the hostname.
-- Therefore: DNS, TLS, and proxying are all healthy. **There is simply no application bound to the hostname.**
+- Every application path returns a zero-byte `404` because Pages has no `index.html` and no routes to serve.
+- **The 200 on `/robots.txt` is a false positive.** Its content is Cloudflare's *managed* robots.txt (the AI-crawler-control feature — `Content-Signal: search=yes,ai-train=no`, blocking GPTBot/ClaudeBot/CCBot etc.). It is injected by Cloudflare's edge, **not served by the site**.
+- The 200 on `/README.md`, by contrast, **is** the site — that file is in this repository, and Pages is serving it as a static asset.
+- Therefore: DNS, TLS, proxying, and the Pages deployment pipeline are all healthy. **The repository has no web content for Pages to serve.**
 
 ### The HostGator IP — verified, and verified *unusable*
 
@@ -158,13 +193,17 @@ The two records differ only in the `rua=` reporting address, so this is almost c
 
 **Not fixed in this pass** — it is an email record, and the brief mandates a stop rather than an unattended edit. The fix is a one-record deletion and is specified in §4. It should be done deliberately, and it is worth doing soon: this is a live security gap independent of any deployment.
 
-### 3.2 🔴 HIGH — Nothing to deploy
+### 3.2 🔴 HIGH — Nothing to deploy (this is the outage)
 
-No site code exists in this repository. Any "deployment" would publish an empty site over a hostname that is already live. There is no artifact, no build, and no preview to validate.
+No site code exists in this repository, and this repository is what Pages publishes to production. The live site is down — zero-byte `404` on every route — for this reason alone. There is no artifact and no build to validate.
 
-### 3.3 🔴 HIGH — Concurrent modification of production
+⚠️ **Corollary: this repository is production.** Any commit merged to `main` deploys straight to `gearswipe.com`. Treat pushes here as production changes.
 
-`gs-web-prod`, `gs-gateway-prod`, `gs-api-prod`, and `gs-api` were all modified on 2026-08-07 between 15:14 and 15:30 UTC — within about two hours of this audit. Another actor (person, CI pipeline, or agent) is changing production concurrently. **Applying DNS changes now risks colliding with in-flight work.** Establish who owns those changes before touching the zone.
+### 3.3 🟠 MEDIUM — Concurrent modification of the Workers fleet
+
+`gs-web-prod`, `gs-gateway-prod`, `gs-api-prod`, and `gs-api` were all modified on 2026-08-07 between 15:14 and 15:30 UTC — within about two hours of this audit. Another actor (person, CI pipeline, or agent) is active in this account.
+
+Downgraded from HIGH once §2 established that **none of these Workers serves `gearswipe.com`** — the apex is Pages-backed, so this activity does not directly threaten the web deployment. It still matters for the API question (§4) and indicates the account is not quiescent. Establish ownership before changing Worker routes.
 
 ### 3.4 🟠 MEDIUM — DNSSEC not enabled
 
@@ -204,14 +243,16 @@ TLS is valid (`CN=gearswipe.com`, Google Trust Services WE1, TLS 1.3, expires 20
 | 0.2 | Export the full authoritative zone via API and re-run this inventory | Closes the enumeration gap in §1 | None (read-only) |
 | 0.3 | Identify the owner of the 2026-08-07 Worker changes | Avoid collision (§3.3) | None |
 
-### Tier 1 — Blocked until a site exists
+### Tier 1 — Ship the site
 
-| # | Change | Blocked on |
+| # | Change | Status |
 |---|---|---|
-| 1.1 | Build/commit the actual website | Site code does not exist |
-| 1.2 | Create Pages project **or** confirm the existing Worker as the web target | 1.1 + route ownership |
-| 1.3 | Bind `gearswipe.com` + `www.gearswipe.com` to the deployment | 1.2 |
-| 1.4 | Configure preview deployments | 1.2 |
+| 1.1 | Build/commit the actual website into this repository | ⛔ **The only blocker.** Site code does not exist |
+| 1.2 | Create a Pages project | ✅ **Already done** — `gearswipe-pages` exists |
+| 1.3 | Bind `gearswipe.com` + `www.gearswipe.com` | ✅ **Already done** — both serve from the project |
+| 1.4 | Configure preview deployments | ✅ **Already done** — PR #7 produced a Pages preview build |
+
+**No DNS change is required to bring the site up.** Tier 1 reduces to a single task: put a real site in this repository. Adding even a minimal `index.html` would immediately convert the apex from a zero-byte `404` to a `200`.
 
 ### Tier 2 — Safe hardening, after Tier 1 validates
 
@@ -325,8 +366,9 @@ Every action taken was read-only: public DNS resolution, unauthenticated HTTP pr
 | Requirement | Outcome |
 |---|---|
 | Audit existing zone | ✅ Complete, with the enumeration caveat in §1 |
+| Determine architecture (Option A vs B) | ✅ **Option A — Cloudflare Pages**, already deployed and bound (§2) |
 | Preserve non-web records | ✅ Nothing touched |
-| Deploy website safely | ⛔ Blocked — no site code exists |
+| Deploy website safely | ⛔ Blocked — no site code exists. Pipeline is ready and waiting |
 | Never break email | ✅ No email record modified. Pre-existing DMARC defect found and reported, not altered |
 | Never overwrite DNS without verification | ✅ Nothing overwritten |
 | Rollback plan before changes | ✅ §5 |
@@ -342,8 +384,11 @@ Validation of the *current* production state, run against live DNS and HTTPS.
 
 | Check | Result | Detail |
 |---|---|---|
-| Homepage | ❌ **FAIL** | `GET /` → 404, 0 bytes |
-| Deep links | ❌ **FAIL** | All probed paths → 404, 0 bytes |
+| Homepage | ❌ **FAIL** | `GET /` → 404, 0 bytes — no `index.html` in the repository |
+| Deep links | ❌ **FAIL** | All probed application paths → 404, 0 bytes |
+| Static asset serving | ✅ **PASS** | `GET /README.md` → 200, 15 bytes — Pages pipeline confirmed working |
+| Pages build | ✅ **PASS** | `gearswipe-pages` built and deployed successfully on PR #7 |
+| Custom domain binding | ✅ **PASS** | Apex and `www` both serve from the Pages project |
 | SPA routing | ❌ **N/A** | No application deployed |
 | 404 handling | ⚠️ **DEGRADED** | Returns 404 correctly but with an empty body — no error page |
 | API endpoint | ❌ **FAIL** | `api.gearswipe.com` NXDOMAIN; `/api/*` → 404 |
@@ -360,17 +405,19 @@ Validation of the *current* production state, run against live DNS and HTTPS.
 | DMARC | ❌ **FAIL** | Duplicate records ⇒ policy unenforced per RFC 7489 §6.6.3 |
 | MX | ⚠️ **NONE** | No inbound mail — consistent with SPF `-all`, may or may not be intended |
 
-**Overall: the infrastructure layer is healthy and the application layer is empty.** DNS, TLS, proxying, and HTTP/2+3 all work correctly. There is no website behind them.
+**Overall: every infrastructure layer is healthy and the application layer is empty.** DNS, TLS, proxying, HTTP/2+3, the Pages build, and the custom-domain binding all work correctly. The only thing missing is the website itself.
+
+The two `www` findings are worth reading together: `www` does not *redirect* to the apex, but it does not need to — it is bound to the same Pages project and serves identical content. If a canonical-host redirect is wanted for SEO, that is a deliberate addition (Pages bulk redirect or a redirect rule), not a repair.
 
 ---
 
 ## 8. Recommended next steps
 
-1. **Confirm who modified the four production Workers on 2026-08-07** before any change to this zone (§3.3).
+1. **Build the site in this repository.** This is the entire fix for the outage. Pages is already wired to both hostnames and deploys on merge to `main`; the site is down only because there is nothing to serve. Start with an `index.html` to confirm the pipeline end-to-end, then build out.
 2. **Fix the duplicate DMARC record** (§4, item 0.1) — a live security gap, independent of deployment, and a one-record deletion.
-3. **Locate the real gearswipe.com site source.** It is not in this repository. Given `gs-web-prod` exists and was updated today, the site is likely deployed from elsewhere. Identify that repository before building anything new here — otherwise a "deployment" from this repo would overwrite working production with nothing.
-4. **Locate the quote API source** for the same reason (§4).
-5. **Provision a scoped Cloudflare API token** (Zone.DNS:Edit + Zone.Settings:Edit) so a full authoritative zone export can close the §1 gap.
-6. Only then proceed to Tier 1–3.
+3. **Decide the quote API's home** (§4). `api.gearswipe.com` does not resolve, but four `gs-api*` Workers exist and three were modified today, so an API may already be deployed from another repository. Find it before creating any `api.` record.
+4. **Confirm who modified the Workers on 2026-08-07** (§3.3) before touching Worker routes.
+5. **Provision a scoped Cloudflare API token** (Zone.DNS:Edit + Zone.Settings:Edit) so a full authoritative zone export can close the §1 enumeration gap.
+6. Then proceed to Tier 2 hardening and Tier 3 DNSSEC.
 
-**Do not point DNS at `50.87.146.6`.** It is a decommissioned HostGator origin that redirects to Cloudflare; using it causes an infinite redirect loop and a hard outage.
+**Do not point DNS at `50.87.146.6`.** It is a decommissioned HostGator origin that redirects to Cloudflare; using it causes an infinite redirect loop and a hard outage. It is also unnecessary — Pages already serves both hostnames.
