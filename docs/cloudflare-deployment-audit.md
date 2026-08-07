@@ -76,22 +76,40 @@ Inspected for context only, per instruction. **No changes proposed or made.**
 | `armsway.com` | `brady`/`luciana`.ns.cloudflare.com | Cloudflare Email Routing | Live mail. SPF includes iCloud + MailChannels |
 | `goldshore.foundation` | **none** | — | Does not resolve at all — no NS delegation. Either unregistered or not delegated |
 
-### 1.2 Workers inventory (authenticated, via MCP)
+### 1.2 Workers inventory — ⚠️ `gs-` means **Gold Shore**, not GearSwipe
 
-23 Workers exist in the Gold Shore Labs account. Those relevant to gearswipe.com:
+23 Workers exist in the Gold Shore Labs account. **None of them belongs to gearswipe.com.**
 
-| Worker | Last modified | Relevance |
+The `gs-` prefix reads naturally as "GearSwipe" and it is not — it is **Gold Shore**. This is the single most misleading thing in the account, and it is worth stating plainly before anyone acts on the fleet.
+
+Evidence, from the deployed `gs-web-prod` bundle (1.4 MB, retrieved via MCP):
+
+- **206** occurrences of `goldshore`; **zero** occurrences of `gearswipe`.
+- Bundle chunks are Gold Shore products: `GoldShoreShell`, `goldshore-shell`, `RiskRadar`, `goldclaw`, `banproof`, `bridgekeeper`, `ai-oracle`, `consulting`, `digital-strategy`, `systems-integration`.
+- Hardcoded references to `api.goldshore.ai` and `admin.goldshore.ai`.
+- It is a built **Astro** application (`WebLayout.astro`, `GoldShoreShell.astro`, Astro server islands).
+
+And it is live and healthy on its own domain:
+
+```
+GET https://goldshore.org/          → 200, 27,856 bytes, <title>Gold Shore Labs | Applied Intelligence</title>
+GET https://goldshore.org/about     → 200, 14,164 bytes
+GET https://goldshore.org/contact   → 200, 15,694 bytes
+GET https://goldshore.org/services  → 200, 22,073 bytes
+```
+
+| Worker group | Belongs to | State |
 |---|---|---|
-| `gs-web-prod` | **2026-08-07 15:30** | Likely bound to the apex — modified hours before this audit |
-| `gs-gateway-prod` | **2026-08-07 15:30** | Modified same window |
-| `gs-api-prod` | **2026-08-07 15:29** | Modified same window |
-| `gs-api` | **2026-08-07 15:14** | Modified same window |
-| `gs-www-redirect-production`, `gs-www-redirect-prod` | 2026-07-19 / 06-30 | ⚠️ Two near-identical www-redirect Workers — likely one is obsolete |
-| `gs-api-preview`, `gs-api-staging`, `gs-web` | Jul 2026 | Non-production |
-| `gs-mail`, `gs-email-router` | Jul 2026 | ⚠️ Mail-related Workers exist despite no MX record |
-| `gs-signals`, `gs-signals-prod`, `gs-admin`, `gs-trading-prod`, `gs-risk-radar`, `gs-todo`, `goldclaw`, `goldshore-ai`, `armsway-com`, `banproof-me`, `banproof-me-prod`, `partners-in-pools` | various | Other properties — out of scope |
+| `gs-web-prod`, `gs-web` | Gold Shore website (Astro) | ✅ Working — serves `goldshore.org` |
+| `gs-api-prod`, `gs-api`, `gs-api-staging`, `gs-api-preview` | Gold Shore API (`api.goldshore.ai`) | ⚠️ **`api.goldshore.ai` returns HTTP 500** — see §3.10 |
+| `gs-gateway-prod`, `gs-trading-prod`, `gs-signals`, `gs-signals-prod`, `gs-admin`, `gs-risk-radar`, `gs-todo` | Gold Shore services | Out of scope |
+| `gs-mail`, `gs-email-router` | Gold Shore mail | Out of scope — **not** gearswipe mail |
+| `gs-www-redirect-production`, `gs-www-redirect-prod` | Gold Shore www redirect | ⚠️ Two near-identical Workers; one is likely obsolete |
+| `goldclaw`, `goldshore-ai`, `armsway-com`, `banproof-me`, `banproof-me-prod`, `partners-in-pools` | Other properties | Out of scope |
 
-The MCP server does not expose Worker **route bindings**, so which Worker answers `gearswipe.com/*` could not be confirmed authoritatively. Four production Workers were modified within ~2 hours of this audit, which means **someone or something else is actively changing this environment right now.**
+**No Worker in this account is named for, or contains any code belonging to, gearswipe.com.**
+
+The MCP server does not expose Worker route bindings, so routes could not be read directly; the conclusions above rest on bundle contents plus live HTTP behaviour, which agree.
 
 ---
 
@@ -125,7 +143,9 @@ That means:
 
 An earlier pass of this audit concluded production was Cloudflare Workers, inferred from `access-control-allow-origin: *` and `cache-control: no-store` on the `404`. That was wrong: those are Cloudflare Pages' own headers on its zero-byte 404, not a Worker signature. The error was inferring the backend from response headers without testing whether the apex served the repository's own files. The `/README.md` probe above settles it.
 
-The 23 Workers in the account are real and several were modified today (§1.2, §3.3), but **none of them is what answers `gearswipe.com/*`.**
+The 23 Workers in the account are real and several were modified today (§1.2, §3.3), but **none of them is what answers `gearswipe.com/*` — and none of them belongs to GearSwipe at all.** The `gs-` prefix means **Gold Shore**, not GearSwipe (§1.2). `gs-web-prod` is a complete Astro application that serves `goldshore.org`, and it works.
+
+So there is no "GearSwipe Worker" that is broken. There is no GearSwipe Worker. The only thing serving `gearswipe.com` is the empty Pages project.
 
 ### Supporting evidence (path probes)
 
@@ -199,11 +219,21 @@ No site code exists in this repository, and this repository is what Pages publis
 
 ⚠️ **Corollary: this repository is production.** Any commit merged to `main` deploys straight to `gearswipe.com`. Treat pushes here as production changes.
 
-### 3.3 🟠 MEDIUM — Concurrent modification of the Workers fleet
+### 3.3 🟡 LOW (for gearswipe) — Concurrent modification of the Gold Shore Workers
 
-`gs-web-prod`, `gs-gateway-prod`, `gs-api-prod`, and `gs-api` were all modified on 2026-08-07 between 15:14 and 15:30 UTC — within about two hours of this audit. Another actor (person, CI pipeline, or agent) is active in this account.
+`gs-web-prod`, `gs-gateway-prod`, `gs-api-prod`, and `gs-api` were all modified on 2026-08-07 between 15:14 and 15:30 UTC — within about two hours of this audit. Someone or something is actively working in this account.
 
-Downgraded from HIGH once §2 established that **none of these Workers serves `gearswipe.com`** — the apex is Pages-backed, so this activity does not directly threaten the web deployment. It still matters for the API question (§4) and indicates the account is not quiescent. Establish ownership before changing Worker routes.
+Downgraded twice: first from HIGH once §2 established the apex is Pages-backed, then again once §1.2 established these are **Gold Shore's** Workers, not GearSwipe's. They cannot affect gearswipe.com. Noted only so that nobody "cleans up" the `gs-*` fleet believing it to be stale GearSwipe infrastructure — **deleting any of it would take down goldshore.org.**
+
+### 3.10 🔴 HIGH (Gold Shore, not GearSwipe) — `api.goldshore.ai` is returning HTTP 500
+
+```
+GET https://api.goldshore.ai/  → 500, text/plain
+```
+
+Found incidentally while disambiguating the `gs-` prefix. This is a **live production failure on a different property**, in the Worker group (`gs-api-prod` / `gs-api`) that was modified today at 15:14–15:29 UTC — the timing strongly suggests the two are related.
+
+Out of scope for this deployment and **not touched**, but flagged because it is a real outage that a gearswipe.com audit would otherwise never surface. `goldshore.org` itself is fine; it is the API that is failing. Recommend checking the 15:29 deployment of `gs-api-prod` and rolling back if it correlates.
 
 ### 3.4 🟠 MEDIUM — DNSSEC not enabled
 
@@ -266,7 +296,11 @@ DNSSEC: enable in Cloudflare, then publish the DS record at the registrar, then 
 
 ### API subdomain (`api.gearswipe.com`)
 
-**Blocker documented, per instruction.** `api.gearswipe.com` does not resolve, and no quote API source exists in this repository. However, Workers named `gs-api`, `gs-api-prod`, `gs-api-staging`, and `gs-api-preview` **do** exist in the account and three were modified today — so a quote API may well exist, deployed from **a different repository**. Locate that repository before creating any `api.` record; provisioning one here risks shadowing working infrastructure.
+**Blocker documented, per instruction: no quote API exists.**
+
+`api.gearswipe.com` does not resolve, and no quote API source exists in this repository. The `gs-api*` Workers are **not** it — they are Gold Shore's API, hardcoded to `api.goldshore.ai` (§1.2), and that endpoint is currently returning 500 (§3.10).
+
+There is therefore nothing to deploy as `api.gearswipe.com` and nothing to point it at. Building the quote API is net-new work, not a routing exercise. Do not create an `api.gearswipe.com` record until the service exists.
 
 ---
 
@@ -415,9 +449,10 @@ The two `www` findings are worth reading together: `www` does not *redirect* to 
 
 1. **Build the site in this repository.** This is the entire fix for the outage. Pages is already wired to both hostnames and deploys on merge to `main`; the site is down only because there is nothing to serve. Start with an `index.html` to confirm the pipeline end-to-end, then build out.
 2. **Fix the duplicate DMARC record** (§4, item 0.1) — a live security gap, independent of deployment, and a one-record deletion.
-3. **Decide the quote API's home** (§4). `api.gearswipe.com` does not resolve, but four `gs-api*` Workers exist and three were modified today, so an API may already be deployed from another repository. Find it before creating any `api.` record.
-4. **Confirm who modified the Workers on 2026-08-07** (§3.3) before touching Worker routes.
-5. **Provision a scoped Cloudflare API token** (Zone.DNS:Edit + Zone.Settings:Edit) so a full authoritative zone export can close the §1 enumeration gap.
-6. Then proceed to Tier 2 hardening and Tier 3 DNSSEC.
+3. **Build the quote API if it is wanted** (§4) — it does not exist. The `gs-api*` Workers are Gold Shore's, not GearSwipe's.
+4. **Separately, investigate `api.goldshore.ai` returning 500** (§3.10). Different property, out of scope here, but it is a live outage and correlates with a 15:29 UTC deployment today.
+5. **Do not delete anything named `gs-*` as "stale GearSwipe infrastructure."** It is Gold Shore's production fleet and `goldshore.org` depends on it.
+6. **Provision a scoped Cloudflare API token** (Zone.DNS:Edit + Zone.Settings:Edit) so a full authoritative zone export can close the §1 enumeration gap.
+7. Then proceed to Tier 2 hardening and Tier 3 DNSSEC.
 
 **Do not point DNS at `50.87.146.6`.** It is a decommissioned HostGator origin that redirects to Cloudflare; using it causes an infinite redirect loop and a hard outage. It is also unnecessary — Pages already serves both hostnames.
