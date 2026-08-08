@@ -616,6 +616,7 @@ function MailForms() {
 }
 
 export default function HomePage() {
+  // Gearswipe marketplace - precision tech storefront
   const [activeCategory, setActiveCategory] = useState("All");
 
   const categories = useMemo(
