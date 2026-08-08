@@ -2,7 +2,7 @@
 
 ## Overview
 
-GearSwipe uses a modern edge-first architecture:
+GearSwipe uses a modern edge-first architecture managed entirely through the Cloudflare dashboard UI.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -24,10 +24,9 @@ GearSwipe uses a modern edge-first architecture:
     └──────────────┘           └──────────────────┘
          │ ▼                              │
     ┌──────────────────────────────────────────────┐
-    │  Cloudflare Services                         │
+    │  Cloudflare Services (Dashboard-configured) │
     │  - D1 (SQLite)                               │
     │  - R2 (Object Storage)                       │
-    │  - Durable Objects (sessions)                │
     │  - Email Routing (inbound mail)              │
     │  - Analytics                                 │
     └──────────────────────────────────────────────┘
@@ -46,7 +45,8 @@ GearSwipe uses a modern edge-first architecture:
 
 **Framework**: Next.js 16 with Vinext (edge runtime)  
 **Deployment**: Cloudflare Workers  
-**Entry point**: `worker/index.ts`
+**Entry point**: `worker/index.ts`  
+**Configuration**: Cloudflare Dashboard UI (not wrangler.toml)
 
 Features:
 - Server-side rendering (RSC)
@@ -54,19 +54,18 @@ Features:
 - Mail routing (inbound email handling)
 - Security headers (HSTS, CSP, CORS policies)
 - Session management via Durable Objects
-- Tailwind CSS styling
 
 **Deploy**:
 ```bash
-npm run build
-wrangler deploy -c wrangler.toml --env production
+pnpm build
+wrangler deploy
 ```
 
 ### 2. Quote API (`api.gearswipe.com`)
 
 **Framework**: TypeScript on Cloudflare Workers  
 **Entry point**: `worker/quote-api.ts`  
-**Database**: D1 (optional, for quote storage)
+**Configuration**: Cloudflare Dashboard UI (not wrangler.quote-api.toml)
 
 Endpoints:
 - `POST /quote` — Calculate quote from product IDs + quantities
@@ -75,7 +74,7 @@ Endpoints:
 
 **Deploy**:
 ```bash
-wrangler deploy -c wrangler.quote-api.toml --env production
+wrangler deploy -c wrangler.quote-api.toml
 ```
 
 ### 3. HostGator (Fallback/Emergency)
@@ -90,7 +89,7 @@ Only use if Cloudflare Workers are down; primary entry point is always via Cloud
 
 **Deploy**:
 ```bash
-npm run build
+pnpm build
 export HOSTGATOR_USER=... HOSTGATOR_HOST=... HOSTGATOR_DOCROOT=...
 bash scripts/deploy-hostgator.sh
 ```
@@ -107,7 +106,7 @@ pnpm dev
 # Production build (Next.js → static output + Worker bundle)
 pnpm build
 
-# Test production build
+# Test production build locally
 pnpm start
 
 # Unit/integration tests
@@ -119,93 +118,159 @@ Build output:
 - `dist/` — Static assets (fallback for HostGator)
 - Worker bundle — compiled TypeScript for Cloudflare
 
-## Deployment Flow
+## Dashboard Configuration (⚠️ All Settings Here)
 
-### 1. Staging
+**⚠️  IMPORTANT: All configuration is done in the Cloudflare dashboard, not in files.**
 
-Deploy to staging subdomain for testing:
+The `wrangler.toml` files are minimal and only specify entry points. All settings are configured via the UI to avoid conflicts and ensure consistency.
 
-```bash
-wrangler deploy -c wrangler.toml --env staging
-wrangler deploy -c wrangler.quote-api.toml --env staging
-```
+### Storefront Worker Setup
 
-Test at `https://staging.gearswipe.com` and `https://api.staging.gearswipe.com`
+**Cloudflare Dashboard → Workers & Pages → Services → gearswipe**
 
-### 2. Production
+1. **Routes**: Add routes for `gearswipe.com` and `www.gearswipe.com`
+2. **Triggers**: Set up schedule trigger for email routing (optional)
+3. **Environment Variables**:
+   - `ENVIRONMENT` = `production` (or `staging`)
 
-Once staging is verified:
+4. **Service Bindings**:
+   - `ASSETS` → Points to static asset namespace
+   - `IMAGES` → Points to image optimization service
 
-```bash
-wrangler deploy -c wrangler.toml --env production
-wrangler deploy -c wrangler.quote-api.toml --env production
-```
+5. **Database Bindings** (optional):
+   - `DB` → D1 database for sessions/storage
 
-Deployed to `https://gearswipe.com` and `https://api.gearswipe.com`
+6. **Email Routing**:
+   - Enable Email Routing for domain
+   - Route inbound mail to worker
 
-### 3. DNS & Routing
+### Quote API Worker Setup
 
-Cloudflare DNS configuration:
+**Cloudflare Dashboard → Workers & Pages → Services → gearswipe-quote-api**
+
+1. **Routes**: Add routes for `api.gearswipe.com/*`
+2. **Environment Variables**:
+   - `SHOPIFY_STOREFRONT_TOKEN` = `your-shopify-token`
+   - `SHOPIFY_STORE_URL` = `your-store.myshopify.com`
+   - `ENVIRONMENT` = `production`
+
+3. **Database Bindings** (optional):
+   - `DB` → D1 database for quote storage
+
+### DNS Configuration
+
+**Cloudflare Dashboard → DNS**
 
 | Type | Name | Target | Proxy |
 | --- | --- | --- | --- |
-| A | `@` | Cloudflare Worker | Proxied |
-| CNAME | `www` | `gearswipe.com` | Proxied |
-| CNAME | `api` | `gearswipe-quote-api.workers.dev` | Proxied |
+| A | `@` (root) | Cloudflare Worker | Proxied (Orange) |
+| CNAME | `www` | `gearswipe.com` | Proxied (Orange) |
+| CNAME | `api` | `gearswipe-quote-api.workers.dev` | Proxied (Orange) |
 
-**Note**: DNS points directly to Cloudflare Workers. HostGator is only used as an emergency static fallback if the Worker is unavailable.
+**Preserve existing records** (MX, TXT, SPF, DKIM, DMARC, CAA, etc.)
 
-## Environment Configuration
+### SSL/TLS Configuration
 
-### Main Worker (`wrangler.toml`)
+**Cloudflare Dashboard → SSL/TLS**
 
-Required bindings (set in Cloudflare dashboard):
-- `ASSETS` — Static asset fetcher
-- `IMAGES` — Image optimization service
-- `DB` (optional) — D1 database
-- `EMAIL` (optional) — Email routing service
+1. **Encryption Mode**: Full (Strict)
+   - Requires valid certificate at origin (HostGator fallback)
 
-Environment variables:
-- `ENVIRONMENT` — "production" or "staging"
+2. **Recommended Settings**:
+   - Always Use HTTPS: **On**
+   - Automatic HTTPS Rewrites: **On**
+   - Minimum TLS Version: **1.2**
+   - HSTS: **Do not enable** until site is production-stable
+     - Once enabled, cannot be disabled (browsers cache forever)
 
-### Quote API Worker (`wrangler.quote-api.toml`)
+### Caching & Performance
 
-Required bindings:
-- `DB` (optional) — Quote storage
+**Cloudflare Dashboard → Caching**
 
-Environment variables:
-- `SHOPIFY_STOREFRONT_TOKEN` — Shopify Storefront API token
-- `SHOPIFY_STORE_URL` — Shopify store domain (e.g., `mystore.myshopify.com`)
+1. **Cache Rules**:
+   - Static assets (`/assets/*`): Cache for 1 year
+   - HTML: No-cache (always fresh)
+   - API (`/api/*`): No-cache
+
+2. **Purge Options**:
+   - Purge all: On every production deploy
+   - Or purge by URL: Target specific assets
+
+## Deployment Flow
+
+### 1. Local Development
+
+```bash
+pnpm dev        # Local Vite server with Miniflare
+# Test at http://localhost:3000
+```
+
+### 2. Build
+
+```bash
+pnpm build      # Next.js + Worker bundle
+# Output: .next/, dist/, bundled worker code
+```
+
+### 3. Deploy to Workers
+
+```bash
+# Deploy main storefront
+wrangler deploy
+
+# Deploy Quote API
+wrangler deploy -c wrangler.quote-api.toml
+```
+
+That's it! No configuration files to edit. Settings are in the dashboard.
+
+### 4. Verify Deployment
+
+```bash
+# Check main site
+curl -I https://gearswipe.com
+# Expected: 200, security headers present
+
+# Check Quote API
+curl -I https://api.gearswipe.com/health
+# Expected: 200 with JSON response
+```
 
 ## Scaling & Performance
 
-### Caching
+### Caching Strategy
 
-- **Static assets** (hashed filenames): Cache indefinitely
+- **Static assets** (hashed filenames): Cache indefinitely (1 year)
 - **HTML (index.html)**: Cache for 0s (always fresh)
 - **API responses**: No cache (always hit origin)
-- **Cloudflare cache**: Purge via dashboard or API on deploy
+
+Set via **Cloudflare Dashboard → Caching → Cache Rules**
 
 ### Rate Limiting
 
-Quote API rate limits (prevent abuse):
+Quote API rate limits (configured in dashboard):
 - 100 requests/minute per IP
 - 1000 requests/hour per IP
 
-Configure in Cloudflare dashboard → Security → Rate limiting.
+Configure via **Cloudflare Dashboard → Security → Rate limiting**
 
 ### Monitoring
 
-- **Cloudflare Analytics** — Request volume, cache hit ratio, error rates
-- **Worker Logs** — Real-time log streaming (`wrangler tail`)
-- **Error Tracking** — Via mail routing and D1 logging
+- **Analytics**: Cloudflare Dashboard → Analytics
+  - Request volume, cache hit ratio, error rates
+- **Worker Logs**: 
+  ```bash
+  wrangler tail
+  wrangler tail -c wrangler.quote-api.toml
+  ```
+- **Error Tracking**: D1 logs + mail routing archives
 
 ## Troubleshooting
 
 ### Worker deployment fails
 
 ```bash
-wrangler deploy --env production 2>&1 | head -50
+wrangler deploy 2>&1 | head -50
 ```
 
 Check:
@@ -213,22 +278,35 @@ Check:
 - Authentication: `wrangler login`
 - Account ID: `wrangler whoami`
 
+### Site returns 404
+
+- Verify routes are added in dashboard (Workers → Services → gearswipe → Routes)
+- Check DNS A/CNAME records (DNS tab)
+- Purge cache (Caching → Purge Cache → Purge Everything)
+
 ### Quote API 502 errors
 
 ```bash
-# Test endpoint
-curl -X POST https://api.gearswipe.com/quote \
+# Test endpoint locally
+curl -X POST http://localhost:8787/quote \
   -H "Content-Type: application/json" \
   -d '{"productIds":["1"],"quantities":[1]}'
 
-# Check logs
-wrangler tail -c wrangler.quote-api.toml --env production
+# Check live logs
+wrangler tail -c wrangler.quote-api.toml
 ```
+
+Verify environment variables are set in dashboard:
+- `SHOPIFY_STOREFRONT_TOKEN`
+- `SHOPIFY_STORE_URL`
 
 ### Site slow after deploy
 
+Purge Cloudflare cache:
+- Dashboard → Caching → Purge Cache → Purge Everything
+
+Or via API:
 ```bash
-# Purge Cloudflare cache
 curl -X POST https://api.cloudflare.com/client/v4/zones/{zone_id}/purge_cache \
   -H "Authorization: Bearer {api_token}" \
   -d '{"files":["https://gearswipe.com/*"]}'
@@ -236,39 +314,37 @@ curl -X POST https://api.cloudflare.com/client/v4/zones/{zone_id}/purge_cache \
 
 ### Switch to HostGator fallback (emergency only)
 
-```bash
-# Update Cloudflare DNS A record to HostGator IP
-# Apex: 192.0.2.100 (example)
-# www: gearswipe.com (unchanged)
-
-# Verify
-curl -I https://gearswipe.com
-# Should resolve through HostGator after DNS TTL expires
-```
+1. **Update DNS A record** (Cloudflare → DNS):
+   - Change apex from Worker to HostGator IP (e.g., `192.0.2.100`)
+2. **Verify**:
+   ```bash
+   curl -I https://gearswipe.com
+   # Should serve static SPA after TTL expires (~5 min)
+   ```
+3. **Restore**:
+   - When Workers recover, restore A record to Cloudflare Worker
 
 ## Rollback
 
-### Workers
+### Workers Rollback
 
 ```bash
 # List deployments
 wrangler deployments list
 
 # Rollback to previous version
-wrangler rollback --env production
+wrangler rollback
 ```
 
-### DNS
+### DNS Rollback
 
-```bash
-# Restore previous DNS records
-# Cloudflare dashboard → DNS → Revert to snapshot
-```
+Dashboard → DNS → View DNS records history → Restore previous snapshot
 
 ## References
 
-- [Cloudflare Workers docs](https://developers.cloudflare.com/workers/)
+- [Cloudflare Workers](https://developers.cloudflare.com/workers/)
+- [Cloudflare Dashboard](https://dash.cloudflare.com/)
 - [Next.js on Cloudflare](https://developers.cloudflare.com/workers/frameworks/framework-guides/nextjs/)
-- [Vinext docs](https://github.com/cloudflare/next-on-pages)
-- [D1 database](https://developers.cloudflare.com/d1/)
-- [Email routing](https://developers.cloudflare.com/email-routing/)
+- [Wrangler CLI docs](https://developers.cloudflare.com/workers/wrangler/)
+- [D1 Database](https://developers.cloudflare.com/d1/)
+- [Email Routing](https://developers.cloudflare.com/email-routing/)

@@ -13,11 +13,10 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate",
     "deploy": "npm run build && npm run deploy:workers",
-    "deploy:workers": "wrangler deploy -c wrangler.toml --env production && wrangler deploy -c wrangler.quote-api.toml --env production",
-    "deploy:staging": "npm run build && wrangler deploy -c wrangler.toml --env staging && wrangler deploy -c wrangler.quote-api.toml --env staging",
+    "deploy:workers": "wrangler deploy && wrangler deploy -c wrangler.quote-api.toml",
     "deploy:hostgator": "npm run build && bash scripts/deploy-hostgator.sh",
-    "logs": "wrangler tail -c wrangler.toml --env production",
-    "logs:api": "wrangler tail -c wrangler.quote-api.toml --env production"
+    "logs": "wrangler tail",
+    "logs:api": "wrangler tail -c wrangler.quote-api.toml"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

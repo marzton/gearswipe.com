@@ -4,28 +4,10 @@ main = "worker/quote-api.ts"
 compatibility_date = "2025-08-08"
 compatibility_flags = ["nodejs_compat"]
 
-# D1 database for quote storage (optional)
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "gearswipe-quotes"
-
-[env.production]
-name = "gearswipe-quote-api"
-routes = [
-  { pattern = "api.gearswipe.com", zone_name = "gearswipe.com" },
-  { pattern = "api.gearswipe.com/*", zone_name = "gearswipe.com" }
-]
-
-[env.production.env]
-ENVIRONMENT = "production"
-SHOPIFY_STOREFRONT_TOKEN = ""
-SHOPIFY_STORE_URL = ""
-
-[env.staging]
-name = "gearswipe-quote-api-staging"
-routes = [
-  { pattern = "api.staging.gearswipe.com", zone_name = "gearswipe.com" }
-]
-
-[env.staging.env]
-ENVIRONMENT = "staging"
+# ⚠️  ALL CONFIGURATION IS IN THE CLOUDFLARE DASHBOARD
+#
+# Do NOT add routes, environment variables, or bindings here.
+# They are configured and managed entirely via:
+#   Cloudflare Dashboard → Workers & Pages → gearswipe-quote-api
+#
+# For complete setup instructions, see DEPLOYMENT.md § Dashboard Configuration
