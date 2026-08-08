@@ -1,4 +1,4 @@
-import { createClient } from 'next-sanity'
+import { createClient } from '@sanity/client'
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || 'production'
@@ -13,6 +13,7 @@ export const sanityClient = createClient({
   dataset,
   apiVersion,
   useCdn: true,
+  token: process.env.SANITY_API_TOKEN,
 })
 
 // GROQ Queries
@@ -45,11 +46,11 @@ export async function getPages() {
 }
 
 export async function getSiteSettings() {
-  return await sanityClient.fetch(`*[_type == "siteSettings"][0]`)
+  return await sanityClient.fetch(`*[_type == "settings"][0]`)
 }
 
 export async function getNavigation() {
-  return await sanityClient.fetch(`*[_type == "siteSettings"][0].nav[]`)
+  return await sanityClient.fetch(`*[_type == "settings"][0].navigation[]`)
 }
 
 export async function getPosts() {
