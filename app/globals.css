@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #080d14;
-  --foreground: #f5f7fa;
+  --background: #0b0f14;
+  --foreground: #f4f7fb;
   --radius: 0;
 }
 
@@ -25,11 +25,11 @@ html {
 body {
   margin: 0;
   background:
-    linear-gradient(90deg, rgba(134, 151, 172, 0.06) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(134, 151, 172, 0.06) 1px, transparent 1px),
-    linear-gradient(135deg, rgba(26, 143, 255, 0.09), transparent 42%),
+    linear-gradient(90deg, rgba(117, 137, 159, 0.05) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(117, 137, 159, 0.05) 1px, transparent 1px),
+    linear-gradient(135deg, rgba(107, 182, 255, 0.08), transparent 34%),
     var(--background);
-  background-size: 28px 28px, 28px 28px, auto, auto;
+  background-size: 34px 34px, 34px 34px, auto, auto;
   color: var(--foreground);
   font-family: var(--font-space-grotesk), Arial, Helvetica, sans-serif;
   text-rendering: optimizeLegibility;
@@ -41,6 +41,6 @@ a {
 }
 
 ::selection {
-  background: rgba(26, 143, 255, 0.28);
+  background: rgba(107, 182, 255, 0.3);
   color: #ffffff;
 }

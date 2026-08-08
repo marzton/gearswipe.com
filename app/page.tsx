@@ -1,110 +1,344 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Image from "next/image";
+import { useMemo, useState, type FormEvent } from "react";
+import { siteGraphLinks } from "../lib/admin-data";
 
 type Product = {
   name: string;
   category: string;
   price: string;
   copy: string;
-  badge: string;
+  tag: string;
 };
 
 const products: Product[] = [
   {
     name: "Custom PC Build",
-    category: "Custom PCs",
+    category: "Builds",
     price: "From $1,499",
     copy:
-      "Performance-focused desktop builds for creators, gamers, and operators who want a clean buying path.",
-    badge: "Featured",
+      "A configured desktop offer for gaming, editing, or work setups that need a clear buying path.",
+    tag: "Featured",
   },
   {
     name: "Windows 11 Pro Key",
-    category: "Digital Licenses",
+    category: "Digital licenses",
     price: "From $5.49",
     copy:
-      "Fast-moving activation keys for devices that need a quick setup without the warehouse overhead.",
-    badge: "Instant delivery",
+      "A simple activation lane for systems that need software unlocked without the usual clutter.",
+    tag: "Instant delivery",
   },
   {
-    name: "Antivirus Software",
-    category: "Digital Licenses",
+    name: "Antivirus Suite",
+    category: "Digital licenses",
     price: "From $14.99",
     copy:
-      "Protection plans and device security bundles packaged for simple checkout and easy renewal.",
-    badge: "Protection",
+      "Security software packaged for fast checkout, easy renewal, and everyday device coverage.",
+    tag: "Protection",
   },
   {
     name: "YubiKey 5 NFC",
-    category: "Security Hardware",
+    category: "Security hardware",
     price: "From $25",
     copy:
-      "A compact security lane for customers who want trusted hardware with low-friction fulfillment.",
-    badge: "Trusted",
+      "Hardware authentication for sign-ins, admin accounts, and higher-trust access flows.",
+    tag: "Trusted",
   },
   {
-    name: "Upgrade Parts Rail",
+    name: "SSD + RAM Upgrade Kit",
     category: "Parts",
     price: "From $19.99",
     copy:
-      "Memory, storage, cables, and small parts for the kind of inventory that can be refreshed quickly.",
-    badge: "Builder pick",
+      "Refresh items for the common upgrade jobs that keep a store useful without heavy stock.",
+    tag: "Builder pick",
   },
   {
     name: "Meta Glasses",
     category: "Wearables",
     price: "From $299",
     copy:
-      "A premium consumer lane kept sharp and minimal so the product stays at center stage.",
-    badge: "Lifestyle",
+      "Connected consumer gear kept in the mix as a premium option alongside the core catalog.",
+    tag: "Lifestyle",
   },
 ];
 
 const categories = ["All", ...new Set(products.map((product) => product.category))];
 
-const storeNotes = [
+const collections = [
   {
-    title: "No-stock friendly",
-    copy: "Digital goods, fulfillment-light products, and curated hardware stay easy to keep current.",
+    title: "Digital licenses",
+    copy:
+      "Software keys and access products with an emphasis on quick delivery and low-friction setup.",
   },
   {
-    title: "Serious presentation",
-    copy: "The storefront feels technical and direct without turning into a dashboard or a spec sheet.",
+    title: "Custom builds",
+    copy:
+      "PC offers and configured systems for buyers who want a serious product without a complex journey.",
   },
   {
-    title: "Built to browse fast",
-    copy: "The layout stays clear on mobile, with sharp contrast and compact product rails.",
+    title: "Security hardware",
+    copy:
+      "YubiKeys, auth tools, and privacy-minded devices that fit naturally into a technical storefront.",
   },
 ];
 
-const laneRows = [
-  ["PC builds", "Custom desktop offers for higher-ticket buyers."],
-  ["License keys", "Software activations with simple delivery."],
-  ["Security gear", "Trusted hardware and privacy tools."],
-  ["Upgrade parts", "Small components and add-ons with quick turnarounds."],
+const trustPoints = [
+  {
+    title: "Clean checkout flow",
+    copy: "The buying path stays short, direct, and easy to follow.",
+  },
+  {
+    title: "Mobile-friendly catalog",
+    copy: "The layout keeps its shape on phones without feeling cramped.",
+  },
+  {
+    title: "Focused product mix",
+    copy: "Enough variety to shop well, not so much that it feels noisy.",
+  },
 ];
 
-function MiniWave({ values }: { values: number[] }) {
-  const points = values
-    .map((value, index) => `${index * 22},${72 - value}`)
-    .join(" ");
+function StatusLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-[#263246] py-3 last:border-b-0">
+      <span className="text-sm text-[#9aa9bb]">{label}</span>
+      <span className="text-sm font-medium text-[#f4f7fb]">{value}</span>
+    </div>
+  );
+}
+
+function BrandMark() {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-[#263246] bg-[#0b0f14]">
+        <Image
+          src="/brand/gearswipe-cart-logo.jpg"
+          alt="Gearswipe cart logo"
+          fill
+          sizes="48px"
+          className="object-cover"
+          priority
+        />
+      </div>
+      <div className="leading-tight">
+        <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
+          Gearswipe
+        </p>
+        <p className="text-sm text-[#dbe4ee]">Focused tech store</p>
+      </div>
+    </div>
+  );
+}
+
+function MailForms() {
+  const [contactState, setContactState] = useState<{
+    status: "idle" | "submitting" | "success" | "error";
+    message: string;
+  }>({ status: "idle", message: "" });
+  const [subscribeState, setSubscribeState] = useState<{
+    status: "idle" | "submitting" | "success" | "error";
+    message: string;
+  }>({ status: "idle", message: "" });
+
+  async function submitContact(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setContactState({ status: "submitting", message: "Routing your message..." });
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    formData.set("workspace", "Gearswipe");
+
+    const response = await fetch("/api/contact", {
+      method: "POST",
+      body: formData,
+    });
+
+    const payload = (await response.json().catch(() => null)) as
+      | { ok?: boolean; message?: string }
+      | null;
+
+    if (!response.ok || !payload?.ok) {
+      setContactState({
+        status: "error",
+        message: payload?.message ?? "We could not send the request.",
+      });
+      return;
+    }
+
+    form.reset();
+    setContactState({
+      status: "success",
+      message: payload.message ?? "Message routed successfully.",
+    });
+  }
+
+  async function submitSubscribe(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubscribeState({ status: "submitting", message: "Saving your email..." });
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    formData.set("workspace", "Gearswipe");
+
+    const response = await fetch("/api/subscribe", {
+      method: "POST",
+      body: formData,
+    });
+
+    const payload = (await response.json().catch(() => null)) as
+      | { ok?: boolean; message?: string }
+      | null;
+
+    if (!response.ok || !payload?.ok) {
+      setSubscribeState({
+        status: "error",
+        message: payload?.message ?? "We could not save your subscription.",
+      });
+      return;
+    }
+
+    form.reset();
+    setSubscribeState({
+      status: "success",
+      message: payload.message ?? "Subscription saved.",
+    });
+  }
+
+  const statusClass = (status: string) =>
+    status === "success"
+      ? "border-[#2b7a5c] bg-[#143125] text-[#a4f0cf]"
+      : status === "error"
+        ? "border-[#7b2d2d] bg-[#2a1111] text-[#ffb4b4]"
+        : "border-[#263246] bg-[#0b0f14] text-[#9aa9bb]";
 
   return (
-    <svg
-      viewBox="0 0 110 72"
-      className="h-20 w-full text-[#1a8fff]"
-      aria-hidden="true"
-    >
-      <polyline
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="square"
-        strokeLinejoin="miter"
-        points={points}
-      />
-    </svg>
+    <div className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
+      <form
+        onSubmit={submitContact}
+        className="border border-[#263246] bg-[#10161f] p-4 sm:p-5"
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-[#263246] pb-4">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
+              Contact
+            </p>
+            <h3 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-white">
+              Start a direct conversation with Gearswipe.
+            </h3>
+          </div>
+          <span className="border border-[#6bb6ff]/30 bg-[#6bb6ff]/10 px-2 py-1 text-xs text-[#93cfff]">
+            Routed
+          </span>
+        </div>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <label className="grid gap-2 text-sm text-[#c7d3df]">
+            Name
+            <input
+              name="name"
+              required
+              className="border border-[#263246] bg-[#0b0f14] px-3 py-3 text-white outline-none transition placeholder:text-[#6f7e91] focus:border-[#6bb6ff]"
+              placeholder="Your name"
+            />
+          </label>
+          <label className="grid gap-2 text-sm text-[#c7d3df]">
+            Email
+            <input
+              name="email"
+              type="email"
+              required
+              className="border border-[#263246] bg-[#0b0f14] px-3 py-3 text-white outline-none transition placeholder:text-[#6f7e91] focus:border-[#6bb6ff]"
+              placeholder="you@company.com"
+            />
+          </label>
+          <label className="grid gap-2 text-sm text-[#c7d3df]">
+            Company
+            <input
+              name="company"
+              className="border border-[#263246] bg-[#0b0f14] px-3 py-3 text-white outline-none transition placeholder:text-[#6f7e91] focus:border-[#6bb6ff]"
+              placeholder="Optional"
+            />
+          </label>
+          <label className="grid gap-2 text-sm text-[#c7d3df]">
+            Subject
+            <input
+              name="subject"
+              className="border border-[#263246] bg-[#0b0f14] px-3 py-3 text-white outline-none transition placeholder:text-[#6f7e91] focus:border-[#6bb6ff]"
+              placeholder="Build quote, partnership, or support"
+            />
+          </label>
+        </div>
+
+        <label className="mt-4 grid gap-2 text-sm text-[#c7d3df]">
+          Message
+          <textarea
+            name="message"
+            required
+            rows={5}
+            className="border border-[#263246] bg-[#0b0f14] px-3 py-3 text-white outline-none transition placeholder:text-[#6f7e91] focus:border-[#6bb6ff]"
+            placeholder="Tell us what you need, what you’re buying, and any timing details."
+          />
+        </label>
+
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className={`border px-3 py-2 text-sm ${statusClass(contactState.status)}`}>
+            {contactState.message || "Messages route to the right support inbox."}
+          </p>
+          <button
+            type="submit"
+            className="border border-[#6bb6ff] bg-[#6bb6ff] px-4 py-3 text-sm font-medium text-[#081018] transition hover:bg-[#89c7ff]"
+          >
+            Send message
+          </button>
+        </div>
+      </form>
+
+      <div className="grid gap-4">
+        <form
+          onSubmit={submitSubscribe}
+          className="border border-[#263246] bg-[#10161f] p-4 sm:p-5"
+        >
+          <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
+            Subscribe
+          </p>
+          <h3 className="mt-2 text-xl font-medium text-white">
+            Get store updates, launches, and product notes.
+          </h3>
+          <label className="mt-4 grid gap-2 text-sm text-[#c7d3df]">
+            Email
+            <input
+              name="email"
+              type="email"
+              required
+              className="border border-[#263246] bg-[#0b0f14] px-3 py-3 text-white outline-none transition placeholder:text-[#6f7e91] focus:border-[#6bb6ff]"
+              placeholder="you@email.com"
+            />
+          </label>
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <p className={`border px-3 py-2 text-sm ${statusClass(subscribeState.status)}`}>
+              {subscribeState.message || "We keep the list short and relevant."}
+            </p>
+            <button
+              type="submit"
+              className="border border-[#263246] bg-[#0f141c] px-4 py-3 text-sm font-medium text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+            >
+              Subscribe
+            </button>
+          </div>
+        </form>
+
+        <div className="border border-[#263246] bg-[#10161f] p-4">
+          <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
+            Mail routing
+          </p>
+          <div className="mt-3 grid gap-3">
+            <StatusLine label="Contact" value="support@gearswipe.com" />
+            <StatusLine label="Subscribe" value="updates@gearswipe.com" />
+            <StatusLine label="Access" value="access@gearswipe.com" />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -113,18 +347,19 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState("All");
 
   const filteredProducts = useMemo(() => {
+    const search = query.trim().toLowerCase();
+
     return products.filter((product) => {
-      const searchText = [
+      const searchable = [
         product.name,
         product.category,
         product.copy,
-        product.badge,
+        product.tag,
       ]
         .join(" ")
         .toLowerCase();
 
-      const matchesQuery =
-        query.trim().length === 0 || searchText.includes(query.toLowerCase());
+      const matchesQuery = search.length === 0 || searchable.includes(search);
       const matchesCategory =
         activeCategory === "All" || product.category === activeCategory;
 
@@ -133,28 +368,21 @@ export default function Home() {
   }, [activeCategory, query]);
 
   return (
-    <main className="min-h-screen bg-[#080d14] text-[#f5f7fa]">
+    <main className="min-h-screen bg-[#0b0f14] text-[#f4f7fb]">
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8">
-        <header className="sticky top-3 z-20 border border-[#1c2734] bg-[#0a1119] px-4 py-3">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="grid h-11 w-11 place-items-center border border-[#1a8fff]/45 bg-[#0d1520] text-[10px] font-semibold tracking-[0.38em] text-[#f5f7fa]">
-                GS
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.5em] text-[#8fa3b8]">
-                  Gearswipe
-                </p>
-                <p className="text-sm text-[#b8c7d6]">
-                  A store for builds, keys, hardware, parts, and practical tech
-                </p>
-              </div>
+        <header className="sticky top-3 z-20 border border-[#263246] bg-[#10161f]/96 px-4 py-3 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] backdrop-blur-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-1">
+              <BrandMark />
+              <p className="text-sm text-[#b4c0cf]">
+                Curated tech, keys, parts, and build-ready gear.
+              </p>
             </div>
 
-            <label className="flex items-center gap-3 border border-[#182433] bg-[#0d1520] px-3 py-2 text-sm text-[#8fa3b8]">
+            <label className="flex items-center gap-3 border border-[#263246] bg-[#0b0f14] px-3 py-2 text-sm text-[#9aa9bb]">
               <svg
                 viewBox="0 0 24 24"
-                className="h-4 w-4 shrink-0 text-[#1a8fff]"
+                className="h-4 w-4 shrink-0 text-[#6bb6ff]"
                 aria-hidden="true"
               >
                 <circle
@@ -175,8 +403,8 @@ export default function Home() {
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search products, categories, or brands"
-                className="w-full bg-transparent text-sm text-[#f5f7fa] outline-none placeholder:text-[#8fa3b8]"
+                placeholder="Search builds, keys, hardware"
+                className="w-full bg-transparent text-sm text-[#f4f7fb] outline-none placeholder:text-[#78879a]"
                 aria-label="Search products"
               />
             </label>
@@ -184,21 +412,33 @@ export default function Home() {
             <nav className="flex flex-wrap items-center gap-2 text-sm">
               <a
                 href="#catalog"
-                className="border border-[#182433] px-3 py-2 text-[#e5eef8] transition hover:border-[#1a8fff] hover:text-white"
+                className="border border-[#263246] px-3 py-2 text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
               >
-                Shop
+                Catalog
               </a>
               <a
-                href="#details"
-                className="border border-[#182433] px-3 py-2 text-[#e5eef8] transition hover:border-[#1a8fff] hover:text-white"
+                href="#collections"
+                className="border border-[#263246] px-3 py-2 text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
               >
-                Details
+                Collections
               </a>
               <a
-                href="#catalog"
-                className="border border-[#1a8fff] bg-[#1a8fff] px-3 py-2 font-medium text-white transition hover:bg-[#2a95ff]"
+                href="/admin"
+                className="border border-[#263246] px-3 py-2 text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
               >
-                Browse store
+                Admin
+              </a>
+              <a
+                href="/login"
+                className="border border-[#263246] px-3 py-2 text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+              >
+                Login
+              </a>
+              <a
+                href="#contact"
+                className="border border-[#6bb6ff] bg-[#6bb6ff] px-3 py-2 font-medium text-[#081018] transition hover:bg-[#89c7ff]"
+              >
+                Browse now
               </a>
             </nav>
           </div>
@@ -207,87 +447,110 @@ export default function Home() {
         <section className="grid gap-6 py-6 lg:grid-cols-[1.08fr_0.92fr] lg:py-8">
           <div className="flex flex-col justify-between gap-6">
             <div>
-              <p className="text-xs uppercase tracking-[0.5em] text-[#8fa3b8]">
-                Tech goods, no warehouse drama
-              </p>
-              <h1 className="mt-4 max-w-3xl text-5xl font-semibold leading-[0.92] tracking-[-0.06em] text-white sm:text-6xl lg:text-7xl">
-                A storefront for
-                <span className="block bg-gradient-to-r from-[#1a8fff] via-[#8ec2ff] to-[#f5f7fa] bg-clip-text text-transparent">
-                  tech that moves cleanly.
+              <h1 className="max-w-3xl text-5xl font-semibold leading-[0.92] tracking-[-0.06em] text-white sm:text-6xl lg:text-7xl">
+                Curated tech for
+                <span className="block text-[#93cfff]">
+                  builds, licenses, and gear.
                 </span>
               </h1>
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-[#b8c7d6]">
-                Gearswipe sells custom PC builds, software licenses, security
-                hardware, upgrade parts, and other tech products that do not
-                need a warehouse full of stock to stay current.
+              <p className="mt-5 max-w-2xl text-lg leading-8 text-[#b4c0cf]">
+                Gearswipe is a focused storefront for custom PC builds,
+                software keys, security hardware, upgrade parts, and connected
+                tech products that belong in a clean checkout-first catalog.
               </p>
-            </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
-              {storeNotes.map((item) => (
-                <div
-                  key={item.title}
-                  className="border border-[#182433] bg-[#0d1520] px-4 py-3"
+              <div className="mt-6 flex flex-wrap gap-3">
+                <a
+                  href="#catalog"
+                  className="border border-[#6bb6ff] bg-[#6bb6ff] px-4 py-3 text-sm font-medium text-[#081018] transition hover:bg-[#89c7ff]"
                 >
-                  <p className="text-sm font-medium text-white">{item.title}</p>
-                  <p className="mt-1 text-sm leading-6 text-[#8fa3b8]">
-                    {item.copy}
-                  </p>
-                </div>
-              ))}
+                  Shop the catalog
+                </a>
+                <a
+                  href="#collections"
+                  className="border border-[#263246] bg-[#0f141c] px-4 py-3 text-sm font-medium text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+                >
+                  See collections
+                </a>
+                <a
+                  href="/admin"
+                  className="border border-[#263246] bg-[#0f141c] px-4 py-3 text-sm font-medium text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+                >
+                  Open admin
+                </a>
+              </div>
             </div>
-          </div>
 
-          <div className="grid gap-4 border border-[#182433] bg-[#0d1520] p-4">
-            <div className="flex items-center justify-between border-b border-[#182433] pb-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.4em] text-[#8fa3b8]">
-                  Storefront snapshot
-                </p>
-                <p className="mt-1 text-lg font-medium text-white">
-                  Curated for quick browsing
+          <div className="grid gap-3 sm:grid-cols-3">
+            {trustPoints.map((item) => (
+              <div
+                key={item.title}
+                className="border border-[#263246] bg-[#10161f] px-4 py-3"
+              >
+                <p className="text-sm font-medium text-white">{item.title}</p>
+                <p className="mt-1 text-sm leading-6 text-[#9aa9bb]">
+                  {item.copy}
                 </p>
               </div>
-              <span className="border border-[#1a8fff]/30 bg-[#1a8fff]/10 px-2 py-1 text-xs text-[#8ec2ff]">
+            ))}
+          </div>
+          </div>
+
+          <div
+            id="collections"
+            className="grid gap-4 border border-[#263246] bg-[#10161f] p-4"
+          >
+            <div className="flex items-center justify-between border-b border-[#263246] pb-3">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
+                  Store snapshot
+                </p>
+                <p className="mt-1 text-lg font-medium text-white">
+                  A clean catalog, built for quick decisions
+                </p>
+              </div>
+              <span className="border border-[#6bb6ff]/40 bg-[#6bb6ff]/10 px-2 py-1 text-xs text-[#93cfff]">
                 Live
               </span>
             </div>
 
-            <div className="grid gap-3 border border-[#182433] bg-[#0a1119] p-3">
-              {laneRows.map(([label, copy]) => (
+            <div className="grid gap-3 border border-[#263246] bg-[#0b0f14] p-3">
+              {collections.map((collection) => (
                 <div
-                  key={label}
-                  className="grid gap-2 border-b border-[#182433] pb-3 last:border-b-0 last:pb-0"
+                  key={collection.title}
+                  className="border-b border-[#263246] pb-3 last:border-b-0 last:pb-0"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-white">{label}</p>
-                    <span className="text-xs uppercase tracking-[0.25em] text-[#1a8fff]">
+                    <p className="text-sm font-medium text-white">
+                      {collection.title}
+                    </p>
+                    <span className="text-xs uppercase tracking-[0.26em] text-[#6bb6ff]">
                       Ready
                     </span>
                   </div>
-                  <p className="text-sm leading-6 text-[#b8c7d6]">{copy}</p>
+                  <p className="mt-2 text-sm leading-6 text-[#b4c0cf]">
+                    {collection.copy}
+                  </p>
                 </div>
               ))}
             </div>
 
-            <div className="border border-[#182433] bg-[#0a1119] p-3">
-              <MiniWave values={[34, 52, 58, 46, 73]} />
-              <div className="mt-3 flex items-center justify-between text-sm text-[#8fa3b8]">
-                <span>Store signal</span>
-                <span className="text-white">Steady demand</span>
-              </div>
+            <div className="border border-[#263246] bg-[#0b0f14] p-3">
+              <StatusLine label="Fulfillment" value="Digital and physical" />
+              <StatusLine label="Audience" value="Builders and buyers" />
+              <StatusLine label="Focus" value="Clear, practical, current" />
             </div>
           </div>
         </section>
 
         <section id="catalog" className="py-4">
-          <div className="flex flex-col gap-3 border-t border-[#182433] pt-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-3 border-t border-[#263246] pt-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.5em] text-[#8fa3b8]">
+              <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
                 Catalog
               </p>
               <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-white">
-                Built around products people actually buy.
+                Products that fit the store’s actual purpose.
               </h2>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -298,8 +561,8 @@ export default function Home() {
                   onClick={() => setActiveCategory(category)}
                   className={`border px-3 py-2 text-sm transition ${
                     activeCategory === category
-                      ? "border-[#1a8fff] bg-[#1a8fff]/10 text-white"
-                      : "border-[#182433] bg-[#0d1520] text-[#b8c7d6] hover:border-[#1a8fff]/60 hover:text-white"
+                      ? "border-[#6bb6ff] bg-[#6bb6ff]/10 text-white"
+                      : "border-[#263246] bg-[#10161f] text-[#b4c0cf] hover:border-[#6bb6ff]/60 hover:text-white"
                   }`}
                 >
                   {category}
@@ -312,13 +575,15 @@ export default function Home() {
             {filteredProducts.map((product) => (
               <article
                 key={product.name}
-                className="flex h-full flex-col border border-[#182433] bg-[#0d1520] p-4"
+                className="flex h-full flex-col border border-[#263246] bg-[#10161f] p-4"
               >
-                <div className="flex items-center justify-between gap-3 border-b border-[#182433] pb-3">
-                  <span className="border border-[#1a8fff]/30 bg-[#1a8fff]/10 px-2 py-1 text-[11px] uppercase tracking-[0.28em] text-[#8ec2ff]">
-                    {product.badge}
+                <div className="flex items-center justify-between gap-3 border-b border-[#263246] pb-3">
+                  <span className="border border-[#6bb6ff]/30 bg-[#6bb6ff]/10 px-2 py-1 text-[11px] uppercase tracking-[0.28em] text-[#93cfff]">
+                    {product.tag}
                   </span>
-                  <span className="text-sm text-[#8fa3b8]">{product.category}</span>
+                  <span className="text-sm text-[#9aa9bb]">
+                    {product.category}
+                  </span>
                 </div>
 
                 <div className="flex flex-1 flex-col justify-between gap-4 pt-4">
@@ -326,14 +591,14 @@ export default function Home() {
                     <h3 className="text-xl font-medium text-white">
                       {product.name}
                     </h3>
-                    <p className="mt-2 text-sm leading-7 text-[#b8c7d6]">
+                    <p className="mt-2 text-sm leading-7 text-[#b4c0cf]">
                       {product.copy}
                     </p>
                   </div>
 
-                  <div className="flex items-end justify-between gap-3 border-t border-[#182433] pt-4">
+                  <div className="flex items-end justify-between gap-3 border-t border-[#263246] pt-4">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.35em] text-[#8fa3b8]">
+                      <p className="text-[11px] uppercase tracking-[0.35em] text-[#8191a5]">
                         From
                       </p>
                       <p className="text-2xl font-semibold text-white">
@@ -342,7 +607,7 @@ export default function Home() {
                     </div>
                     <button
                       type="button"
-                      className="border border-[#1a8fff] px-3 py-2 text-sm font-medium text-white transition hover:bg-[#1a8fff] hover:text-white"
+                      className="border border-[#263246] px-3 py-2 text-sm font-medium text-white transition hover:border-[#6bb6ff] hover:bg-[#6bb6ff] hover:text-[#081018]"
                     >
                       View offer
                     </button>
@@ -354,56 +619,121 @@ export default function Home() {
         </section>
 
         <section
-          id="details"
-          className="mt-8 grid gap-4 border-t border-[#182433] py-6 lg:grid-cols-[0.95fr_1.05fr]"
+          id="contact"
+          className="mt-8 grid gap-4 border-t border-[#263246] py-6"
         >
-          <div className="border border-[#182433] bg-[#0d1520] p-4">
-            <p className="text-xs uppercase tracking-[0.5em] text-[#8fa3b8]">
-              Why it works
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold text-white">
-              Sharp enough to feel technical, simple enough to shop.
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-[#b8c7d6]">
-              The layout stays product-first: clear category lanes, strong
-              contrast, and a compact presentation that works on desktop and
-              mobile without feeling like a spec sheet.
-            </p>
+          <div className="grid gap-4 lg:grid-cols-[0.92fr_1.08fr]">
+            <div className="border border-[#263246] bg-[#10161f] p-4 sm:p-5">
+              <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
+                About Gearswipe
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">
+                A storefront with a sharper edge.
+              </h2>
+              <p className="mt-3 text-sm leading-7 text-[#b4c0cf]">
+                The brand stays product-first: practical tech, clean presentation,
+                and a visual system that feels like a focused web store instead of
+                a general-purpose portal.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <a
+                  href="/admin"
+                  className="border border-[#263246] px-3 py-2 text-sm text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+                >
+                  Gearswipe admin
+                </a>
+                <a
+                  href="/login"
+                  className="border border-[#263246] px-3 py-2 text-sm text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+                >
+                  Login
+                </a>
+                <a
+                  href="https://www.goldshore.ai"
+                  className="border border-[#263246] px-3 py-2 text-sm text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+                >
+                  Gold Shore
+                </a>
+                <a
+                  href="https://www.rmarston.com"
+                  className="border border-[#263246] px-3 py-2 text-sm text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+                >
+                  R. Marston
+                </a>
+              </div>
+              <div className="mt-5 overflow-hidden border border-[#263246] bg-[#0b0f14]">
+                <Image
+                  src="/brand/gearswipe-logo-dark.jpg"
+                  alt="Gearswipe logo"
+                  width={1200}
+                  height={1200}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            </div>
+
+            <MailForms />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="border border-[#182433] bg-[#0d1520] p-4">
-              <p className="text-xs uppercase tracking-[0.45em] text-[#8fa3b8]">
-                Support context
+            <div className="border border-[#263246] bg-[#10161f] p-4">
+              <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
+                Purchase mix
               </p>
               <p className="mt-2 text-lg font-medium text-white">
-                Product-first, with back office kept light.
+                Digital goods, hardware, and parts in one place.
               </p>
-              <p className="mt-3 text-sm leading-7 text-[#b8c7d6]">
-                Gearswipe can sit alongside the broader portfolio without
-                turning into a hub page or a router for other brands.
+              <p className="mt-3 text-sm leading-7 text-[#b4c0cf]">
+                Enough variety to be useful, but still tight enough to feel like
+                one coherent storefront.
               </p>
             </div>
 
-            <div className="border border-[#182433] bg-[#0d1520] p-4">
-              <p className="text-xs uppercase tracking-[0.45em] text-[#8fa3b8]">
+            <div className="border border-[#263246] bg-[#10161f] p-4">
+              <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
                 Portfolio note
               </p>
               <p className="mt-2 text-lg font-medium text-white">
-                Standalone storefront, not the whole network.
+                Gearswipe stands on its own.
               </p>
-              <p className="mt-3 text-sm leading-7 text-[#b8c7d6]">
-                Gold Shore remains background context only while Gearswipe keeps
-                its own shopping identity and tone.
+              <p className="mt-3 text-sm leading-7 text-[#b4c0cf]">
+                Broader brand context can sit in the background without turning
+                this homepage into a network router.
               </p>
             </div>
           </div>
         </section>
 
-        <footer className="mt-auto border-t border-[#182433] py-5 text-sm text-[#8fa3b8]">
+        <section className="grid gap-4 border-t border-[#263246] py-6">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
+                Connected sites
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold text-white">
+                Cross-links across the brand graph
+              </h2>
+            </div>
+            <p className="text-sm text-[#9aa9bb]">Purposeful links only</p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {siteGraphLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="border border-[#263246] bg-[#10161f] p-4 transition hover:border-[#6bb6ff] hover:bg-[#0f141c]"
+              >
+                <p className="text-lg font-medium text-white">{link.label}</p>
+                <p className="mt-1 text-sm text-[#9aa9bb]">{link.note}</p>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        <footer className="mt-auto border-t border-[#263246] py-5 text-sm text-[#9aa9bb]">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p>Gearswipe sells tech products in a sharp, inventory-light storefront.</p>
-            <p className="text-white">Gold Shore context stays secondary.</p>
+            <p>Gearswipe is a focused tech storefront for practical products.</p>
+            <p className="text-white">Standalone brand. Clean presentation.</p>
           </div>
         </footer>
       </div>

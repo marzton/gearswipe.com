@@ -1,8 +1,18 @@
-# vinext-starter
+# Gearswipe repo blueprint
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+Gearswipe is the storefront brand in this workspace. The source of truth for
+cross-site routing, repo ownership, workers, and DNS is the GitHub-backed canon
+at:
+
+`E:\GitHub\marzton\goldshore-ai\docs\canonical-sites-routing.md`
+
+This repo stays focused on the Gearswipe product surface itself. HostGator is
+reserved for backend, storage, backup, and prototype use cases rather than as a
+portfolio router.
+
+The current implementation uses a vinext/Next-based app so the site can be
+developed like a modern component app, built locally, and deployed as static
+output when needed.
 
 ## Prerequisites
 
@@ -18,14 +28,54 @@ npm run build
 
 This starter does not use `wrangler.jsonc`.
 
-## Included Shape
+## Repository roles
+
+- GitHub: source of truth
+- VS Code: local editing
+- Codex: implementation and debugging
+- SSH: server inspection and deploy support
+- HostGator: backend/prototype origin
+- Replit: optional browser scratchpad or preview surface
+
+## Included shape
 
 - edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
+- keep deployment and origin assumptions in this repo instead of in a separate
+  platform
 - `vite.config.ts` simulates declared bindings for local development
 - `db/schema.ts` starts intentionally empty
 - `examples/d1/` contains an optional D1 example surface
 - `drizzle.config.ts` supports local migration generation when needed
+
+## Build and deploy flow
+
+1. Edit the app in this repo.
+2. Run the local build and verify the output.
+3. Copy the built frontend output to the HostGator document root.
+4. Let Cloudflare DNS point `gearswipe.com` and `www.gearswipe.com` at the
+   current public hosting target for this repo.
+
+The live site should stay simple:
+
+- one public product site
+- one deployment target
+- one fallback prototype path if needed
+- no routing hub behavior for the rest of the domain portfolio
+
+## Mobile-friendly editing loop
+
+- Use a browser-based code session or Replit for quick edits on the go.
+- Keep the repo authoritative so work stays portable across desktop and mobile.
+- Use Codex to inspect bugs, fix implementation issues, and keep the site
+  aligned with the production goal.
+
+## WordPress fallback
+
+WordPress is acceptable as a fallback if we need fast visual prototyping or
+theme-style page assembly.
+
+It should stay separate from the primary repo-first path so it does not become
+the main development system.
 
 ## Workspace Auth Headers
 
@@ -85,12 +135,21 @@ or enforce explicit server-side membership or allowlist checks.
 Use SIWC for account pages, user-specific dashboards, saved records, and write
 actions tied to the current ChatGPT user. Leave public content anonymous.
 
-## Useful Commands
+## Useful commands
 
 - `npm run dev`: start local development
 - `npm run build`: verify the vinext build output
 - `npm test`: build the starter and verify its rendered loading skeleton
 - `npm run db:generate`: generate Drizzle migrations after schema changes
+
+## Current deployment notes
+
+- `gearswipe.com` is configured behind Cloudflare DNS and points at the
+- current public hosting for the storefront.
+- The repo is the implementation source; the hosting target is not the source
+  of truth.
+- Keep the site architecture stable and avoid reintroducing a domain-router
+  homepage.
 
 ## Learn More
 
