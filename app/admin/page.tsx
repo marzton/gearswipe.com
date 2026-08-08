@@ -7,7 +7,9 @@ import {
   type AdminStoreItem,
   type AdminVendorItem,
   type AdminWorkspace,
+  emailSetupChecklist,
   adminWorkspaces,
+  mailRouteMatrix,
   siteGraphLinks,
 } from "../../lib/admin-data";
 
@@ -1398,6 +1400,67 @@ export default function AdminPage() {
               Keep restore copies, deploy notes, and service checks in one
               control path.
             </p>
+          </div>
+        </section>
+
+        <section className="mt-6 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="border border-[#263246] bg-[#10161f] p-4">
+            <div className="flex items-end justify-between gap-3 border-b border-[#263246] pb-3">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
+                  Mail routing
+                </p>
+                <h2 className="mt-2 text-xl font-semibold text-white">
+                  HostGator and Cloudflare mail lanes
+                </h2>
+              </div>
+              <span className="text-sm text-[#9aa9bb]">Operational path</span>
+            </div>
+
+            <div className="mt-4 grid gap-3">
+              {mailRouteMatrix.map((route) => (
+                <div key={route.address} className="border border-[#263246] bg-[#0b0f14] p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-base font-medium text-white">{route.purpose}</p>
+                      <p className="mt-1 text-sm text-[#9aa9bb]">{route.address}</p>
+                    </div>
+                    <span className="text-[11px] uppercase tracking-[0.32em] text-[#6bb6ff]">
+                      {route.route}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm leading-6 text-[#b4c0cf]">
+                    Targets: <span className="text-white">{route.targets}</span>
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-[#9aa9bb]">{route.provider}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="border border-[#263246] bg-[#10161f] p-4">
+            <div className="flex items-end justify-between gap-3 border-b border-[#263246] pb-3">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
+                  Setup checklist
+                </p>
+                <h2 className="mt-2 text-xl font-semibold text-white">
+                  What still needs to be configured
+                </h2>
+              </div>
+              <span className="text-sm text-[#9aa9bb]">Cloudflare → HostGator</span>
+            </div>
+
+            <div className="mt-4 grid gap-3">
+              {emailSetupChecklist.map((step, index) => (
+                <div key={step} className="border border-[#263246] bg-[#0b0f14] p-4">
+                  <p className="text-[11px] uppercase tracking-[0.32em] text-[#6bb6ff]">
+                    Step {index + 1}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-[#f4f7fb]">{step}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 

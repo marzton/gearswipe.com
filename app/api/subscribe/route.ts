@@ -1,5 +1,7 @@
 import type { NextRequest } from "next/server";
 import { storeNewsletterSignup } from "../../../lib/mail-store";
+import { resolveMailRoute } from "../../../lib/mail-routing";
+import { sendMailRouteNotification } from "../../../lib/email-service";
 
 export const runtime = "edge";
 
@@ -31,6 +33,15 @@ export async function POST(request: NextRequest) {
   }
 
   const result = await storeNewsletterSignup({ workspace, email });
+
+  await sendMailRouteNotification({
+    route: resolveMailRoute(workspace, "subscribe"),
+    subject: `${workspace} newsletter signup`,
+    name: "",
+    email,
+    message: `Newsletter signup received for ${workspace}.`,
+    formType: "subscribe",
+  }).catch(() => null);
 
   return Response.json({
     ok: true,

@@ -1,10 +1,24 @@
 /** Cloudflare Worker entry point for the vinext-starter template. */
 import { handleImageOptimization, DEFAULT_DEVICE_SIZES, DEFAULT_IMAGE_SIZES } from "vinext/server/image-optimization";
 import handler from "vinext/server/app-router-entry";
+import { resolveMailRoute } from "../lib/mail-routing";
+import { sendAutoReply } from "../lib/email-service";
+import { storeMailSubmission } from "../lib/mail-store";
 
 interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
+  EMAIL?: {
+    send(input: {
+      to: string | string[];
+      from: { email: string; name?: string };
+      subject: string;
+      text: string;
+      html: string;
+      replyTo?: string;
+      headers?: Record<string, string>;
+    }): Promise<unknown>;
+  };
   IMAGES: {
     input(stream: ReadableStream): {
       transform(options: Record<string, unknown>): {
@@ -82,6 +96,58 @@ const worker = {
     }
 
     return withSecurityHeaders(await handler.fetch(request, env, ctx));
+  },
+
+  async email(message: {
+    from: string;
+    to: string;
+    headers: Headers;
+    raw: ReadableStream<Uint8Array>;
+  }, env: Env, ctx: ExecutionContext): Promise<void> {
+    (globalThis as typeof globalThis & { __GEARSWIPE_ENV__?: Env }).__GEARSWIPE_ENV__ = env;
+
+    const route = resolveMailRoute(
+      message.to.includes("goldshore") ? "Gold Shore" : "Gearswipe",
+      message.to.includes("quote")
+        ? "quote"
+        : message.to.includes("subscribe")
+          ? "subscribe"
+          : message.to.includes("access") || message.to.includes("admin")
+            ? "auth"
+            : "contact",
+    );
+
+    const rawText = await new Response(message.raw).text();
+    const subject = message.headers.get("subject") || "";
+    const extractedSubject =
+      rawText.match(/^Subject:\s*(.*)$/im)?.[1]?.trim() || subject;
+    const extractedReplyTo =
+      rawText.match(/^Reply-To:\s*(.*)$/im)?.[1]?.trim() || message.from;
+
+    await storeMailSubmission({
+      workspace: route.workspace,
+      formType: route.formType,
+      name: "",
+      email: extractedReplyTo,
+      company: "",
+      subject: extractedSubject,
+      message: rawText.slice(0, 8000),
+    }).catch(() => null);
+
+    if (env.EMAIL) {
+      await sendAutoReply({
+        to: message.from,
+        from: route.from,
+        subject: `Re: ${extractedSubject || "Your message"}`,
+        workspace: route.workspace,
+        body:
+          `Thanks — we received your ${route.formType} message for ${route.workspace}.\n\n` +
+          `We’ve logged it and routed it to the right inbox.\n\n` +
+          `Route: ${route.alias} → ${route.to.join(", ")}`,
+      }).catch(() => null);
+    }
+
+    ctx.waitUntil(Promise.resolve());
   },
 };
 

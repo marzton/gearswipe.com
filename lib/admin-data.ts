@@ -94,6 +94,66 @@ export const siteGraphLinks = [
   },
 ] as const;
 
+export const mailRouteMatrix = [
+  {
+    purpose: "Gearswipe support",
+    address: "support@gearswipe.com",
+    route: "Gearswipe / contact",
+    targets: "support@gearswipe.com, ops@gearswipe.com",
+    provider: "Cloudflare Email Routing → HostGator inboxes",
+  },
+  {
+    purpose: "Gearswipe launches",
+    address: "updates@gearswipe.com",
+    route: "Gearswipe / subscribe",
+    targets: "updates@gearswipe.com",
+    provider: "Cloudflare Email Sending + Routing",
+  },
+  {
+    purpose: "Gearswipe login help",
+    address: "access@gearswipe.com",
+    route: "Gearswipe / auth",
+    targets: "access@gearswipe.com, admin@gearswipe.com",
+    provider: "Cloudflare Email Routing → HostGator inboxes",
+  },
+  {
+    purpose: "Gearswipe quotes",
+    address: "quotes@gearswipe.com",
+    route: "Gearswipe / quote",
+    targets: "quotes@gearswipe.com, ops@gearswipe.com",
+    provider: "Cloudflare Email Sending + Routing",
+  },
+  {
+    purpose: "Gold Shore work intake",
+    address: "contact@goldshore.ai",
+    route: "Gold Shore / contact",
+    targets: "contact@goldshore.ai, ops@goldshore.ai",
+    provider: "Cloudflare Email Routing → HostGator inboxes",
+  },
+  {
+    purpose: "Gold Shore newsletter",
+    address: "newsletter@goldshore.ai",
+    route: "Gold Shore / subscribe",
+    targets: "newsletter@goldshore.ai",
+    provider: "Cloudflare Email Sending + Routing",
+  },
+  {
+    purpose: "Gold Shore admin",
+    address: "admin@goldshore.ai",
+    route: "Gold Shore / auth",
+    targets: "admin@goldshore.ai, ops@goldshore.ai",
+    provider: "Cloudflare Email Routing → HostGator inboxes",
+  },
+] as const;
+
+export const emailSetupChecklist = [
+  "Enable Cloudflare Email Sending for the sending domains.",
+  "Create Cloudflare Email Routing rules for each public inbox.",
+  "Verify HostGator destination mailboxes before forwarding.",
+  "Publish SPF, DKIM, and DMARC records for sending alignment.",
+  "Keep transactional notifications separate from newsletter mail.",
+] as const;
+
 export function seedAdminState(workspace: AdminWorkspace): AdminState {
   if (workspace === "Gold Shore") {
     return {

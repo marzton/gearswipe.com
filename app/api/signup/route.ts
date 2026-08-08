@@ -1,5 +1,7 @@
 import type { NextRequest } from "next/server";
 import { storeRewardSignup } from "../../../lib/rewards-store";
+import { resolveMailRoute } from "../../../lib/mail-routing";
+import { sendMailRouteNotification } from "../../../lib/email-service";
 
 export const runtime = "edge";
 
@@ -36,6 +38,15 @@ export async function POST(request: NextRequest) {
     email,
     interest,
   });
+
+  await sendMailRouteNotification({
+    route: resolveMailRoute(workspace, "auth"),
+    subject: `${workspace} signup and access`,
+    name,
+    email,
+    message: `Reward signup received.\nInterest: ${interest || "not provided"}`,
+    formType: "auth",
+  }).catch(() => null);
 
   return Response.json({
     ok: true,

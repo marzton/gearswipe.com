@@ -1,5 +1,7 @@
 import type { NextRequest } from "next/server";
 import { storeMailSubmission } from "../../../lib/mail-store";
+import { resolveMailRoute } from "../../../lib/mail-routing";
+import { sendMailRouteNotification } from "../../../lib/email-service";
 
 export const runtime = "edge";
 
@@ -66,6 +68,15 @@ export async function POST(request: NextRequest) {
     subject,
     message: body,
   });
+
+  await sendMailRouteNotification({
+    route: resolveMailRoute(workspace, "quote"),
+    subject,
+    name,
+    email,
+    message: body,
+    formType: "quote",
+  }).catch(() => null);
 
   return Response.json({
     ok: true,

@@ -31,9 +31,9 @@ follow the canonical doc whenever the two differ.
 
 | Domain | Status | Blocker |
 | --- | --- | --- |
-| www.armsway.com | pending validation | Cloudflare Sites has the TXT record, but the hostname has not finished validating yet |
-| solefoodny.com | pending | Apex CNAME is managed by Cloudflare Registrar and marked read-only |
-| www.solefoodny.com | pending | Validation is in place, but the apex registrar-controlled record still prevents completion |
+| www.armsway.com | active in Sites | The hostname belongs to the Armsway Sites project; validation is still settling |
+| solefoodny.com | active in Sites | The hostname belongs to the Sole Food NY Sites project; the apex still needs registrar-side handling |
+| www.solefoodny.com | active in Sites | The hostname belongs to the Sole Food NY Sites project |
 
 ## Explicitly external
 
@@ -49,5 +49,7 @@ follow the canonical doc whenever the two differ.
 - The Gold Shore service subdomains still belong to Workers, Pages, Access, or
   Email Routing where the infra docs say they do.
 - `partners-in-pools.com` is intentionally external.
-- `solefoodny.com` remains blocked until the registrar-managed apex record is
-  changed externally.
+- `solefoodny.com` is already a Sites hostname, but the registrar-managed apex
+  record still needs external handling.
+- `www.armsway.com` is already a Sites hostname; the remaining issue is only
+  validation settling, not migration status.
