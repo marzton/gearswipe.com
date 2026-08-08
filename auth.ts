@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { DrizzleAdapter } from "@auth/drizzle-adapter";
 
 const DEFAULT_ADMIN_EMAIL =
   process.env.GEARSWIPE_ADMIN_EMAIL?.trim() || "admin@gearswipe.com";
@@ -10,12 +11,28 @@ const AUTH_SECRET =
   process.env.NEXTAUTH_SECRET?.trim() ||
   "gearswipe-local-auth-secret";
 
+// Lazy load database to avoid connection issues in edge runtime
+let db: any = null;
+
+async function getDb() {
+  if (!db) {
+    try {
+      const { db: database } = await import("./db");
+      db = database;
+    } catch (error) {
+      console.warn("Database not available, using JWT session strategy");
+    }
+  }
+  return db;
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: AUTH_SECRET,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
   },
+  adapter: undefined, // Will be set conditionally in callbacks if DB available
   providers: [
     Credentials({
       credentials: {
