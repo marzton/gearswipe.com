@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { signOut } from "next-auth/react";
 import {
   type AdminQueueItem,
   type AdminStoreItem,
@@ -36,6 +37,15 @@ function StatCard({
         {value}
       </p>
       <p className="mt-2 text-sm leading-6 text-[#9aa9bb]">{note}</p>
+    </div>
+  );
+}
+
+function StatusLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-[#263246] py-3 last:border-b-0">
+      <span className="text-sm text-[#9aa9bb]">{label}</span>
+      <span className="text-sm font-medium text-[#f4f7fb]">{value}</span>
     </div>
   );
 }
@@ -177,36 +187,43 @@ export default function AdminPage() {
     notes: "",
   });
 
-  async function loadWorkspace(activeWorkspace: AdminWorkspace) {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(
-        `/api/admin/state?workspace=${encodeURIComponent(activeWorkspace)}`,
-        { cache: "no-store" },
-      );
-      const payload = (await response.json()) as AdminResponse & { error?: string };
-      if (!response.ok) {
-        throw new Error(payload.error ?? "Unable to load admin state");
-      }
-      setWorkspace(payload.workspace);
-      setQueueItems(payload.queueItems);
-      setStoreItems(payload.storeItems);
-      setVendorItems(payload.vendorItems ?? []);
-      setSource(payload.source);
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Unable to load admin state");
-      setQueueItems([]);
-      setStoreItems([]);
-      setVendorItems([]);
-    } finally {
-      setLoading(false);
+  async function loadWorkspace(activeWorkspace: AdminWorkspace): Promise<AdminResponse> {
+    const response = await fetch(
+      `/api/admin/state?workspace=${encodeURIComponent(activeWorkspace)}`,
+      { cache: "no-store" },
+    );
+    const payload = (await response.json()) as AdminResponse & { error?: string };
+    if (!response.ok) {
+      throw new Error(payload.error ?? "Unable to load admin state");
     }
+    return payload;
   }
 
   useEffect(() => {
-    void loadWorkspace(workspace);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let cancelled = false;
+    void (async () => {
+      try {
+        const payload = await loadWorkspace(workspace);
+        if (cancelled) return;
+        setWorkspace(payload.workspace);
+        setQueueItems(payload.queueItems);
+        setStoreItems(payload.storeItems);
+        setVendorItems(payload.vendorItems ?? []);
+        setSource(payload.source);
+      } catch (loadError) {
+        if (cancelled) return;
+        setError(loadError instanceof Error ? loadError.message : "Unable to load admin state");
+        setQueueItems([]);
+        setStoreItems([]);
+        setVendorItems([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [workspace]);
 
   const filteredQueue = useMemo(() => {
@@ -520,15 +537,19 @@ export default function AdminPage() {
                 <button
                   key={item}
                   type="button"
-                  onClick={() => setWorkspace(item)}
+                  onClick={() => {
+                    setLoading(true);
+                    setError(null);
+                    setWorkspace(item);
+                  }}
                   className={`border px-3 py-2 text-sm transition ${
                     workspace === item
                       ? "border-[#6bb6ff] bg-[#6bb6ff]/10 text-white"
                       : "border-[#263246] bg-[#0b0f14] text-[#b4c0cf] hover:border-[#6bb6ff]/60 hover:text-white"
                   }`}
-                  >
-                    {item}
-                  </button>
+                >
+                  {item}
+                </button>
               ))}
               <button
                 type="button"
@@ -593,12 +614,13 @@ export default function AdminPage() {
               >
                 {pipelineInsight.action}
               </button>
-              <a
-                href="/login"
+              <button
+                type="button"
+                onClick={() => signOut({ callbackUrl: "/" })}
                 className="border border-[#263246] px-3 py-2 text-sm text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
               >
-                Login route
-              </a>
+                Sign out
+              </button>
             </div>
           </div>
           <div className="border border-[#263246] bg-[#10161f] p-4">

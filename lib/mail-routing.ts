@@ -2,7 +2,7 @@ export const mailWorkspaces = ["Gearswipe", "Gold Shore"] as const;
 
 export type MailWorkspace = (typeof mailWorkspaces)[number];
 
-export type MailFormType = "contact" | "subscribe" | "auth" | "support";
+export type MailFormType = "contact" | "subscribe" | "auth" | "support" | "quote";
 
 export type MailRoute = {
   workspace: MailWorkspace;
@@ -45,6 +45,16 @@ const routes: MailRoute[] = [
     cc: [],
     subjectPrefix: "[Gearswipe access]",
     notes: "Login and IDP support requests.",
+  },
+  {
+    workspace: "Gearswipe",
+    formType: "quote",
+    alias: "quotes@gearswipe.com",
+    from: "no-reply@gearswipe.com",
+    to: ["quotes@gearswipe.com", "ops@gearswipe.com"],
+    cc: ["rmarston@rmarston.com"],
+    subjectPrefix: "[Gearswipe quote]",
+    notes: "Custom build and configured product quote requests.",
   },
   {
     workspace: "Gold Shore",

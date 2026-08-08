@@ -6,7 +6,6 @@ type DbEnvironment = {
 };
 
 declare global {
-  // eslint-disable-next-line no-var
   var __GEARSWIPE_ENV__: DbEnvironment | undefined;
 }
 

@@ -11,8 +11,9 @@ reserved for backend, storage, backup, and prototype use cases rather than as a
 portfolio router.
 
 The current implementation uses a vinext/Next-based app so the site can be
-developed like a modern component app, built locally, and deployed as static
-output when needed.
+developed like a modern component app and deployed on Cloudflare. Because the
+site now includes auth and API routes, it should be treated as a full-stack app
+rather than a pure static export.
 
 ## Prerequisites
 
@@ -27,6 +28,21 @@ npm run build
 ```
 
 This starter does not use `wrangler.jsonc`.
+
+## Cloudflare deploy shape
+
+Gearswipe is compatible with Cloudflare Pages when the project is deployed as a
+Pages Functions app rather than a plain static export.
+
+Recommended Pages settings:
+
+- Production branch: `main`
+- Build command: `npm run build`
+- Build output directory: `dist`
+
+If a deployment target only accepts static assets, it will not preserve the
+login, admin, quote, or other server-side routes. In that case, deploy the
+full app to Cloudflare Workers instead.
 
 ## Repository roles
 
@@ -51,8 +67,10 @@ This starter does not use `wrangler.jsonc`.
 
 1. Edit the app in this repo.
 2. Run the local build and verify the output.
-3. Copy the built frontend output to the HostGator document root.
-4. Let Cloudflare DNS point `gearswipe.com` and `www.gearswipe.com` at the
+3. For Cloudflare Pages, connect the Git repo and use the build settings above.
+4. For HostGator, copy the built frontend output only if you are intentionally
+   using it as a temporary origin or fallback.
+5. Let Cloudflare DNS point `gearswipe.com` and `www.gearswipe.com` at the
    current public hosting target for this repo.
 
 The live site should stay simple:

@@ -50,6 +50,18 @@ export const newsletterSignups = sqliteTable("newsletter_signups", {
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+export const rewardSignups = sqliteTable("reward_signups", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  workspace: text("workspace").notNull(),
+  name: text("name").notNull().default(""),
+  email: text("email").notNull(),
+  interest: text("interest").notNull().default(""),
+  points: integer("points").notNull().default(100),
+  status: text("status").notNull().default("pending"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 export const vendorLicensingItems = sqliteTable("vendor_licensing_items", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   workspace: text("workspace").notNull(),

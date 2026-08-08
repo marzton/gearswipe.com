@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState, type FormEvent } from "react";
+import Link from "next/link";
+import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { siteGraphLinks } from "../lib/admin-data";
 
 type Product = {
@@ -9,123 +10,131 @@ type Product = {
   category: string;
   price: string;
   copy: string;
-  tag: string;
+  cta: string;
+  tone: "buy" | "quote" | "secure";
 };
 
 const products: Product[] = [
   {
     name: "Custom PC Build",
-    category: "Builds",
-    price: "From $1,499",
+    category: "Configured systems",
+    price: "Quote on request",
     copy:
-      "A configured desktop offer for gaming, editing, or work setups that need a clear buying path.",
-    tag: "Featured",
+      "Choose gaming, CAD, or workstation intent and we’ll turn it into a clean build path with compatibility checks.",
+    cta: "Request a build quote",
+    tone: "quote",
   },
   {
     name: "Windows 11 Pro Key",
-    category: "Digital licenses",
+    category: "Digital delivery",
     price: "From $5.49",
-    copy:
-      "A simple activation lane for systems that need software unlocked without the usual clutter.",
-    tag: "Instant delivery",
+    copy: "Fast digital activation with a checkout path that stays out of your way.",
+    cta: "Buy now",
+    tone: "buy",
   },
   {
     name: "Antivirus Suite",
-    category: "Digital licenses",
+    category: "Digital delivery",
     price: "From $14.99",
-    copy:
-      "Security software packaged for fast checkout, easy renewal, and everyday device coverage.",
-    tag: "Protection",
+    copy: "Simple protection products for customers who want setup without friction.",
+    cta: "Buy now",
+    tone: "buy",
   },
   {
     name: "YubiKey 5 NFC",
     category: "Security hardware",
     price: "From $25",
-    copy:
-      "Hardware authentication for sign-ins, admin accounts, and higher-trust access flows.",
-    tag: "Trusted",
+    copy: "Authentication hardware for sign-ins, admin access, and device trust.",
+    cta: "Buy now",
+    tone: "secure",
   },
   {
-    name: "SSD + RAM Upgrade Kit",
-    category: "Parts",
+    name: "SSD + RAM Kit",
+    category: "Parts & upgrades",
     price: "From $19.99",
-    copy:
-      "Refresh items for the common upgrade jobs that keep a store useful without heavy stock.",
-    tag: "Builder pick",
+    copy: "A restrained catalog lane for useful upgrades, not a crowded parts warehouse.",
+    cta: "View kit",
+    tone: "buy",
   },
   {
     name: "Meta Glasses",
-    category: "Wearables",
+    category: "Consumer tech",
     price: "From $299",
-    copy:
-      "Connected consumer gear kept in the mix as a premium option alongside the core catalog.",
-    tag: "Lifestyle",
+    copy: "Premium connected gear that sits comfortably beside the core store mix.",
+    cta: "View details",
+    tone: "buy",
   },
 ];
 
-const categories = ["All", ...new Set(products.map((product) => product.category))];
-
 const collections = [
   {
-    title: "Digital licenses",
+    title: "Fixed-price inventory",
     copy:
-      "Software keys and access products with an emphasis on quick delivery and low-friction setup.",
+      "Standard products move through normal add-to-cart checkout with clear pricing and quick delivery.",
   },
   {
-    title: "Custom builds",
+    title: "Configured products",
     copy:
-      "PC offers and configured systems for buyers who want a serious product without a complex journey.",
+      "Custom PC builds and quoted bundles move through inquiry, review, and approval instead of a fake price tag.",
   },
   {
-    title: "Security hardware",
+    title: "Rights-aware assets",
     copy:
-      "YubiKeys, auth tools, and privacy-minded devices that fit naturally into a technical storefront.",
+      "Every image, spec sheet, and vendor asset can be tied to provenance, permissions, and expiry.",
   },
 ];
 
 const trustPoints = [
   {
-    title: "Clean checkout flow",
-    copy: "The buying path stays short, direct, and easy to follow.",
+    title: "Minimal, professional layout",
+    copy: "Clean type, straight borders, and a restrained cadence that reads like a serious retail brand.",
   },
   {
-    title: "Mobile-friendly catalog",
-    copy: "The layout keeps its shape on phones without feeling cramped.",
+    title: "Mobile-first structure",
+    copy: "The same system collapses cleanly on smaller screens without cramming the page.",
   },
   {
-    title: "Focused product mix",
-    copy: "Enough variety to shop well, not so much that it feels noisy.",
+    title: "Fast path to action",
+    copy: "Shop, quote, sign up, or log in without wandering through unnecessary pages.",
   },
 ];
-
-function StatusLine({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-4 border-b border-[#263246] py-3 last:border-b-0">
-      <span className="text-sm text-[#9aa9bb]">{label}</span>
-      <span className="text-sm font-medium text-[#f4f7fb]">{value}</span>
-    </div>
-  );
-}
 
 function BrandMark() {
   return (
     <div className="flex items-center gap-3">
-      <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-[#263246] bg-[#0b0f14]">
+      <div className="relative h-11 w-11 overflow-hidden border border-[#d8d8d3] bg-white">
         <Image
           src="/brand/gearswipe-cart-logo.jpg"
           alt="Gearswipe cart logo"
           fill
-          sizes="48px"
+          sizes="44px"
           className="object-cover"
           priority
         />
       </div>
       <div className="leading-tight">
-        <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
+        <p className="text-[11px] uppercase tracking-[0.4em] text-[#7a7a74]">
           Gearswipe
         </p>
-        <p className="text-sm text-[#dbe4ee]">Focused tech store</p>
+        <p className="text-sm text-[#111111]">Minimal gear store</p>
       </div>
+    </div>
+  );
+}
+
+function SectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <p className="text-[11px] uppercase tracking-[0.42em] text-[#7a7a74]">
+      {children}
+    </p>
+  );
+}
+
+function StatusLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-[#deded7] py-3 last:border-b-0">
+      <span className="text-sm text-[#76766f]">{label}</span>
+      <span className="text-sm font-medium text-[#101010]">{value}</span>
     </div>
   );
 }
@@ -206,135 +215,146 @@ function MailForms() {
 
   const statusClass = (status: string) =>
     status === "success"
-      ? "border-[#2b7a5c] bg-[#143125] text-[#a4f0cf]"
+      ? "border-[#b8d8c2] bg-[#eef7ef] text-[#1c5536]"
       : status === "error"
-        ? "border-[#7b2d2d] bg-[#2a1111] text-[#ffb4b4]"
-        : "border-[#263246] bg-[#0b0f14] text-[#9aa9bb]";
+        ? "border-[#efc1c1] bg-[#f8efef] text-[#8a1f1f]"
+        : "border-[#deded7] bg-white text-[#76766f]";
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1.25fr_0.75fr]">
+    <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
       <form
         onSubmit={submitContact}
-        className="border border-[#263246] bg-[#10161f] p-4 sm:p-5"
+        className="border border-[#deded7] bg-white p-5 shadow-[0_1px_0_rgba(16,16,16,0.03)] sm:p-6"
       >
-        <div className="flex items-start justify-between gap-4 border-b border-[#263246] pb-4">
+        <div className="flex items-start justify-between gap-4 border-b border-[#ededeb] pb-4">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
-              Contact
+            <SectionLabel>Contact</SectionLabel>
+            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-[#111111]">
+              Talk to Gearswipe
+            </h2>
+            <p className="mt-2 max-w-lg text-sm leading-7 text-[#5f5f59]">
+              Ask about store setup, product sourcing, vendor licensing, or a custom
+              build quote.
             </p>
-            <h3 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-white">
-              Start a direct conversation with Gearswipe.
-            </h3>
           </div>
-          <span className="border border-[#6bb6ff]/30 bg-[#6bb6ff]/10 px-2 py-1 text-xs text-[#93cfff]">
-            Routed
-          </span>
-        </div>
-
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <label className="grid gap-2 text-sm text-[#c7d3df]">
-            Name
-            <input
-              name="name"
-              required
-              className="border border-[#263246] bg-[#0b0f14] px-3 py-3 text-white outline-none transition placeholder:text-[#6f7e91] focus:border-[#6bb6ff]"
-              placeholder="Your name"
-            />
-          </label>
-          <label className="grid gap-2 text-sm text-[#c7d3df]">
-            Email
-            <input
-              name="email"
-              type="email"
-              required
-              className="border border-[#263246] bg-[#0b0f14] px-3 py-3 text-white outline-none transition placeholder:text-[#6f7e91] focus:border-[#6bb6ff]"
-              placeholder="you@company.com"
-            />
-          </label>
-          <label className="grid gap-2 text-sm text-[#c7d3df]">
-            Company
-            <input
-              name="company"
-              className="border border-[#263246] bg-[#0b0f14] px-3 py-3 text-white outline-none transition placeholder:text-[#6f7e91] focus:border-[#6bb6ff]"
-              placeholder="Optional"
-            />
-          </label>
-          <label className="grid gap-2 text-sm text-[#c7d3df]">
-            Subject
-            <input
-              name="subject"
-              className="border border-[#263246] bg-[#0b0f14] px-3 py-3 text-white outline-none transition placeholder:text-[#6f7e91] focus:border-[#6bb6ff]"
-              placeholder="Build quote, partnership, or support"
-            />
-          </label>
-        </div>
-
-        <label className="mt-4 grid gap-2 text-sm text-[#c7d3df]">
-          Message
-          <textarea
-            name="message"
-            required
-            rows={5}
-            className="border border-[#263246] bg-[#0b0f14] px-3 py-3 text-white outline-none transition placeholder:text-[#6f7e91] focus:border-[#6bb6ff]"
-            placeholder="Tell us what you need, what you’re buying, and any timing details."
-          />
-        </label>
-
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className={`border px-3 py-2 text-sm ${statusClass(contactState.status)}`}>
             {contactState.message || "Messages route to the right support inbox."}
           </p>
+        </div>
+
+        <div className="mt-5 grid gap-3">
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="grid gap-2">
+              <span className="text-sm text-[#44443f]">Name</span>
+              <input
+                name="name"
+                className="border border-[#dcdcd6] px-3 py-3 text-[15px] text-[#111111] outline-none transition focus:border-[#111111]"
+                placeholder="Your name"
+              />
+            </label>
+            <label className="grid gap-2">
+              <span className="text-sm text-[#44443f]">Email</span>
+              <input
+                name="email"
+                type="email"
+                className="border border-[#dcdcd6] px-3 py-3 text-[15px] text-[#111111] outline-none transition focus:border-[#111111]"
+                placeholder="you@example.com"
+              />
+            </label>
+          </div>
+
+          <label className="grid gap-2">
+            <span className="text-sm text-[#44443f]">Company</span>
+            <input
+              name="company"
+              className="border border-[#dcdcd6] px-3 py-3 text-[15px] text-[#111111] outline-none transition focus:border-[#111111]"
+              placeholder="Optional"
+            />
+          </label>
+
+          <label className="grid gap-2">
+            <span className="text-sm text-[#44443f]">Subject</span>
+            <input
+              name="subject"
+              className="border border-[#dcdcd6] px-3 py-3 text-[15px] text-[#111111] outline-none transition focus:border-[#111111]"
+              placeholder="Product question, quote, vendor partnership..."
+            />
+          </label>
+
+          <label className="grid gap-2">
+            <span className="text-sm text-[#44443f]">Message</span>
+            <textarea
+              name="message"
+              rows={5}
+              className="border border-[#dcdcd6] px-3 py-3 text-[15px] text-[#111111] outline-none transition focus:border-[#111111]"
+              placeholder="Tell us what you need..."
+            />
+          </label>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
             type="submit"
-            className="border border-[#6bb6ff] bg-[#6bb6ff] px-4 py-3 text-sm font-medium text-[#081018] transition hover:bg-[#89c7ff]"
+            className="border border-[#111111] bg-[#111111] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#262626]"
           >
             Send message
           </button>
+          <Link
+            href="/signup"
+            className="border border-[#dcdcd6] px-4 py-3 text-sm text-[#111111] transition hover:border-[#111111]"
+          >
+            Join rewards
+          </Link>
         </div>
       </form>
 
       <div className="grid gap-4">
         <form
           onSubmit={submitSubscribe}
-          className="border border-[#263246] bg-[#10161f] p-4 sm:p-5"
+          className="border border-[#deded7] bg-[#fafaf8] p-5 sm:p-6"
         >
-          <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
-            Subscribe
+          <SectionLabel>Rewards signup</SectionLabel>
+          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-[#111111]">
+            Get 100 points on join
+          </h2>
+          <p className="mt-2 text-sm leading-7 text-[#5f5f59]">
+            Early members get points, order updates, and launch access without
+            cluttering your inbox.
           </p>
-          <h3 className="mt-2 text-xl font-medium text-white">
-            Get store updates, launches, and product notes.
-          </h3>
-          <label className="mt-4 grid gap-2 text-sm text-[#c7d3df]">
-            Email
+          <p className={`mt-4 border px-3 py-2 text-sm ${statusClass(subscribeState.status)}`}>
+            {subscribeState.message || "Clean signup. Fast reward entry."}
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
             <input
               name="email"
               type="email"
-              required
-              className="border border-[#263246] bg-[#0b0f14] px-3 py-3 text-white outline-none transition placeholder:text-[#6f7e91] focus:border-[#6bb6ff]"
-              placeholder="you@email.com"
+              className="border border-[#dcdcd6] bg-white px-3 py-3 text-[15px] text-[#111111] outline-none transition focus:border-[#111111]"
+              placeholder="Email address"
             />
-          </label>
-          <div className="mt-4 flex items-center justify-between gap-3">
-            <p className={`border px-3 py-2 text-sm ${statusClass(subscribeState.status)}`}>
-              {subscribeState.message || "We keep the list short and relevant."}
-            </p>
             <button
               type="submit"
-              className="border border-[#263246] bg-[#0f141c] px-4 py-3 text-sm font-medium text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+              className="border border-[#111111] bg-[#111111] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#262626]"
             >
-              Subscribe
+              Join now
             </button>
           </div>
         </form>
 
-        <div className="border border-[#263246] bg-[#10161f] p-4">
-          <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
-            Mail routing
-          </p>
-          <div className="mt-3 grid gap-3">
-            <StatusLine label="Contact" value="support@gearswipe.com" />
-            <StatusLine label="Subscribe" value="updates@gearswipe.com" />
-            <StatusLine label="Access" value="access@gearswipe.com" />
+        <div className="border border-[#deded7] bg-white p-5 sm:p-6">
+          <SectionLabel>Store snapshot</SectionLabel>
+          <div className="mt-4 overflow-hidden border border-[#ededeb] bg-[#fafaf8] p-4">
+            <Image
+              src="/brand/gearswipe-logo-dark.jpg"
+              alt="Gearswipe logo"
+              width={1200}
+              height={1200}
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div className="mt-4 grid">
+            <StatusLine label="Rewards" value="100 points signup" />
+            <StatusLine label="Access" value="Shop, quote, admin" />
+            <StatusLine label="Style" value="Minimal retail" />
           </div>
         </div>
       </div>
@@ -342,214 +362,145 @@ function MailForms() {
   );
 }
 
-export default function Home() {
-  const [query, setQuery] = useState("");
+export default function HomePage() {
   const [activeCategory, setActiveCategory] = useState("All");
 
+  const categories = useMemo(
+    () => ["All", ...new Set(products.map((product) => product.category))],
+    [],
+  );
+
   const filteredProducts = useMemo(() => {
-    const search = query.trim().toLowerCase();
-
-    return products.filter((product) => {
-      const searchable = [
-        product.name,
-        product.category,
-        product.copy,
-        product.tag,
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      const matchesQuery = search.length === 0 || searchable.includes(search);
-      const matchesCategory =
-        activeCategory === "All" || product.category === activeCategory;
-
-      return matchesQuery && matchesCategory;
-    });
-  }, [activeCategory, query]);
+    if (activeCategory === "All") return products;
+    return products.filter((product) => product.category === activeCategory);
+  }, [activeCategory]);
 
   return (
-    <main className="min-h-screen bg-[#0b0f14] text-[#f4f7fb]">
+    <main className="min-h-screen bg-[#fbfbf8] text-[#111111]">
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8">
-        <header className="sticky top-3 z-20 border border-[#263246] bg-[#10161f]/96 px-4 py-3 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] backdrop-blur-sm">
+        <header className="border-b border-[#deded7] bg-[#fbfbf8] py-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-col gap-1">
-              <BrandMark />
-              <p className="text-sm text-[#b4c0cf]">
-                Curated tech, keys, parts, and build-ready gear.
-              </p>
-            </div>
+            <BrandMark />
 
-            <label className="flex items-center gap-3 border border-[#263246] bg-[#0b0f14] px-3 py-2 text-sm text-[#9aa9bb]">
-              <svg
-                viewBox="0 0 24 24"
-                className="h-4 w-4 shrink-0 text-[#6bb6ff]"
-                aria-hidden="true"
+            <nav className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/shop"
+                className="border border-[#deded7] px-3 py-2 text-sm text-[#111111] transition hover:border-[#111111]"
               >
-                <circle
-                  cx="11"
-                  cy="11"
-                  r="6.75"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                />
-                <path
-                  d="M16 16l4 4"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="square"
-                />
-              </svg>
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search builds, keys, hardware"
-                className="w-full bg-transparent text-sm text-[#f4f7fb] outline-none placeholder:text-[#78879a]"
-                aria-label="Search products"
-              />
-            </label>
-
-            <nav className="flex flex-wrap items-center gap-2 text-sm">
-              <a
-                href="#catalog"
-                className="border border-[#263246] px-3 py-2 text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+                Shop
+              </Link>
+              <Link
+                href="/rewards"
+                className="border border-[#deded7] px-3 py-2 text-sm text-[#111111] transition hover:border-[#111111]"
               >
-                Catalog
-              </a>
-              <a
-                href="#collections"
-                className="border border-[#263246] px-3 py-2 text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+                Rewards
+              </Link>
+              <Link
+                href="/signup"
+                className="border border-[#deded7] px-3 py-2 text-sm text-[#111111] transition hover:border-[#111111]"
               >
-                Collections
-              </a>
-              <a
-                href="/admin"
-                className="border border-[#263246] px-3 py-2 text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
-              >
-                Admin
-              </a>
-              <a
+                Sign up
+              </Link>
+              <Link
                 href="/login"
-                className="border border-[#263246] px-3 py-2 text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+                className="border border-[#deded7] px-3 py-2 text-sm text-[#111111] transition hover:border-[#111111]"
               >
                 Login
-              </a>
-              <a
-                href="#contact"
-                className="border border-[#6bb6ff] bg-[#6bb6ff] px-3 py-2 font-medium text-[#081018] transition hover:bg-[#89c7ff]"
+              </Link>
+              <Link
+                href="/admin"
+                className="border border-[#111111] bg-[#111111] px-3 py-2 text-sm text-white transition hover:bg-[#262626]"
               >
-                Browse now
-              </a>
+                Admin
+              </Link>
             </nav>
           </div>
         </header>
 
-        <section className="grid gap-6 py-6 lg:grid-cols-[1.08fr_0.92fr] lg:py-8">
-          <div className="flex flex-col justify-between gap-6">
+        <section className="grid gap-8 py-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-stretch lg:py-10">
+          <div className="flex flex-col justify-between gap-8">
             <div>
-              <h1 className="max-w-3xl text-5xl font-semibold leading-[0.92] tracking-[-0.06em] text-white sm:text-6xl lg:text-7xl">
-                Curated tech for
-                <span className="block text-[#93cfff]">
-                  builds, licenses, and gear.
-                </span>
+              <SectionLabel>Gearswipe</SectionLabel>
+              <h1 className="mt-3 max-w-3xl text-5xl font-semibold tracking-[-0.07em] sm:text-6xl lg:text-7xl">
+                A minimal tech store for products, builds, and trusted gear.
               </h1>
-              <p className="mt-5 max-w-2xl text-lg leading-8 text-[#b4c0cf]">
-                Gearswipe is a focused storefront for custom PC builds,
-                software keys, security hardware, upgrade parts, and connected
-                tech products that belong in a clean checkout-first catalog.
+              <p className="mt-5 max-w-2xl text-base leading-8 text-[#5f5f59] sm:text-lg">
+                Gearswipe keeps the storefront tight: buy what has a price, request a quote
+                for custom systems, and move through a professional checkout flow that feels
+                deliberate on desktop and mobile.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
-                <a
-                  href="#catalog"
-                  className="border border-[#6bb6ff] bg-[#6bb6ff] px-4 py-3 text-sm font-medium text-[#081018] transition hover:bg-[#89c7ff]"
+                <Link
+                  href="/shop"
+                  className="border border-[#111111] bg-[#111111] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#262626]"
                 >
-                  Shop the catalog
-                </a>
-                <a
-                  href="#collections"
-                  className="border border-[#263246] bg-[#0f141c] px-4 py-3 text-sm font-medium text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+                  Shop products
+                </Link>
+                <Link
+                  href="/signup"
+                  className="border border-[#deded7] px-4 py-3 text-sm text-[#111111] transition hover:border-[#111111]"
                 >
-                  See collections
-                </a>
-                <a
-                  href="/admin"
-                  className="border border-[#263246] bg-[#0f141c] px-4 py-3 text-sm font-medium text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+                  Join rewards
+                </Link>
+                <Link
+                  href="/login"
+                  className="border border-[#deded7] px-4 py-3 text-sm text-[#111111] transition hover:border-[#111111]"
                 >
-                  Open admin
-                </a>
+                  Sign in
+                </Link>
               </div>
             </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            {trustPoints.map((item) => (
-              <div
-                key={item.title}
-                className="border border-[#263246] bg-[#10161f] px-4 py-3"
-              >
-                <p className="text-sm font-medium text-white">{item.title}</p>
-                <p className="mt-1 text-sm leading-6 text-[#9aa9bb]">
-                  {item.copy}
-                </p>
-              </div>
-            ))}
-          </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {trustPoints.map((item) => (
+                <div key={item.title} className="border border-[#deded7] bg-white p-4">
+                  <p className="text-sm font-medium text-[#111111]">{item.title}</p>
+                  <p className="mt-2 text-sm leading-6 text-[#5f5f59]">{item.copy}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div
-            id="collections"
-            className="grid gap-4 border border-[#263246] bg-[#10161f] p-4"
-          >
-            <div className="flex items-center justify-between border-b border-[#263246] pb-3">
+          <div className="border border-[#deded7] bg-white p-4 sm:p-5">
+            <div className="flex items-center justify-between border-b border-[#ededeb] pb-3">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
-                  Store snapshot
-                </p>
-                <p className="mt-1 text-lg font-medium text-white">
-                  A clean catalog, built for quick decisions
+                <SectionLabel>Featured surface</SectionLabel>
+                <p className="mt-2 text-lg font-medium text-[#111111]">
+                  Clean catalog, quick decisions
                 </p>
               </div>
-              <span className="border border-[#6bb6ff]/40 bg-[#6bb6ff]/10 px-2 py-1 text-xs text-[#93cfff]">
+              <span className="border border-[#111111] bg-[#111111] px-2 py-1 text-xs text-white">
                 Live
               </span>
             </div>
 
-            <div className="grid gap-3 border border-[#263246] bg-[#0b0f14] p-3">
-              {collections.map((collection) => (
-                <div
-                  key={collection.title}
-                  className="border-b border-[#263246] pb-3 last:border-b-0 last:pb-0"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium text-white">
-                      {collection.title}
-                    </p>
-                    <span className="text-xs uppercase tracking-[0.26em] text-[#6bb6ff]">
-                      Ready
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-[#b4c0cf]">
-                    {collection.copy}
-                  </p>
-                </div>
-              ))}
+            <div className="mt-4 overflow-hidden border border-[#ededeb] bg-[#fafaf8]">
+              <Image
+                src="/brand/gearswipe-cart-logo.jpg"
+                alt="Gearswipe cart logo"
+                width={1200}
+                height={1200}
+                className="h-full w-full object-cover"
+                priority
+              />
             </div>
 
-            <div className="border border-[#263246] bg-[#0b0f14] p-3">
-              <StatusLine label="Fulfillment" value="Digital and physical" />
-              <StatusLine label="Audience" value="Builders and buyers" />
-              <StatusLine label="Focus" value="Clear, practical, current" />
+            <div className="mt-4 grid gap-3">
+              <div className="border border-[#ededeb] p-4">
+                <StatusLine label="Fixed-price" value="Inventory, keys, accessories" />
+                <StatusLine label="Quoted" value="Custom PC builds and bundles" />
+                <StatusLine label="Rewards" value="Points for members" />
+              </div>
             </div>
           </div>
         </section>
 
-        <section id="catalog" className="py-4">
-          <div className="flex flex-col gap-3 border-t border-[#263246] pt-5 lg:flex-row lg:items-end lg:justify-between">
+        <section className="border-t border-[#deded7] py-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
-                Catalog
-              </p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-white">
+              <SectionLabel>Collections</SectionLabel>
+              <h2 className="mt-2 text-3xl font-semibold tracking-[-0.05em] text-[#111111]">
                 Products that fit the store’s actual purpose.
               </h2>
             </div>
@@ -561,8 +512,8 @@ export default function Home() {
                   onClick={() => setActiveCategory(category)}
                   className={`border px-3 py-2 text-sm transition ${
                     activeCategory === category
-                      ? "border-[#6bb6ff] bg-[#6bb6ff]/10 text-white"
-                      : "border-[#263246] bg-[#10161f] text-[#b4c0cf] hover:border-[#6bb6ff]/60 hover:text-white"
+                      ? "border-[#111111] bg-[#111111] text-white"
+                      : "border-[#deded7] bg-white text-[#111111] hover:border-[#111111]"
                   }`}
                 >
                   {category}
@@ -573,44 +524,52 @@ export default function Home() {
 
           <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {filteredProducts.map((product) => (
-              <article
-                key={product.name}
-                className="flex h-full flex-col border border-[#263246] bg-[#10161f] p-4"
-              >
-                <div className="flex items-center justify-between gap-3 border-b border-[#263246] pb-3">
-                  <span className="border border-[#6bb6ff]/30 bg-[#6bb6ff]/10 px-2 py-1 text-[11px] uppercase tracking-[0.28em] text-[#93cfff]">
-                    {product.tag}
-                  </span>
-                  <span className="text-sm text-[#9aa9bb]">
+              <article key={product.name} className="flex h-full flex-col border border-[#deded7] bg-white p-4">
+                <div className="flex items-center justify-between gap-3 border-b border-[#ededeb] pb-3">
+                  <span className="border border-[#deded7] bg-[#fafaf8] px-2 py-1 text-[11px] uppercase tracking-[0.28em] text-[#5f5f59]">
                     {product.category}
+                  </span>
+                  <span
+                    className={`text-xs uppercase tracking-[0.28em] ${
+                      product.tone === "quote"
+                        ? "text-[#8a5a14]"
+                        : product.tone === "secure"
+                          ? "text-[#1c5536]"
+                          : "text-[#5f5f59]"
+                    }`}
+                  >
+                    {product.tone === "quote" ? "Build" : product.tone === "secure" ? "Secure" : "Ready"}
                   </span>
                 </div>
 
                 <div className="flex flex-1 flex-col justify-between gap-4 pt-4">
                   <div>
-                    <h3 className="text-xl font-medium text-white">
-                      {product.name}
-                    </h3>
-                    <p className="mt-2 text-sm leading-7 text-[#b4c0cf]">
-                      {product.copy}
-                    </p>
+                    <h3 className="text-xl font-medium text-[#111111]">{product.name}</h3>
+                    <p className="mt-2 text-sm leading-7 text-[#5f5f59]">{product.copy}</p>
                   </div>
 
-                  <div className="flex items-end justify-between gap-3 border-t border-[#263246] pt-4">
+                  <div className="flex items-end justify-between gap-3 border-t border-[#ededeb] pt-4">
                     <div>
-                      <p className="text-[11px] uppercase tracking-[0.35em] text-[#8191a5]">
-                        From
+                      <p className="text-[11px] uppercase tracking-[0.35em] text-[#7a7a74]">
+                        {product.tone === "quote" ? "Pricing" : "From"}
                       </p>
-                      <p className="text-2xl font-semibold text-white">
-                        {product.price}
-                      </p>
+                      <p className="text-2xl font-semibold text-[#111111]">{product.price}</p>
                     </div>
-                    <button
-                      type="button"
-                      className="border border-[#263246] px-3 py-2 text-sm font-medium text-white transition hover:border-[#6bb6ff] hover:bg-[#6bb6ff] hover:text-[#081018]"
-                    >
-                      View offer
-                    </button>
+                    {product.tone === "quote" ? (
+                      <Link
+                        href="/build/custom-pc"
+                        className="border border-[#111111] px-3 py-2 text-sm font-medium text-[#111111] transition hover:bg-[#111111] hover:text-white"
+                      >
+                        {product.cta}
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        className="border border-[#111111] px-3 py-2 text-sm font-medium text-[#111111] transition hover:bg-[#111111] hover:text-white"
+                      >
+                        {product.cta}
+                      </button>
+                    )}
                   </div>
                 </div>
               </article>
@@ -618,122 +577,65 @@ export default function Home() {
           </div>
         </section>
 
-        <section
-          id="contact"
-          className="mt-8 grid gap-4 border-t border-[#263246] py-6"
-        >
-          <div className="grid gap-4 lg:grid-cols-[0.92fr_1.08fr]">
-            <div className="border border-[#263246] bg-[#10161f] p-4 sm:p-5">
-              <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
-                About Gearswipe
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">
-                A storefront with a sharper edge.
-              </h2>
-              <p className="mt-3 text-sm leading-7 text-[#b4c0cf]">
-                The brand stays product-first: practical tech, clean presentation,
-                and a visual system that feels like a focused web store instead of
-                a general-purpose portal.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <a
-                  href="/admin"
-                  className="border border-[#263246] px-3 py-2 text-sm text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
-                >
-                  Gearswipe admin
-                </a>
-                <a
-                  href="/login"
-                  className="border border-[#263246] px-3 py-2 text-sm text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
-                >
-                  Login
-                </a>
-                <a
-                  href="https://www.goldshore.ai"
-                  className="border border-[#263246] px-3 py-2 text-sm text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
-                >
-                  Gold Shore
-                </a>
-                <a
-                  href="https://www.rmarston.com"
-                  className="border border-[#263246] px-3 py-2 text-sm text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
-                >
-                  R. Marston
-                </a>
-              </div>
-              <div className="mt-5 overflow-hidden border border-[#263246] bg-[#0b0f14]">
-                <Image
-                  src="/brand/gearswipe-logo-dark.jpg"
-                  alt="Gearswipe logo"
-                  width={1200}
-                  height={1200}
-                  className="h-full w-full object-cover"
-                />
-              </div>
+        <section className="grid gap-4 border-t border-[#deded7] py-8 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="border border-[#deded7] bg-white p-5 sm:p-6">
+            <SectionLabel>How it works</SectionLabel>
+            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.05em] text-[#111111]">
+              A simple path for store, quote, and admin work.
+            </h2>
+            <div className="mt-4 grid gap-3">
+              <StatusLine label="Fixed-price items" value="Add to cart, checkout, ship" />
+              <StatusLine label="Custom builds" value="Requirements, quote, approval" />
+              <StatusLine label="Rewards" value="Signup, points, member access" />
+              <StatusLine label="Admin" value="Login, vendor rights, publish control" />
             </div>
-
-            <MailForms />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="border border-[#263246] bg-[#10161f] p-4">
-              <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
-                Purchase mix
-              </p>
-              <p className="mt-2 text-lg font-medium text-white">
-                Digital goods, hardware, and parts in one place.
-              </p>
-              <p className="mt-3 text-sm leading-7 text-[#b4c0cf]">
-                Enough variety to be useful, but still tight enough to feel like
-                one coherent storefront.
-              </p>
-            </div>
-
-            <div className="border border-[#263246] bg-[#10161f] p-4">
-              <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
-                Portfolio note
-              </p>
-              <p className="mt-2 text-lg font-medium text-white">
-                Gearswipe stands on its own.
-              </p>
-              <p className="mt-3 text-sm leading-7 text-[#b4c0cf]">
-                Broader brand context can sit in the background without turning
-                this homepage into a network router.
-              </p>
+          <div className="border border-[#deded7] bg-[#fafaf8] p-5 sm:p-6">
+            <SectionLabel>Collections</SectionLabel>
+            <div className="mt-3 grid gap-4">
+              {collections.map((collection) => (
+                <div key={collection.title} className="border border-[#deded7] bg-white p-4">
+                  <p className="text-base font-medium text-[#111111]">{collection.title}</p>
+                  <p className="mt-2 text-sm leading-7 text-[#5f5f59]">{collection.copy}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
-        <section className="grid gap-4 border-t border-[#263246] py-6">
-          <div className="flex items-end justify-between gap-3">
+        <section className="border-t border-[#deded7] py-8">
+          <MailForms />
+        </section>
+
+        <section className="border-t border-[#deded7] py-8">
+          <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
-                Connected sites
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">
-                Cross-links across the brand graph
+              <SectionLabel>Connected sites</SectionLabel>
+              <h2 className="mt-2 text-2xl font-semibold text-[#111111]">
+                Purposeful links only
               </h2>
             </div>
-            <p className="text-sm text-[#9aa9bb]">Purposeful links only</p>
+            <p className="text-sm text-[#5f5f59]">Standalone brands, not a router</p>
           </div>
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {siteGraphLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
-                className="border border-[#263246] bg-[#10161f] p-4 transition hover:border-[#6bb6ff] hover:bg-[#0f141c]"
+                className="border border-[#deded7] bg-white p-4 transition hover:border-[#111111]"
               >
-                <p className="text-lg font-medium text-white">{link.label}</p>
-                <p className="mt-1 text-sm text-[#9aa9bb]">{link.note}</p>
+                <p className="text-lg font-medium text-[#111111]">{link.label}</p>
+                <p className="mt-1 text-sm text-[#5f5f59]">{link.note}</p>
               </a>
             ))}
           </div>
         </section>
 
-        <footer className="mt-auto border-t border-[#263246] py-5 text-sm text-[#9aa9bb]">
+        <footer className="mt-auto border-t border-[#deded7] py-5 text-sm text-[#5f5f59]">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p>Gearswipe is a focused tech storefront for practical products.</p>
-            <p className="text-white">Standalone brand. Clean presentation.</p>
+            <p className="text-[#111111]">Standalone brand. Clean presentation.</p>
           </div>
         </footer>
       </div>

@@ -1,74 +1,129 @@
-import Image from "next/image";
+"use client";
 
-export const metadata = {
-  title: "Login — Gearswipe",
-  description: "Continue into the Gearswipe admin and access workflow.",
-};
+import Link from "next/link";
+import Image from "next/image";
+import { useMemo, useState, type FormEvent } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { adminLoginHint } from "@/auth";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const nextPath = useMemo(() => {
+    const candidate = searchParams.get("next") || "/admin";
+    return candidate.startsWith("/") ? candidate : "/admin";
+  }, [searchParams]);
+  const [email, setEmail] = useState(adminLoginHint.email);
+  const [password, setPassword] = useState(adminLoginHint.password);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+      callbackUrl: nextPath,
+    });
+
+    if (result?.error) {
+      setError("That username or password did not work.");
+      setLoading(false);
+      return;
+    }
+
+    router.push(nextPath);
+    router.refresh();
+  }
+
   return (
     <main className="min-h-screen bg-[#0b0f14] text-[#f4f7fb]">
-      <div className="mx-auto flex min-h-screen w-full max-w-4xl items-center px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid w-full gap-6 border border-[#263246] bg-[#10161f] p-5 shadow-[0_30px_100px_rgba(0,0,0,0.35)] lg:grid-cols-[0.95fr_1.05fr] lg:p-8">
-          <div className="overflow-hidden border border-[#263246] bg-[#0b0f14]">
+      <div className="mx-auto flex min-h-screen w-full max-w-5xl items-center px-4 py-8 sm:px-6 lg:px-8">
+        <div className="grid w-full gap-0 overflow-hidden border border-[#263246] bg-[#10161f] shadow-[0_30px_100px_rgba(0,0,0,0.35)] lg:grid-cols-[0.92fr_1.08fr]">
+          <div className="relative min-h-[260px] border-b border-[#263246] bg-[#0b0f14] lg:min-h-full lg:border-b-0 lg:border-r">
             <Image
-              src="/brand/gearswipe-logo-dark.jpg"
-              alt="Gearswipe logo"
-              width={1200}
-              height={1200}
-              className="h-full w-full object-cover"
+              src="/brand/gearswipe-cart-logo.jpg"
+              alt="Gearswipe cart logo"
+              fill
               priority
+              sizes="(max-width: 1024px) 100vw, 48vw"
+              className="object-cover"
             />
           </div>
 
-          <div className="flex flex-col justify-between gap-6">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
-                Identity
-              </p>
-              <h1 className="mt-2 text-4xl font-semibold tracking-[-0.06em] text-white sm:text-5xl">
-                Continue into Gearswipe.
-              </h1>
-              <p className="mt-4 max-w-xl text-lg leading-8 text-[#b4c0cf]">
-                Use the admin path for operations, inventory, and store controls.
-                The access route stays separate from the public storefront.
-              </p>
-            </div>
+          <div className="p-6 sm:p-8 lg:p-10">
+            <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
+              Admin access
+            </p>
+            <h1 className="mt-3 text-4xl font-semibold tracking-[-0.06em] text-white sm:text-5xl">
+              Sign in to Gearswipe
+            </h1>
+            <p className="mt-4 max-w-xl text-base leading-7 text-[#b4c0cf]">
+              Use the standard admin login to access products, vendor licensing, outreach,
+              and store operations. No external provider setup is required.
+            </p>
 
-            <div className="grid gap-3">
-              <a
-                href="/admin"
-                className="border border-[#6bb6ff] bg-[#6bb6ff] px-4 py-3 text-sm font-medium text-[#081018] transition hover:bg-[#89c7ff]"
-              >
-                Continue to admin
-              </a>
-              <a
-                href="/api/mail?workspace=Gearswipe"
-                className="border border-[#263246] bg-[#0f141c] px-4 py-3 text-sm font-medium text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
-              >
-                View mail routing
-              </a>
-              <a
-                href="/"
-                className="border border-[#263246] px-4 py-3 text-sm font-medium text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
-              >
-                Back to storefront
-              </a>
-            </div>
+            <form onSubmit={handleSubmit} className="mt-8 grid gap-4">
+              <label className="grid gap-2">
+                <span className="text-sm text-[#dbe4ee]">Username</span>
+                <input
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  className="border border-[#263246] bg-[#0f141c] px-4 py-3 text-base text-white outline-none transition placeholder:text-[#64768c] focus:border-[#6bb6ff]"
+                  autoComplete="email"
+                  placeholder="admin@gearswipe.com"
+                />
+              </label>
 
-            <div className="grid gap-3 border-t border-[#263246] pt-5 text-sm text-[#9aa9bb] sm:grid-cols-3">
-              <div>
-                <p className="text-white">Support</p>
-                <p className="mt-1">support@gearswipe.com</p>
+              <label className="grid gap-2">
+                <span className="text-sm text-[#dbe4ee]">Password</span>
+                <input
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  type="password"
+                  className="border border-[#263246] bg-[#0f141c] px-4 py-3 text-base text-white outline-none transition placeholder:text-[#64768c] focus:border-[#6bb6ff]"
+                  autoComplete="current-password"
+                  placeholder="gearswipe-admin"
+                />
+              </label>
+
+              {error ? (
+                <p className="border border-[#7f2b2b] bg-[#201013] px-4 py-3 text-sm text-[#ffb6b6]">
+                  {error}
+                </p>
+              ) : null}
+
+              <div className="flex flex-wrap gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="border border-[#6bb6ff] bg-[#6bb6ff] px-4 py-3 text-sm font-medium text-[#081018] transition hover:bg-[#89c7ff] disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {loading ? "Signing in..." : "Sign in"}
+                </button>
+                <Link
+                  href="/"
+                  className="border border-[#263246] bg-[#0f141c] px-4 py-3 text-sm font-medium text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+                >
+                  Back to storefront
+                </Link>
               </div>
-              <div>
-                <p className="text-white">Access</p>
-                <p className="mt-1">access@gearswipe.com</p>
-              </div>
-              <div>
-                <p className="text-white">Updates</p>
-                <p className="mt-1">updates@gearswipe.com</p>
-              </div>
+            </form>
+
+            <div className="mt-8 border-t border-[#263246] pt-5 text-sm leading-6 text-[#9aa9bb]">
+              <p>
+                Local fallback login: <span className="text-[#e8eef6]">admin@gearswipe.com</span> /{" "}
+                <span className="text-[#e8eef6]">gearswipe-admin</span>
+              </p>
+              <p className="mt-1">
+                You can change the credentials later with environment variables, but you do
+                not need to wire anything up right now.
+              </p>
             </div>
           </div>
         </div>
