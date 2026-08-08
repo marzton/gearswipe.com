@@ -24,9 +24,41 @@ export type AdminStoreItem = {
   updatedAt?: string;
 };
 
+export type AdminVendorItem = {
+  id: number;
+  workspace: AdminWorkspace;
+  company: string;
+  vendorType: string;
+  contactName: string;
+  contactTitle: string;
+  email: string;
+  phone: string;
+  website: string;
+  territory: string;
+  productCategories: string;
+  minimumOrderRequirements: string;
+  dealerResellerApplicationUrl: string;
+  currentRelationshipStatus: string;
+  documents: string;
+  catalogApiAvailability: string;
+  productImageRights: string;
+  trademarkLogoPermissions: string;
+  pricingFeedPermissions: string;
+  aiDataProcessingPermissions: string;
+  agreementEffectiveDate: string;
+  agreementExpirationDate: string;
+  aiVendorBrief: string;
+  outreachEmail: string;
+  requestedPermissions: string;
+  notes: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type AdminState = {
   queueItems: AdminQueueItem[];
   storeItems: AdminStoreItem[];
+  vendorItems: AdminVendorItem[];
 };
 
 export const siteGraphLinks = [
@@ -125,6 +157,36 @@ export function seedAdminState(workspace: AdminWorkspace): AdminState {
           value: "Controlled",
         },
       ],
+      vendorItems: [
+        {
+          id: 1,
+          workspace,
+          company: "Gold Shore Contract Services",
+          vendorType: "Distributor",
+          contactName: "Operations Desk",
+          contactTitle: "Partnership Intake",
+          email: "partnerships@goldshore.ai",
+          phone: "",
+          website: "https://www.goldshore.ai",
+          territory: "US",
+          productCategories: "Services, contracts, infrastructure",
+          minimumOrderRequirements: "Project-based",
+          dealerResellerApplicationUrl: "https://www.goldshore.ai/contact",
+          currentRelationshipStatus: "Active Vendor",
+          documents: "MSA, SOW, NDA",
+          catalogApiAvailability: "No",
+          productImageRights: "Pending",
+          trademarkLogoPermissions: "Pending",
+          pricingFeedPermissions: "Pending",
+          aiDataProcessingPermissions: "Pending",
+          agreementEffectiveDate: "2026-08-01",
+          agreementExpirationDate: "2027-08-01",
+          aiVendorBrief: "Trusted internal services and contract support.",
+          outreachEmail: "Already active relationship",
+          requestedPermissions: "N/A",
+          notes: "Gold Shore internal alignment record.",
+        },
+      ],
     };
   }
 
@@ -187,6 +249,68 @@ export function seedAdminState(workspace: AdminWorkspace): AdminState {
         channel: "Security hardware",
         state: "Tracked",
         value: "From $25",
+      },
+    ],
+    vendorItems: [
+      {
+        id: 1,
+        workspace,
+        company: "Dell Technologies",
+        vendorType: "Manufacturer",
+        contactName: "Channel Partnerships",
+        contactTitle: "Dealer Programs",
+        email: "dealer@dell.com",
+        phone: "+1 (800) 999-3355",
+        website: "https://www.dell.com",
+        territory: "North America",
+        productCategories: "Laptops, desktops, monitors, accessories",
+        minimumOrderRequirements: "Dealer application required",
+        dealerResellerApplicationUrl: "https://www.dell.com/partner",
+        currentRelationshipStatus: "Prospect",
+        documents: "Brand guidelines, dealer terms, MAP policy",
+        catalogApiAvailability: "Yes",
+        productImageRights: "Pending",
+        trademarkLogoPermissions: "Pending",
+        pricingFeedPermissions: "Pending",
+        aiDataProcessingPermissions: "Pending",
+        agreementEffectiveDate: "",
+        agreementExpirationDate: "",
+        aiVendorBrief:
+          "Large manufacturer with an established dealer channel. Likely need channel partnerships, reseller program, or distribution contact.",
+        outreachEmail: "",
+        requestedPermissions:
+          "Authorized reseller/dealer status; permission to advertise products; product catalog/feed access; product photography/media usage; brand/logo usage; technical specifications; AI-assisted catalog ingestion",
+        notes: "Initial target for Gearswipe retail and product data licensing.",
+      },
+      {
+        id: 2,
+        workspace,
+        company: "Yubico",
+        vendorType: "Manufacturer",
+        contactName: "Partner Programs",
+        contactTitle: "Channel Sales",
+        email: "partners@yubico.com",
+        phone: "",
+        website: "https://www.yubico.com",
+        territory: "Global",
+        productCategories: "Security keys, identity hardware",
+        minimumOrderRequirements: "Reseller program terms apply",
+        dealerResellerApplicationUrl: "https://www.yubico.com/partners/",
+        currentRelationshipStatus: "Negotiating",
+        documents: "Dealer application, image license request",
+        catalogApiAvailability: "Yes",
+        productImageRights: "Pending",
+        trademarkLogoPermissions: "Pending",
+        pricingFeedPermissions: "Pending",
+        aiDataProcessingPermissions: "Pending",
+        agreementEffectiveDate: "",
+        agreementExpirationDate: "",
+        aiVendorBrief:
+          "Identity and security hardware vendor with likely reseller onboarding and media usage requirements.",
+        outreachEmail: "",
+        requestedPermissions:
+          "Authorized reseller/dealer status; permission to advertise products; product catalog/feed access; product photography/media usage; brand/logo usage; technical specifications; warranty support; AI-assisted catalog ingestion",
+        notes: "Good fit for admin auth and security hardware catalog lines.",
       },
     ],
   };

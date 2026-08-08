@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   type AdminQueueItem,
   type AdminStoreItem,
+  type AdminVendorItem,
   type AdminWorkspace,
   adminWorkspaces,
   siteGraphLinks,
@@ -13,6 +14,7 @@ type AdminResponse = {
   workspace: AdminWorkspace;
   queueItems: AdminQueueItem[];
   storeItems: AdminStoreItem[];
+  vendorItems: AdminVendorItem[];
   source: "db" | "seed";
 };
 
@@ -45,6 +47,37 @@ function nextPreset(current: string, presets: string[]) {
   const index = presets.indexOf(current);
   return presets[(index + 1) % presets.length] ?? presets[0];
 }
+
+const vendorStages = [
+  "Prospect",
+  "Researching",
+  "Ready for Outreach",
+  "Contacted",
+  "Replied",
+  "Application Required",
+  "Negotiating",
+  "Documents Pending",
+  "Approved Vendor",
+  "Integration Pending",
+  "Active",
+  "Renewal Due",
+  "Rejected",
+];
+
+const permissionOptions = [
+  "Authorized reseller/dealer status",
+  "Permission to advertise products",
+  "Product catalog/feed access",
+  "Pricing and inventory API/feed",
+  "Product photography/media usage",
+  "Brand/logo usage",
+  "Technical specifications",
+  "Dropshipping/fulfillment",
+  "Wholesale purchasing",
+  "Warranty support",
+  "Marketplace resale",
+  "AI-assisted catalog ingestion",
+];
 
 function buildPipelineInsight(
   workspace: AdminWorkspace,
@@ -98,9 +131,13 @@ export default function AdminPage() {
   const [search, setSearch] = useState("");
   const [queueItems, setQueueItems] = useState<AdminQueueItem[]>([]);
   const [storeItems, setStoreItems] = useState<AdminStoreItem[]>([]);
+  const [vendorItems, setVendorItems] = useState<AdminVendorItem[]>([]);
   const [source, setSource] = useState<AdminResponse["source"]>("seed");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeVendorTab, setActiveVendorTab] = useState<
+    "Prospects" | "Outreach" | "Active Agreements"
+  >("Prospects");
   const [queueDraft, setQueueDraft] = useState({
     title: "",
     owner: "Operations",
@@ -112,6 +149,32 @@ export default function AdminPage() {
     channel: "Storefront",
     state: "Featured",
     value: "",
+  });
+  const [vendorDraft, setVendorDraft] = useState({
+    company: "",
+    vendorType: "Manufacturer",
+    contactName: "",
+    contactTitle: "",
+    email: "",
+    phone: "",
+    website: "",
+    territory: "",
+    productCategories: "",
+    minimumOrderRequirements: "",
+    dealerResellerApplicationUrl: "",
+    currentRelationshipStatus: "Prospect",
+    documents: "",
+    catalogApiAvailability: "Unknown",
+    productImageRights: "Pending",
+    trademarkLogoPermissions: "Pending",
+    pricingFeedPermissions: "Pending",
+    aiDataProcessingPermissions: "Pending",
+    agreementEffectiveDate: "",
+    agreementExpirationDate: "",
+    aiVendorBrief: "",
+    outreachEmail: "",
+    requestedPermissions: permissionOptions.join("; "),
+    notes: "",
   });
 
   async function loadWorkspace(activeWorkspace: AdminWorkspace) {
@@ -129,11 +192,13 @@ export default function AdminPage() {
       setWorkspace(payload.workspace);
       setQueueItems(payload.queueItems);
       setStoreItems(payload.storeItems);
+      setVendorItems(payload.vendorItems ?? []);
       setSource(payload.source);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Unable to load admin state");
       setQueueItems([]);
       setStoreItems([]);
+      setVendorItems([]);
     } finally {
       setLoading(false);
     }
@@ -165,6 +230,57 @@ export default function AdminPage() {
         .includes(term);
     });
   }, [search, storeItems]);
+
+  const filteredVendorItems = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    const tabFilters = {
+      Prospects: new Set([
+        "Prospect",
+        "Researching",
+        "Ready for Outreach",
+        "Contacted",
+        "Replied",
+        "Application Required",
+        "Negotiating",
+        "Documents Pending",
+      ]),
+      Outreach: new Set([
+        "Ready for Outreach",
+        "Contacted",
+        "Replied",
+        "Application Required",
+        "Negotiating",
+        "Documents Pending",
+      ]),
+      "Active Agreements": new Set([
+        "Approved Vendor",
+        "Integration Pending",
+        "Active",
+        "Renewal Due",
+      ]),
+    } as const;
+
+    return vendorItems.filter((item) => {
+      const matchesTab = tabFilters[activeVendorTab].has(item.currentRelationshipStatus);
+      if (!matchesTab) return false;
+      if (!term) return true;
+      return [
+        item.company,
+        item.vendorType,
+        item.contactName,
+        item.contactTitle,
+        item.email,
+        item.website,
+        item.territory,
+        item.productCategories,
+        item.currentRelationshipStatus,
+        item.notes,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(term);
+    });
+  }, [activeVendorTab, search, vendorItems]);
 
   const pipelineInsight = useMemo(
     () => buildPipelineInsight(workspace, queueItems, storeItems),
@@ -223,6 +339,52 @@ export default function AdminPage() {
     await loadWorkspace(workspace);
   }
 
+  async function createVendorItem() {
+    const response = await fetch("/api/admin/state", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        workspace,
+        kind: "vendor",
+        ...vendorDraft,
+      }),
+    });
+
+    const payload = await response.json();
+    if (!response.ok) {
+      setError(payload.error ?? "Unable to create vendor item");
+      return;
+    }
+
+    setVendorDraft({
+      company: "",
+      vendorType: "Manufacturer",
+      contactName: "",
+      contactTitle: "",
+      email: "",
+      phone: "",
+      website: "",
+      territory: "",
+      productCategories: "",
+      minimumOrderRequirements: "",
+      dealerResellerApplicationUrl: "",
+      currentRelationshipStatus: "Prospect",
+      documents: "",
+      catalogApiAvailability: "Unknown",
+      productImageRights: "Pending",
+      trademarkLogoPermissions: "Pending",
+      pricingFeedPermissions: "Pending",
+      aiDataProcessingPermissions: "Pending",
+      agreementEffectiveDate: "",
+      agreementExpirationDate: "",
+      aiVendorBrief: "",
+      outreachEmail: "",
+      requestedPermissions: permissionOptions.join("; "),
+      notes: "",
+    });
+    await loadWorkspace(workspace);
+  }
+
   async function updateQueueStatus(id: number, status: string) {
     const response = await fetch("/api/admin/state", {
       method: "PATCH",
@@ -263,6 +425,69 @@ export default function AdminPage() {
     }
 
     await loadWorkspace(workspace);
+  }
+
+  async function updateVendorStatus(
+    id: number,
+    currentRelationshipStatus: string,
+    extras?: Partial<Pick<AdminVendorItem,
+      | "catalogApiAvailability"
+      | "productImageRights"
+      | "trademarkLogoPermissions"
+      | "pricingFeedPermissions"
+      | "aiDataProcessingPermissions"
+      | "agreementEffectiveDate"
+      | "agreementExpirationDate"
+    >>,
+  ) {
+    const response = await fetch("/api/admin/state", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        workspace,
+        kind: "vendor",
+        id,
+        currentRelationshipStatus,
+        ...extras,
+      }),
+    });
+
+    if (!response.ok) {
+      const payload = await response.json();
+      setError(payload.error ?? "Unable to update vendor item");
+      return;
+    }
+
+    await loadWorkspace(workspace);
+  }
+
+  function draftVendorBrief() {
+    const normalized = vendorDraft.company || "the vendor";
+    const categoryLine = vendorDraft.productCategories || "the relevant products";
+    setVendorDraft((draft) => ({
+      ...draft,
+      aiVendorBrief:
+        `Research ${normalized} to determine whether they operate a dealer, reseller, distributor, affiliate, or marketplace program. ` +
+        `Confirm the right contact department, identify products relevant to GearSwipe, and request the permissions needed for ${categoryLine}. ` +
+        `Treat product data, images, specs, and feeds as separate rights from normal sales authorization.`,
+      outreachEmail:
+        draft.outreachEmail ||
+        `Subject: Authorized Dealer / Vendor Partnership — GearSwipe\n\nHello [Name/Team],\n\nMy name is Robert Marston and I'm developing GearSwipe, a technology and equipment commerce platform operated through Gold Shore.\n\nWe're currently establishing relationships with manufacturers, distributors, and authorized suppliers for several product categories, including ${categoryLine}.\n\nI'd like to discuss becoming an authorized third-party dealer/vendor for ${normalized} and understand your requirements for reseller approval.\n\nWe're particularly interested in obtaining authorized access to applicable product catalogs, specifications, pricing/inventory feeds, approved product imagery and brand assets, along with the rights required to market and sell your products through GearSwipe.\n\nOur catalog and merchandising workflow uses AI-assisted systems for product organization, compatibility analysis, search, and customer recommendations. We'd therefore also like to understand any requirements or restrictions governing automated use of your approved catalog data and media.\n\nCould you direct me to the appropriate dealer, reseller, distribution, or channel-partnership contact and provide any application materials?\n\nBest,\nRobert Marston\nGearSwipe / Gold Shore\ngearswipe.com`,
+    }));
+    setError(null);
+  }
+
+  function togglePermission(permission: string) {
+    setVendorDraft((draft) => {
+      const current = draft.requestedPermissions
+        .split(";")
+        .map((item) => item.trim())
+        .filter(Boolean);
+      const next = current.includes(permission)
+        ? current.filter((item) => item !== permission)
+        : [...current, permission];
+      return { ...draft, requestedPermissions: next.join("; ") };
+    });
   }
 
   function seedLicensePipeline() {
@@ -333,9 +558,9 @@ export default function AdminPage() {
             note="Licensing, docs, verification, and maintenance stay visible."
           />
           <StatCard
-            label="Store items"
-            value={String(filteredStore.length).padStart(2, "0")}
-            note="The current mix is kept lean and practical."
+            label="Vendor records"
+            value={String(vendorItems.length).padStart(2, "0")}
+            note="Prospects, outreach, and active agreements stay separate."
           />
           <StatCard
             label="Workspace"
@@ -385,6 +610,449 @@ export default function AdminPage() {
               <StatusLine label="Review" value="Owner approval" />
               <StatusLine label="Fulfill" value="Delivery / key handoff" />
               <StatusLine label="Archive" value="Receipt + audit trail" />
+            </div>
+          </div>
+        </section>
+
+        <section className="border border-[#263246] bg-[#10161f] p-4">
+          <div className="flex flex-col gap-4 border-b border-[#263246] pb-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
+                Partner & Vendor Licensing
+              </p>
+              <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-white">
+                Vendor licensing, outreach, and commercial rights.
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm leading-7 text-[#b4c0cf]">
+                Manage the path from prospect to active vendor, including dealer programs,
+                catalog data access, image rights, trademark permissions, AI/data-processing
+                rights, renewal dates, and attached agreements.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(["Prospects", "Outreach", "Active Agreements"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveVendorTab(tab)}
+                  className={`border px-3 py-2 text-sm transition ${
+                    activeVendorTab === tab
+                      ? "border-[#6bb6ff] bg-[#6bb6ff]/10 text-white"
+                      : "border-[#263246] bg-[#0b0f14] text-[#b4c0cf] hover:border-[#6bb6ff]/60 hover:text-white"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-4 lg:grid-cols-[1.08fr_0.92fr]">
+            <div className="grid gap-3">
+              {filteredVendorItems.map((vendor) => (
+                <article key={vendor.id} className="border border-[#263246] bg-[#0b0f14] p-4">
+                  <div className="flex flex-col gap-3 border-b border-[#263246] pb-3 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <p className="text-sm text-[#9aa9bb]">{vendor.vendorType}</p>
+                      <h3 className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-white">
+                        {vendor.company}
+                      </h3>
+                      <p className="mt-2 text-sm leading-7 text-[#b4c0cf]">
+                        {vendor.aiVendorBrief || "Generate a vendor brief to capture who they are, what they sell, and what rights Gearswipe needs."}
+                      </p>
+                    </div>
+                    <span className="border border-[#6bb6ff]/30 bg-[#6bb6ff]/10 px-2 py-1 text-xs text-[#93cfff]">
+                      {vendor.currentRelationshipStatus}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <div className="grid gap-2 text-sm text-[#b4c0cf]">
+                      <p><span className="text-white">Contact:</span> {vendor.contactName || "—"} {vendor.contactTitle ? `· ${vendor.contactTitle}` : ""}</p>
+                      <p><span className="text-white">Email:</span> {vendor.email || "—"}</p>
+                      <p><span className="text-white">Phone:</span> {vendor.phone || "—"}</p>
+                      <p><span className="text-white">Website:</span> {vendor.website || "—"}</p>
+                    </div>
+                    <div className="grid gap-2 text-sm text-[#b4c0cf]">
+                      <p><span className="text-white">Territory:</span> {vendor.territory || "—"}</p>
+                      <p><span className="text-white">Categories:</span> {vendor.productCategories || "—"}</p>
+                      <p><span className="text-white">MOQ:</span> {vendor.minimumOrderRequirements || "—"}</p>
+                      <p><span className="text-white">Application:</span> {vendor.dealerResellerApplicationUrl || "—"}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    <div className="border border-[#263246] bg-[#10161f] p-3">
+                      <p className="text-[11px] uppercase tracking-[0.35em] text-[#8191a5]">
+                        Rights summary
+                      </p>
+                      <div className="mt-3 grid gap-2 text-sm text-[#b4c0cf]">
+                        <StatusLine label="Catalog/API" value={vendor.catalogApiAvailability} />
+                        <StatusLine label="Images" value={vendor.productImageRights} />
+                        <StatusLine label="Trademark" value={vendor.trademarkLogoPermissions} />
+                        <StatusLine label="Pricing feed" value={vendor.pricingFeedPermissions} />
+                        <StatusLine label="AI/data" value={vendor.aiDataProcessingPermissions} />
+                      </div>
+                    </div>
+                    <div className="border border-[#263246] bg-[#10161f] p-3">
+                      <p className="text-[11px] uppercase tracking-[0.35em] text-[#8191a5]">
+                        Agreement
+                      </p>
+                      <div className="mt-3 grid gap-2 text-sm text-[#b4c0cf]">
+                        <p><span className="text-white">Effective:</span> {vendor.agreementEffectiveDate || "—"}</p>
+                        <p><span className="text-white">Expiration:</span> {vendor.agreementExpirationDate || "—"}</p>
+                        <p><span className="text-white">Docs:</span> {vendor.documents || "—"}</p>
+                        <p><span className="text-white">Notes:</span> {vendor.notes || "—"}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void updateVendorStatus(vendor.id, "Researching")}
+                      className="border border-[#263246] px-3 py-2 text-sm text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+                    >
+                      Research
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void updateVendorStatus(vendor.id, "Ready for Outreach")}
+                      className="border border-[#263246] px-3 py-2 text-sm text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+                    >
+                      Ready for outreach
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void updateVendorStatus(vendor.id, "Negotiating")}
+                      className="border border-[#263246] px-3 py-2 text-sm text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+                    >
+                      Negotiating
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void updateVendorStatus(vendor.id, "Approved Vendor")}
+                      className="border border-[#263246] px-3 py-2 text-sm text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void updateVendorStatus(vendor.id, "Active")}
+                      className="border border-[#6bb6ff] bg-[#6bb6ff] px-3 py-2 text-sm font-medium text-[#081018] transition hover:bg-[#89c7ff]"
+                    >
+                      Activate
+                    </button>
+                  </div>
+                </article>
+              ))}
+
+              {filteredVendorItems.length === 0 ? (
+                <div className="border border-dashed border-[#40506a] bg-[#0b0f14] p-4 text-sm text-[#9aa9bb]">
+                  No vendor records match this tab yet. Seed a prospect record or switch tabs.
+                </div>
+              ) : null}
+            </div>
+
+            <div className="grid gap-4">
+              <div className="border border-[#263246] bg-[#0b0f14] p-4">
+                <div className="flex items-end justify-between gap-3 border-b border-[#263246] pb-3">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
+                      Vendor brief
+                    </p>
+                    <h3 className="mt-2 text-xl font-semibold text-white">
+                      Research first, then outreach
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={draftVendorBrief}
+                    className="border border-[#6bb6ff] bg-[#6bb6ff] px-3 py-2 text-sm font-medium text-[#081018] transition hover:bg-[#89c7ff]"
+                  >
+                    Generate brief
+                  </button>
+                </div>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <label className="grid gap-2">
+                    <span className="text-sm text-[#b4c0cf]">Company / brand</span>
+                    <input
+                      value={vendorDraft.company}
+                      onChange={(event) =>
+                        setVendorDraft((draft) => ({ ...draft, company: event.target.value }))
+                      }
+                      className="border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                      placeholder="Dell Technologies"
+                    />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm text-[#b4c0cf]">Vendor type</span>
+                    <select
+                      value={vendorDraft.vendorType}
+                      onChange={(event) =>
+                        setVendorDraft((draft) => ({ ...draft, vendorType: event.target.value }))
+                      }
+                      className="border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                    >
+                      <option>Manufacturer</option>
+                      <option>Distributor</option>
+                      <option>Wholesaler</option>
+                      <option>Reseller program</option>
+                      <option>Affiliate</option>
+                      <option>Marketplace supplier</option>
+                    </select>
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm text-[#b4c0cf]">Contact name</span>
+                    <input
+                      value={vendorDraft.contactName}
+                      onChange={(event) =>
+                        setVendorDraft((draft) => ({ ...draft, contactName: event.target.value }))
+                      }
+                      className="border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                      placeholder="Partner programs"
+                    />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm text-[#b4c0cf]">Title</span>
+                    <input
+                      value={vendorDraft.contactTitle}
+                      onChange={(event) =>
+                        setVendorDraft((draft) => ({ ...draft, contactTitle: event.target.value }))
+                      }
+                      className="border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                      placeholder="Channel Sales"
+                    />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm text-[#b4c0cf]">Email</span>
+                    <input
+                      value={vendorDraft.email}
+                      onChange={(event) =>
+                        setVendorDraft((draft) => ({ ...draft, email: event.target.value }))
+                      }
+                      className="border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                      placeholder="partner@company.com"
+                    />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm text-[#b4c0cf]">Phone</span>
+                    <input
+                      value={vendorDraft.phone}
+                      onChange={(event) =>
+                        setVendorDraft((draft) => ({ ...draft, phone: event.target.value }))
+                      }
+                      className="border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                    />
+                  </label>
+                  <label className="grid gap-2 md:col-span-2">
+                    <span className="text-sm text-[#b4c0cf]">Website</span>
+                    <input
+                      value={vendorDraft.website}
+                      onChange={(event) =>
+                        setVendorDraft((draft) => ({ ...draft, website: event.target.value }))
+                      }
+                      className="border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                    />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm text-[#b4c0cf]">Territory</span>
+                    <input
+                      value={vendorDraft.territory}
+                      onChange={(event) =>
+                        setVendorDraft((draft) => ({ ...draft, territory: event.target.value }))
+                      }
+                      className="border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                      placeholder="US, Global, NA"
+                    />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm text-[#b4c0cf]">Product categories</span>
+                    <input
+                      value={vendorDraft.productCategories}
+                      onChange={(event) =>
+                        setVendorDraft((draft) => ({ ...draft, productCategories: event.target.value }))
+                      }
+                      className="border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                      placeholder="PCs, keys, software"
+                    />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm text-[#b4c0cf]">Minimum order requirements</span>
+                    <input
+                      value={vendorDraft.minimumOrderRequirements}
+                      onChange={(event) =>
+                        setVendorDraft((draft) => ({ ...draft, minimumOrderRequirements: event.target.value }))
+                      }
+                      className="border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                    />
+                  </label>
+                  <label className="grid gap-2 md:col-span-2">
+                    <span className="text-sm text-[#b4c0cf]">Dealer/reseller application URL</span>
+                    <input
+                      value={vendorDraft.dealerResellerApplicationUrl}
+                      onChange={(event) =>
+                        setVendorDraft((draft) => ({ ...draft, dealerResellerApplicationUrl: event.target.value }))
+                      }
+                      className="border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                    />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm text-[#b4c0cf]">Relationship status</span>
+                    <select
+                      value={vendorDraft.currentRelationshipStatus}
+                      onChange={(event) =>
+                        setVendorDraft((draft) => ({ ...draft, currentRelationshipStatus: event.target.value }))
+                      }
+                      className="border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                    >
+                      {vendorStages.map((stage) => (
+                        <option key={stage}>{stage}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm text-[#b4c0cf]">Catalog/API availability</span>
+                    <select
+                      value={vendorDraft.catalogApiAvailability}
+                      onChange={(event) =>
+                        setVendorDraft((draft) => ({ ...draft, catalogApiAvailability: event.target.value }))
+                      }
+                      className="border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                    >
+                      <option>Unknown</option>
+                      <option>Yes</option>
+                      <option>No</option>
+                      <option>Requested</option>
+                      <option>Confirmed</option>
+                    </select>
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm text-[#b4c0cf]">Effective date</span>
+                    <input
+                      value={vendorDraft.agreementEffectiveDate}
+                      onChange={(event) =>
+                        setVendorDraft((draft) => ({ ...draft, agreementEffectiveDate: event.target.value }))
+                      }
+                      className="border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                      placeholder="YYYY-MM-DD"
+                    />
+                  </label>
+                  <label className="grid gap-2">
+                    <span className="text-sm text-[#b4c0cf]">Expiration date</span>
+                    <input
+                      value={vendorDraft.agreementExpirationDate}
+                      onChange={(event) =>
+                        setVendorDraft((draft) => ({ ...draft, agreementExpirationDate: event.target.value }))
+                      }
+                      className="border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                      placeholder="YYYY-MM-DD"
+                    />
+                  </label>
+                  <label className="grid gap-2 md:col-span-2">
+                    <span className="text-sm text-[#b4c0cf]">Documents</span>
+                    <input
+                      value={vendorDraft.documents}
+                      onChange={(event) =>
+                        setVendorDraft((draft) => ({ ...draft, documents: event.target.value }))
+                      }
+                      className="border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                      placeholder="MSA, reseller application, MAP policy"
+                    />
+                  </label>
+                  <label className="grid gap-2 md:col-span-2">
+                    <span className="text-sm text-[#b4c0cf]">AI vendor brief</span>
+                    <textarea
+                      value={vendorDraft.aiVendorBrief}
+                      onChange={(event) =>
+                        setVendorDraft((draft) => ({ ...draft, aiVendorBrief: event.target.value }))
+                      }
+                      className="min-h-28 border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                      placeholder="Research who they are and what rights we need."
+                    />
+                  </label>
+                </div>
+
+                <div className="mt-4 border-t border-[#263246] pt-4">
+                  <p className="text-[11px] uppercase tracking-[0.35em] text-[#8191a5]">
+                    Requested permissions
+                  </p>
+                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    {permissionOptions.map((permission) => {
+                      const checked = vendorDraft.requestedPermissions.includes(permission);
+                      return (
+                        <label
+                          key={permission}
+                          className="flex items-start gap-3 border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-[#dbe4ee]"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => togglePermission(permission)}
+                            className="mt-1 accent-[#6bb6ff]"
+                          />
+                          <span>{permission}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <label className="mt-4 grid gap-2">
+                  <span className="text-sm text-[#b4c0cf]">AI / outreach draft</span>
+                  <textarea
+                    value={vendorDraft.outreachEmail}
+                    onChange={(event) =>
+                      setVendorDraft((draft) => ({ ...draft, outreachEmail: event.target.value }))
+                    }
+                    className="min-h-44 border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                    placeholder="Subject: Authorized Dealer / Vendor Partnership — GearSwipe"
+                  />
+                </label>
+
+                <label className="mt-4 grid gap-2">
+                  <span className="text-sm text-[#b4c0cf]">Notes</span>
+                  <textarea
+                    value={vendorDraft.notes}
+                    onChange={(event) =>
+                      setVendorDraft((draft) => ({ ...draft, notes: event.target.value }))
+                    }
+                    className="min-h-24 border border-[#263246] bg-[#10161f] px-3 py-2 text-sm text-white outline-none"
+                    placeholder="MAP, territory limits, product image rights, and renewal reminders."
+                  />
+                </label>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={draftVendorBrief}
+                    className="border border-[#263246] px-3 py-2 text-sm text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+                  >
+                    Generate vendor brief
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void createVendorItem()}
+                    className="border border-[#6bb6ff] bg-[#6bb6ff] px-3 py-2 text-sm font-medium text-[#081018] transition hover:bg-[#89c7ff]"
+                  >
+                    Save vendor record
+                  </button>
+                </div>
+              </div>
+
+              <div className="border border-[#263246] bg-[#0b0f14] p-4">
+                <p className="text-[11px] uppercase tracking-[0.35em] text-[#8191a5]">
+                  Workflow path
+                </p>
+                <div className="mt-3 grid gap-3">
+                  <StatusLine label="Prospect" value="Research and qualification" />
+                  <StatusLine label="Outreach" value="Draft, review, and send" />
+                  <StatusLine label="Authorization" value="Rights and agreement review" />
+                  <StatusLine label="Active" value="Catalog + media + feed permissions" />
+                  <StatusLine label="Renewal" value="Expiration tracking and review" />
+                </div>
+              </div>
             </div>
           </div>
         </section>
