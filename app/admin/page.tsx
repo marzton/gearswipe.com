@@ -46,6 +46,53 @@ function nextPreset(current: string, presets: string[]) {
   return presets[(index + 1) % presets.length] ?? presets[0];
 }
 
+function buildPipelineInsight(
+  workspace: AdminWorkspace,
+  queueItems: AdminQueueItem[],
+  storeItems: AdminStoreItem[],
+) {
+  const activeLicenseRequests = queueItems.filter((item) =>
+    /license|licensing|key|activation/i.test(`${item.title} ${item.detail} ${item.owner}`),
+  );
+  const activeStoreOffers = storeItems.filter((item) =>
+    /license|key|software|security/i.test(`${item.name} ${item.channel} ${item.state}`),
+  );
+
+  if (workspace !== "Gearswipe") {
+    return {
+      title: "Gold Shore workflow",
+      body:
+        "Prioritize trust, contract intake, and document handling. AI can summarize incoming requests and route them into the right owner lane.",
+      action: "Focus on contracts and verification",
+    };
+  }
+
+  if (activeLicenseRequests.length > 0) {
+    return {
+      title: "License pipeline is active",
+      body:
+        `${activeLicenseRequests.length} license-related queue items are waiting on review. AI can draft outreach, surface missing metadata, and route approval notes.`,
+      action: "Review license outreach",
+    };
+  }
+
+  if (activeStoreOffers.length > 0) {
+    return {
+      title: "Products are ready for license handling",
+      body:
+        `${activeStoreOffers.length} catalog entries look like license-adjacent products. AI can classify them into outreach, fulfillment, or support lanes.`,
+      action: "Classify store items",
+    };
+  }
+
+  return {
+    title: "Ready for license intake",
+    body:
+      "Create a product/license queue item and let AI organize the follow-up path, vendor response, and handoff details.",
+    action: "Seed license pipeline",
+  };
+}
+
 export default function AdminPage() {
   const [workspace, setWorkspace] = useState<AdminWorkspace>("Gearswipe");
   const [search, setSearch] = useState("");
@@ -118,6 +165,11 @@ export default function AdminPage() {
         .includes(term);
     });
   }, [search, storeItems]);
+
+  const pipelineInsight = useMemo(
+    () => buildPipelineInsight(workspace, queueItems, storeItems),
+    [queueItems, storeItems, workspace],
+  );
 
   async function createQueueItem() {
     const response = await fetch("/api/admin/state", {
@@ -213,6 +265,17 @@ export default function AdminPage() {
     await loadWorkspace(workspace);
   }
 
+  function seedLicensePipeline() {
+    setQueueDraft({
+      title: "Licensing outreach",
+      owner: "AI triage",
+      status: "Drafting",
+      detail:
+        "Review product license requests, draft follow-up, and hand off unresolved items to the right owner.",
+    });
+    setSearch("license");
+  }
+
   return (
     <main className="min-h-screen bg-[#0b0f14] text-[#f4f7fb]">
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8">
@@ -238,10 +301,17 @@ export default function AdminPage() {
                       ? "border-[#6bb6ff] bg-[#6bb6ff]/10 text-white"
                       : "border-[#263246] bg-[#0b0f14] text-[#b4c0cf] hover:border-[#6bb6ff]/60 hover:text-white"
                   }`}
-                >
-                  {item}
-                </button>
+                  >
+                    {item}
+                  </button>
               ))}
+              <button
+                type="button"
+                onClick={seedLicensePipeline}
+                className="border border-[#6bb6ff] bg-[#6bb6ff] px-3 py-2 text-sm font-medium text-[#081018] transition hover:bg-[#89c7ff]"
+              >
+                Seed license pipeline
+              </button>
               <label className="flex items-center gap-3 border border-[#263246] bg-[#0b0f14] px-3 py-2 text-sm text-[#9aa9bb]">
                 <span className="text-[#6bb6ff]">⌕</span>
                 <input
@@ -277,6 +347,46 @@ export default function AdminPage() {
             value={loading ? "Loading" : source}
             note={error ?? "This surface is ready for connected backend wiring."}
           />
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="border border-[#263246] bg-[#10161f] p-4">
+            <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
+              AI assist
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold text-white">
+              {pipelineInsight.title}
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-[#b4c0cf]">
+              {pipelineInsight.body}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={seedLicensePipeline}
+                className="border border-[#6bb6ff] bg-[#6bb6ff] px-3 py-2 text-sm font-medium text-[#081018] transition hover:bg-[#89c7ff]"
+              >
+                {pipelineInsight.action}
+              </button>
+              <a
+                href="/login"
+                className="border border-[#263246] px-3 py-2 text-sm text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
+              >
+                Login route
+              </a>
+            </div>
+          </div>
+          <div className="border border-[#263246] bg-[#10161f] p-4">
+            <p className="text-[11px] uppercase tracking-[0.42em] text-[#8191a5]">
+              Product license pipeline
+            </p>
+            <div className="mt-3 grid gap-3">
+              <StatusLine label="Draft" value="AI triage" />
+              <StatusLine label="Review" value="Owner approval" />
+              <StatusLine label="Fulfill" value="Delivery / key handoff" />
+              <StatusLine label="Archive" value="Receipt + audit trail" />
+            </div>
+          </div>
         </section>
 
         <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
