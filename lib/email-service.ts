@@ -131,3 +131,68 @@ export async function sendContactFormResponse(
     text: `Thank you for contacting ${siteName}. We'll be in touch soon.`,
   })
 }
+
+export async function sendMailRouteNotification(options: {
+  route: {
+    alias: string
+    from: string
+    to: string[]
+    cc: string[]
+    subjectPrefix: string
+    notes: string
+  }
+  subject: string
+  name: string
+  email: string
+  company?: string
+  message: string
+  formType: string
+}) {
+  const recipients = [...options.route.to, ...options.route.cc]
+  const text = [
+    `Route: ${options.route.alias}`,
+    `Form type: ${options.formType}`,
+    `Name: ${options.name}`,
+    `Email: ${options.email}`,
+    options.company ? `Company: ${options.company}` : "",
+    "",
+    options.message,
+  ]
+    .filter(Boolean)
+    .join("\n")
+
+  return sendEmail({
+    to: recipients,
+    from: options.route.from,
+    subject: `${options.route.subjectPrefix} ${options.subject}`,
+    text,
+    html: `
+      <h1>${options.subject}</h1>
+      <p><strong>Route:</strong> ${options.route.alias}</p>
+      <p><strong>Name:</strong> ${options.name}</p>
+      <p><strong>Email:</strong> ${options.email}</p>
+      ${options.company ? `<p><strong>Company:</strong> ${options.company}</p>` : ""}
+      <pre style="white-space:pre-wrap;font-family:inherit">${options.message}</pre>
+    `,
+    replyTo: options.email,
+  })
+}
+
+export async function sendAutoReply(options: {
+  to: string
+  from: { email: string; name?: string }
+  subject: string
+  workspace: string
+  body: string
+}) {
+  return sendEmail({
+    to: options.to,
+    from: `${options.from.name || options.workspace} <${options.from.email}>`,
+    subject: options.subject,
+    text: options.body,
+    html: `
+      <h1>${options.workspace}</h1>
+      <pre style="white-space:pre-wrap;font-family:inherit">${options.body}</pre>
+    `,
+  })
+}
