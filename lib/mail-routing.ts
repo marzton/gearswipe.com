@@ -48,6 +48,16 @@ const routes: MailRoute[] = [
   },
   {
     workspace: "Gearswipe",
+    formType: "support",
+    alias: "orders@gearswipe.com",
+    from: "no-reply@gearswipe.com",
+    to: ["orders@gearswipe.com", "ops@gearswipe.com"],
+    cc: ["rmarston@rmarston.com"],
+    subjectPrefix: "[Gearswipe support]",
+    notes: "Cart checkout requests and purchase follow-up.",
+  },
+  {
+    workspace: "Gearswipe",
     formType: "quote",
     alias: "quotes@gearswipe.com",
     from: "no-reply@gearswipe.com",
@@ -85,6 +95,16 @@ const routes: MailRoute[] = [
     cc: [],
     subjectPrefix: "[Gold Shore access]",
     notes: "Identity, admin, and login support.",
+  },
+  {
+    workspace: "Gold Shore",
+    formType: "support",
+    alias: "orders@goldshore.ai",
+    from: "no-reply@goldshore.ai",
+    to: ["orders@goldshore.ai", "ops@goldshore.ai"],
+    cc: ["support@rmarston.com"],
+    subjectPrefix: "[Gold Shore support]",
+    notes: "Purchase follow-up and operational support.",
   },
 ];
 
