@@ -132,67 +132,45 @@ export async function sendContactFormResponse(
   })
 }
 
-export async function sendMailRouteNotification(options: {
-  route: {
-    alias: string
-    from: string
-    to: string[]
-    cc: string[]
-    subjectPrefix: string
-    notes: string
-  }
-  subject: string
-  name: string
-  email: string
-  company?: string
+// Helper: Send auto-reply from worker
+export async function sendAutoReply(
+  to: string,
+  subject: string,
   message: string
-  formType: string
-}) {
-  const recipients = [...options.route.to, ...options.route.cc]
-  const text = [
-    `Route: ${options.route.alias}`,
-    `Form type: ${options.formType}`,
-    `Name: ${options.name}`,
-    `Email: ${options.email}`,
-    options.company ? `Company: ${options.company}` : "",
-    "",
-    options.message,
-  ]
-    .filter(Boolean)
-    .join("\n")
-
+): Promise<SendEmailResult> {
   return sendEmail({
-    to: recipients,
-    from: options.route.from,
-    subject: `${options.route.subjectPrefix} ${options.subject}`,
-    text,
+    to,
+    subject: `Auto-reply: ${subject}`,
     html: `
-      <h1>${options.subject}</h1>
-      <p><strong>Route:</strong> ${options.route.alias}</p>
-      <p><strong>Name:</strong> ${options.name}</p>
-      <p><strong>Email:</strong> ${options.email}</p>
-      ${options.company ? `<p><strong>Company:</strong> ${options.company}</p>` : ""}
-      <pre style="white-space:pre-wrap;font-family:inherit">${options.message}</pre>
+      <p>${message}</p>
+      <p>This is an automated response. We will review your message shortly.</p>
     `,
-    replyTo: options.email,
+    text: message,
   })
 }
 
-export async function sendAutoReply(options: {
-  to: string
-  from: { email: string; name?: string }
-  subject: string
-  workspace: string
-  body: string
-}) {
+// Helper: Send mail route notification for form submissions
+export async function sendMailRouteNotification(
+  to: string,
+  subject: string,
+  body: string,
+  formType: 'contact' | 'quote' | 'signup' | 'subscribe'
+): Promise<SendEmailResult> {
+  const typeLabel = {
+    contact: 'Contact Form',
+    quote: 'Quote Request',
+    signup: 'Signup',
+    subscribe: 'Newsletter Signup',
+  }[formType]
+
   return sendEmail({
-    to: options.to,
-    from: `${options.from.name || options.workspace} <${options.from.email}>`,
-    subject: options.subject,
-    text: options.body,
+    to,
+    subject: `${typeLabel} Submission: ${subject}`,
     html: `
-      <h1>${options.workspace}</h1>
-      <pre style="white-space:pre-wrap;font-family:inherit">${options.body}</pre>
+      <h2>${typeLabel} Received</h2>
+      <p>${body}</p>
+      <p>Review this submission in the admin dashboard.</p>
     `,
+    text: `${typeLabel}: ${body}`,
   })
 }
