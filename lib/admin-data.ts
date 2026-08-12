@@ -117,6 +117,13 @@ export const mailRouteMatrix = [
     provider: "Cloudflare Email Routing → HostGator inboxes",
   },
   {
+    purpose: "Gearswipe checkout support",
+    address: "orders@gearswipe.com",
+    route: "Gearswipe / support",
+    targets: "orders@gearswipe.com, ops@gearswipe.com",
+    provider: "Cloudflare Email Routing → HostGator inboxes",
+  },
+  {
     purpose: "Gearswipe quotes",
     address: "quotes@gearswipe.com",
     route: "Gearswipe / quote",
@@ -142,6 +149,13 @@ export const mailRouteMatrix = [
     address: "admin@goldshore.ai",
     route: "Gold Shore / auth",
     targets: "admin@goldshore.ai, ops@goldshore.ai",
+    provider: "Cloudflare Email Routing → HostGator inboxes",
+  },
+  {
+    purpose: "Gold Shore checkout support",
+    address: "orders@goldshore.ai",
+    route: "Gold Shore / support",
+    targets: "orders@goldshore.ai, ops@goldshore.ai",
     provider: "Cloudflare Email Routing → HostGator inboxes",
   },
 ] as const;

@@ -1,0 +1,13 @@
+name = "gearswipe"
+type = "service"
+main = "worker/index.ts"
+compatibility_date = "2025-08-08"
+compatibility_flags = ["nodejs_compat"]
+
+# ⚠️  ALL CONFIGURATION IS IN THE CLOUDFLARE DASHBOARD
+#
+# Do NOT add routes, environment variables, or bindings here.
+# They are configured and managed entirely via:
+#   Cloudflare Dashboard → Workers & Pages → gearswipe
+#
+# For complete setup instructions, see DEPLOYMENT.md § Dashboard Configuration
