@@ -2,102 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
+import { StorefrontCatalog } from "../components/storefront-catalog";
 import { siteGraphLinks } from "../lib/admin-data";
-
-type Product = {
-  name: string;
-  category: string;
-  price: string;
-  copy: string;
-  cta: string;
-  tone: "buy" | "quote" | "secure";
-};
-
-const products: Product[] = [
-  {
-    name: "Custom PC Build",
-    category: "Configured systems",
-    price: "Quote on request",
-    copy:
-      "Choose gaming, CAD, or workstation intent and we’ll turn it into a clean build path with compatibility checks.",
-    cta: "Request a build quote",
-    tone: "quote",
-  },
-  {
-    name: "Windows 11 Pro Key",
-    category: "Digital delivery",
-    price: "From $5.49",
-    copy: "Fast digital activation with a checkout path that stays out of your way.",
-    cta: "Buy now",
-    tone: "buy",
-  },
-  {
-    name: "Antivirus Suite",
-    category: "Digital delivery",
-    price: "From $14.99",
-    copy: "Simple protection products for customers who want setup without friction.",
-    cta: "Buy now",
-    tone: "buy",
-  },
-  {
-    name: "YubiKey 5 NFC",
-    category: "Security hardware",
-    price: "From $25",
-    copy: "Authentication hardware for sign-ins, admin access, and device trust.",
-    cta: "Buy now",
-    tone: "secure",
-  },
-  {
-    name: "SSD + RAM Kit",
-    category: "Parts & upgrades",
-    price: "From $19.99",
-    copy: "A restrained catalog lane for useful upgrades, not a crowded parts warehouse.",
-    cta: "View kit",
-    tone: "buy",
-  },
-  {
-    name: "Meta Glasses",
-    category: "Consumer tech",
-    price: "From $299",
-    copy: "Premium connected gear that sits comfortably beside the core store mix.",
-    cta: "View details",
-    tone: "buy",
-  },
-];
-
-const collections = [
-  {
-    title: "Fixed-price inventory",
-    copy:
-      "Standard products move through normal add-to-cart checkout with clear pricing and quick delivery.",
-  },
-  {
-    title: "Configured products",
-    copy:
-      "Custom PC builds and quoted bundles move through inquiry, review, and approval instead of a fake price tag.",
-  },
-  {
-    title: "Rights-aware assets",
-    copy:
-      "Every image, spec sheet, and vendor asset can be tied to provenance, permissions, and expiry.",
-  },
-];
-
-const trustPoints = [
-  {
-    title: "Minimal, professional layout",
-    copy: "Clean type, straight borders, and a restrained cadence that reads like a serious retail brand.",
-  },
-  {
-    title: "Mobile-first structure",
-    copy: "The same system collapses cleanly on smaller screens without cramming the page.",
-  },
-  {
-    title: "Fast path to action",
-    copy: "Shop, quote, sign up, or log in without wandering through unnecessary pages.",
-  },
-];
+import { storeCollections, storeTrustPoints } from "../lib/store-catalog";
 
 function BrandMark() {
   return (
@@ -363,18 +271,6 @@ function MailForms() {
 }
 
 export default function HomePage() {
-  const [activeCategory, setActiveCategory] = useState("All");
-
-  const categories = useMemo(
-    () => ["All", ...new Set(products.map((product) => product.category))],
-    [],
-  );
-
-  const filteredProducts = useMemo(() => {
-    if (activeCategory === "All") return products;
-    return products.filter((product) => product.category === activeCategory);
-  }, [activeCategory]);
-
   return (
     <main className="min-h-screen bg-[#fbfbf8] text-[#111111]">
       <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-4 sm:px-6 lg:px-8">
@@ -400,6 +296,12 @@ export default function HomePage() {
                 className="border border-[#deded7] px-3 py-2 text-sm text-[#111111] transition hover:border-[#111111]"
               >
                 Sign up
+              </Link>
+              <Link
+                href="/cart"
+                className="border border-[#deded7] px-3 py-2 text-sm text-[#111111] transition hover:border-[#111111]"
+              >
+                Cart
               </Link>
               <Link
                 href="/login"
@@ -453,7 +355,7 @@ export default function HomePage() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
-              {trustPoints.map((item) => (
+              {storeTrustPoints.map((item) => (
                 <div key={item.title} className="border border-[#deded7] bg-white p-4">
                   <p className="text-sm font-medium text-[#111111]">{item.title}</p>
                   <p className="mt-2 text-sm leading-6 text-[#5f5f59]">{item.copy}</p>
@@ -496,86 +398,12 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="border-t border-[#deded7] py-8">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <SectionLabel>Collections</SectionLabel>
-              <h2 className="mt-2 text-3xl font-semibold tracking-[-0.05em] text-[#111111]">
-                Products that fit the store’s actual purpose.
-              </h2>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  onClick={() => setActiveCategory(category)}
-                  className={`border px-3 py-2 text-sm transition ${
-                    activeCategory === category
-                      ? "border-[#111111] bg-[#111111] text-white"
-                      : "border-[#deded7] bg-white text-[#111111] hover:border-[#111111]"
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {filteredProducts.map((product) => (
-              <article key={product.name} className="flex h-full flex-col border border-[#deded7] bg-white p-4">
-                <div className="flex items-center justify-between gap-3 border-b border-[#ededeb] pb-3">
-                  <span className="border border-[#deded7] bg-[#fafaf8] px-2 py-1 text-[11px] uppercase tracking-[0.28em] text-[#5f5f59]">
-                    {product.category}
-                  </span>
-                  <span
-                    className={`text-xs uppercase tracking-[0.28em] ${
-                      product.tone === "quote"
-                        ? "text-[#8a5a14]"
-                        : product.tone === "secure"
-                          ? "text-[#1c5536]"
-                          : "text-[#5f5f59]"
-                    }`}
-                  >
-                    {product.tone === "quote" ? "Build" : product.tone === "secure" ? "Secure" : "Ready"}
-                  </span>
-                </div>
-
-                <div className="flex flex-1 flex-col justify-between gap-4 pt-4">
-                  <div>
-                    <h3 className="text-xl font-medium text-[#111111]">{product.name}</h3>
-                    <p className="mt-2 text-sm leading-7 text-[#5f5f59]">{product.copy}</p>
-                  </div>
-
-                  <div className="flex items-end justify-between gap-3 border-t border-[#ededeb] pt-4">
-                    <div>
-                      <p className="text-[11px] uppercase tracking-[0.35em] text-[#7a7a74]">
-                        {product.tone === "quote" ? "Pricing" : "From"}
-                      </p>
-                      <p className="text-2xl font-semibold text-[#111111]">{product.price}</p>
-                    </div>
-                    {product.tone === "quote" ? (
-                      <Link
-                        href="/build/custom-pc"
-                        className="border border-[#111111] px-3 py-2 text-sm font-medium text-[#111111] transition hover:bg-[#111111] hover:text-white"
-                      >
-                        {product.cta}
-                      </Link>
-                    ) : (
-                      <button
-                        type="button"
-                        className="border border-[#111111] px-3 py-2 text-sm font-medium text-[#111111] transition hover:bg-[#111111] hover:text-white"
-                      >
-                        {product.cta}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+        <StorefrontCatalog
+          eyebrow="Collections"
+          title="Products that fit the store's actual purpose."
+          description="Fixed-price products move through add-to-cart checkout, while custom systems stay on a quote path."
+          showCartSummary={false}
+        />
 
         <section className="grid gap-4 border-t border-[#deded7] py-8 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="border border-[#deded7] bg-white p-5 sm:p-6">
@@ -594,12 +422,12 @@ export default function HomePage() {
           <div className="border border-[#deded7] bg-[#fafaf8] p-5 sm:p-6">
             <SectionLabel>Collections</SectionLabel>
             <div className="mt-3 grid gap-4">
-              {collections.map((collection) => (
-                <div key={collection.title} className="border border-[#deded7] bg-white p-4">
-                  <p className="text-base font-medium text-[#111111]">{collection.title}</p>
-                  <p className="mt-2 text-sm leading-7 text-[#5f5f59]">{collection.copy}</p>
-                </div>
-              ))}
+            {storeCollections.map((collection) => (
+              <div key={collection.title} className="border border-[#deded7] bg-white p-4">
+                <p className="text-base font-medium text-[#111111]">{collection.title}</p>
+                <p className="mt-2 text-sm leading-7 text-[#5f5f59]">{collection.copy}</p>
+              </div>
+            ))}
             </div>
           </div>
         </section>
