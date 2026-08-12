@@ -1,0 +1,9 @@
+Options -MultiViews
+RewriteEngine On
+
+# Preserve real files and directories.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# React/Vite SPA fallback for HostGator Apache.
+RewriteRule ^ index.html [QSA,L]

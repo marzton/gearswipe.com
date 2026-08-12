@@ -1,0 +1,20 @@
+{
+  "name": "gearswipe.com",
+  "version": "1.0.0",
+  "description": "GearSwipe storefront — Shopify + Cloudflare + HostGator",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "bash scripts/deploy-hostgator.sh"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "vite": "^latest"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
