@@ -131,3 +131,46 @@ export async function sendContactFormResponse(
     text: `Thank you for contacting ${siteName}. We'll be in touch soon.`,
   })
 }
+
+// Helper: Send auto-reply from worker
+export async function sendAutoReply(
+  to: string,
+  subject: string,
+  message: string
+): Promise<SendEmailResult> {
+  return sendEmail({
+    to,
+    subject: `Auto-reply: ${subject}`,
+    html: `
+      <p>${message}</p>
+      <p>This is an automated response. We will review your message shortly.</p>
+    `,
+    text: message,
+  })
+}
+
+// Helper: Send mail route notification for form submissions
+export async function sendMailRouteNotification(
+  to: string,
+  subject: string,
+  body: string,
+  formType: 'contact' | 'quote' | 'signup' | 'subscribe'
+): Promise<SendEmailResult> {
+  const typeLabel = {
+    contact: 'Contact Form',
+    quote: 'Quote Request',
+    signup: 'Signup',
+    subscribe: 'Newsletter Signup',
+  }[formType]
+
+  return sendEmail({
+    to,
+    subject: `${typeLabel} Submission: ${subject}`,
+    html: `
+      <h2>${typeLabel} Received</h2>
+      <p>${body}</p>
+      <p>Review this submission in the admin dashboard.</p>
+    `,
+    text: `${typeLabel}: ${body}`,
+  })
+}
