@@ -22,7 +22,16 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: ./.github/actions/checkout-repo
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          rm -rf "$GITHUB_WORKSPACE"/*
+          git init "$GITHUB_WORKSPACE"
+          git -C "$GITHUB_WORKSPACE" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          if ! git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_REF"; then
+            git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_SHA"
+          fi
+          git -C "$GITHUB_WORKSPACE" checkout --force FETCH_HEAD
 
       - name: Validate workflow files
         run: |
@@ -53,7 +62,16 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: ./.github/actions/checkout-repo
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          rm -rf "$GITHUB_WORKSPACE"/*
+          git init "$GITHUB_WORKSPACE"
+          git -C "$GITHUB_WORKSPACE" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          if ! git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_REF"; then
+            git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_SHA"
+          fi
+          git -C "$GITHUB_WORKSPACE" checkout --force FETCH_HEAD
 
       - name: Find outdated action versions
         run: |
@@ -73,7 +91,16 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: ./.github/actions/checkout-repo
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          rm -rf "$GITHUB_WORKSPACE"/*
+          git init "$GITHUB_WORKSPACE"
+          git -C "$GITHUB_WORKSPACE" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          if ! git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_REF"; then
+            git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_SHA"
+          fi
+          git -C "$GITHUB_WORKSPACE" checkout --force FETCH_HEAD
 
       - name: Verify minimal permissions
         run: |
@@ -97,7 +124,16 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: ./.github/actions/checkout-repo
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          rm -rf "$GITHUB_WORKSPACE"/*
+          git init "$GITHUB_WORKSPACE"
+          git -C "$GITHUB_WORKSPACE" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          if ! git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_REF"; then
+            git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_SHA"
+          fi
+          git -C "$GITHUB_WORKSPACE" checkout --force FETCH_HEAD
 
       - name: Verify workflow triggers
         run: |
