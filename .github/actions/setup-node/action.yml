@@ -1,0 +1,35 @@
+name: Setup Node.js
+description: Ensure a compatible Node.js runtime is available
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+
+        node_ok=0
+        if command -v node >/dev/null 2>&1; then
+          current="$(node -p 'process.versions.node')"
+          major="${current%%.*}"
+          rest="${current#*.}"
+          minor="${rest%%.*}"
+          patch="${current##*.}"
+          if [ "$major" -gt 22 ] || { [ "$major" -eq 22 ] && { [ "$minor" -gt 13 ] || { [ "$minor" -eq 13 ] && [ "$patch" -ge 0 ]; }; }; }; then
+            node_ok=1
+          fi
+        fi
+
+        if [ "$node_ok" -eq 0 ]; then
+          version="22.13.0"
+          arch="linux-x64"
+          tarball="node-v${version}-${arch}.tar.xz"
+          url="https://nodejs.org/dist/v${version}/${tarball}"
+          tmpdir="$(mktemp -d)"
+          curl -fsSL "$url" -o "$tmpdir/$tarball"
+          mkdir -p "$tmpdir/node"
+          tar -xJf "$tmpdir/$tarball" -C "$tmpdir/node" --strip-components=1
+          echo "$tmpdir/node/bin" >> "$GITHUB_PATH"
+        fi
+
+        node -v
+        npm -v
