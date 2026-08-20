@@ -1,4 +1,20 @@
-export default {
+type ValidationRule = {
+  required(): ValidationRule
+}
+
+type AssetPreviewSelection = {
+  media?: unknown
+  title?: string
+  status?: string
+}
+
+type AssetHiddenContext = {
+  parent?: {
+    attributionRequired?: boolean
+  }
+}
+
+const asset = {
   name: 'asset',
   title: 'Product Assets & Licensing',
   type: 'document',
@@ -10,7 +26,7 @@ export default {
       options: {
         hotspot: true,
       },
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule: ValidationRule) => Rule.required(),
     },
     {
       name: 'assetType',
@@ -29,7 +45,7 @@ export default {
           { title: 'Customer Delivery', value: 'customer_delivery' },
         ],
       },
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule: ValidationRule) => Rule.required(),
     },
     {
       name: 'provenance',
@@ -49,7 +65,7 @@ export default {
               { title: 'Customer Submitted', value: 'customer' },
             ],
           },
-          validation: (Rule: any) => Rule.required(),
+          validation: (Rule: ValidationRule) => Rule.required(),
         },
         {
           name: 'creator',
@@ -65,7 +81,7 @@ export default {
           name: 'acquisitionDate',
           title: 'Acquisition Date',
           type: 'datetime',
-          validation: (Rule: any) => Rule.required(),
+          validation: (Rule: ValidationRule) => Rule.required(),
         },
       ],
     },
@@ -87,7 +103,7 @@ export default {
               { title: 'Vendor Specific', value: 'vendor_specific' },
             ],
           },
-          validation: (Rule: any) => Rule.required(),
+          validation: (Rule: ValidationRule) => Rule.required(),
         },
         {
           name: 'allowedUses',
@@ -105,7 +121,7 @@ export default {
           name: 'attributionText',
           title: 'Attribution Text',
           type: 'string',
-          hidden: ({ parent }: any) => !parent?.attributionRequired,
+        hidden: ({ parent }: AssetHiddenContext) => !parent?.attributionRequired,
         },
         {
           name: 'restrictedGeographies',
@@ -155,7 +171,7 @@ export default {
           { title: 'Archived', value: 'archived' },
         ],
       },
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule: ValidationRule) => Rule.required(),
     },
     {
       name: 'statusReason',
@@ -190,7 +206,7 @@ export default {
       title: 'assetType',
       status: 'status',
     },
-    prepare(selection: any) {
+    prepare(selection: AssetPreviewSelection) {
       return {
         media: selection.media,
         title: selection.title,
@@ -199,3 +215,5 @@ export default {
     },
   },
 }
+
+export default asset

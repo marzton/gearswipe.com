@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import type { JWT } from "next-auth/jwt";
+import type { Session, User } from "next-auth";
 
 const DEFAULT_ADMIN_EMAIL =
   process.env.GEARSWIPE_ADMIN_EMAIL?.trim() || "admin@gearswipe.com";
@@ -11,28 +12,12 @@ const AUTH_SECRET =
   process.env.NEXTAUTH_SECRET?.trim() ||
   "gearswipe-local-auth-secret";
 
-// Lazy load database to avoid connection issues in edge runtime
-let db: any = null;
-
-async function getDb() {
-  if (!db) {
-    try {
-      const { db: database } = await import("./db");
-      db = database;
-    } catch (error) {
-      console.warn("Database not available, using JWT session strategy");
-    }
-  }
-  return db;
-}
-
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: AUTH_SECRET,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
   },
-  adapter: undefined, // Will be set conditionally in callbacks if DB available
   providers: [
     Credentials({
       credentials: {
@@ -53,20 +38,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: email,
           email,
           role: "admin",
-        };
+        } satisfies User;
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: JWT; user?: User }) {
       if (user) {
-        token.name = user.name;
-        token.email = user.email;
+        token.name = user.name ?? token.name;
+        token.email = user.email ?? token.email;
         token.role = "admin";
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
         session.user.name = token.name ?? session.user.name;
         session.user.email = token.email ?? session.user.email;

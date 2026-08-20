@@ -1,4 +1,13 @@
-export default {
+type ValidationRule = {
+  required(): ValidationRule
+}
+
+type VendorPreviewSelection = {
+  title?: string
+  status?: string
+}
+
+const vendor = {
   name: 'vendor',
   title: 'Vendors & Partners',
   type: 'document',
@@ -7,7 +16,7 @@ export default {
       name: 'companyName',
       title: 'Company Name',
       type: 'string',
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule: ValidationRule) => Rule.required(),
     },
     {
       name: 'vendorType',
@@ -23,7 +32,7 @@ export default {
           { title: 'Supplier', value: 'supplier' },
         ],
       },
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule: ValidationRule) => Rule.required(),
     },
     {
       name: 'website',
@@ -118,7 +127,7 @@ export default {
           { title: 'Rejected', value: 'rejected' },
         ],
       },
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule: ValidationRule) => Rule.required(),
     },
     {
       name: 'permissions',
@@ -192,7 +201,7 @@ export default {
       title: 'companyName',
       status: 'relationshipStatus',
     },
-    prepare(selection: any) {
+    prepare(selection: VendorPreviewSelection) {
       return {
         title: selection.title,
         subtitle: `Status: ${selection.status}`,
@@ -200,3 +209,5 @@ export default {
     },
   },
 }
+
+export default vendor

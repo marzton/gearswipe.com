@@ -1,5 +1,4 @@
 name = "gearswipe"
-type = "service"
 main = "worker/index.ts"
 compatibility_date = "2025-08-08"
 compatibility_flags = ["nodejs_compat"]

@@ -239,17 +239,7 @@ function StatusIndicator({ status }: { status: string }) {
   )
 }
 
-function WorkflowStep({
-  status,
-  label,
-  active,
-  completed,
-}: {
-  status: string
-  label: string
-  active: boolean
-  completed?: boolean
-}) {
+function WorkflowStep({ label, active, completed }: { label: string; active: boolean; completed?: boolean }) {
   return (
     <div className={`flex items-center gap-3 p-2 rounded transition ${active ? 'bg-purple-600/30 border border-purple-500' : 'text-gray-500'}`}>
       <div
