@@ -118,13 +118,13 @@ jobs:
         run: |
           echo "Scanning for hardcoded secrets..."
 
-          if grep -r "\${{ secrets\." .github/workflows/ > /dev/null 2>&1; then
-            echo "ℹ️  Secrets are properly referenced via \${{ secrets.* }}"
+          if grep -r 'secrets\.' .github/workflows/ | grep -q '\$'; then
+            echo "ℹ️  Secrets are properly referenced via GitHub Actions expressions"
           fi
 
           # Check for common secret patterns
           if grep -rE "password|token|key|secret" .github/workflows/ | \
-             grep -v "\${{ secrets" | \
+             grep -v 'secrets\.' | \
              grep -v "# " | \
              grep -v "GITHUB_TOKEN"; then
             echo "⚠️  Potential hardcoded credentials detected. Review manually."
