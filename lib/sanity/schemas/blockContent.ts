@@ -1,4 +1,8 @@
-export default {
+type ValidationRule = {
+  required(): ValidationRule
+}
+
+const blockContent = {
   name: 'blockContent',
   title: 'Block Content',
   type: 'array',
@@ -48,7 +52,7 @@ export default {
           name: 'alt',
           type: 'string',
           title: 'Alternative text',
-          validation: (Rule: any) => Rule.required(),
+          validation: (Rule: ValidationRule) => Rule.required(),
         },
         {
           name: 'caption',
@@ -59,3 +63,5 @@ export default {
     },
   ],
 }
+
+export default blockContent

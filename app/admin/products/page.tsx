@@ -1,8 +1,27 @@
 import React from 'react'
 import Link from 'next/link'
 
+type HeroImageStatus =
+  | 'submitted'
+  | 'rights_unknown'
+  | 'source_verified'
+  | 'license_reviewed'
+  | 'approved'
+  | 'published'
+
+type Product = {
+  id: string
+  sku: string
+  name: string
+  category: string
+  price: number
+  heroImageStatus: HeroImageStatus | null
+  published: boolean
+  vendor: string | null
+}
+
 // Mock product data
-const mockProducts = [
+const mockProducts: Product[] = [
   {
     id: '1',
     sku: 'PC-GAMING-001',
@@ -142,8 +161,8 @@ export default function ProductsPage() {
       <div className="border border-gray-800 rounded-lg p-4 bg-gray-900/50 text-sm text-gray-400">
         <p className="font-semibold text-gray-300 mb-2">Publishing Rules:</p>
         <ul className="space-y-1 text-xs">
-          <li>✓ Can only publish if hero image status is "approved"</li>
-          <li>✓ Cannot publish if hero image status is "rights_unknown" or "submitted"</li>
+          <li>✓ Can only publish if hero image status is &quot;approved&quot;</li>
+          <li>✓ Cannot publish if hero image status is &quot;rights_unknown&quot; or &quot;submitted&quot;</li>
           <li>✓ Cannot publish if hero image is expired</li>
         </ul>
       </div>
@@ -151,8 +170,8 @@ export default function ProductsPage() {
   )
 }
 
-function HeroImageBadge({ status }: { status: string }) {
-  const colors: { [key: string]: string } = {
+function HeroImageBadge({ status }: { status: HeroImageStatus }) {
+  const colors: Record<HeroImageStatus, string> = {
     submitted: 'bg-blue-500/20 text-blue-400',
     rights_unknown: 'bg-red-500/20 text-red-400',
     source_verified: 'bg-cyan-500/20 text-cyan-400',

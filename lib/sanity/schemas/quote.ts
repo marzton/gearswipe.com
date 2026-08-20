@@ -1,4 +1,15 @@
-export default {
+type ValidationRule = {
+  required(): ValidationRule
+  unique(): ValidationRule
+}
+
+type QuotePreviewSelection = {
+  quoteNum?: string
+  customer?: string
+  status?: string
+}
+
+const quote = {
   name: 'quote',
   title: 'Build Quotes & Orders',
   type: 'document',
@@ -8,13 +19,13 @@ export default {
       title: 'Build Configuration',
       type: 'reference',
       to: [{ type: 'buildConfiguration' }],
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule: ValidationRule) => Rule.required(),
     },
     {
       name: 'quoteNumber',
       title: 'Quote Number',
       type: 'string',
-      validation: (Rule: any) => Rule.unique(),
+      validation: (Rule: ValidationRule) => Rule.unique(),
       description: 'Auto-generated or manual reference',
     },
     {
@@ -26,13 +37,13 @@ export default {
           name: 'name',
           title: 'Full Name',
           type: 'string',
-          validation: (Rule: any) => Rule.required(),
+          validation: (Rule: ValidationRule) => Rule.required(),
         },
         {
           name: 'email',
           title: 'Email',
           type: 'email',
-          validation: (Rule: any) => Rule.required(),
+          validation: (Rule: ValidationRule) => Rule.required(),
         },
         {
           name: 'phone',
@@ -122,7 +133,7 @@ export default {
           { title: 'Completed', value: 'completed' },
         ],
       },
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule: ValidationRule) => Rule.required(),
     },
     {
       name: 'billOfMaterials',
@@ -273,7 +284,7 @@ export default {
       customer: 'customer.name',
       status: 'status',
     },
-    prepare(selection: any) {
+    prepare(selection: QuotePreviewSelection) {
       return {
         title: `Quote ${selection.quoteNum} - ${selection.customer}`,
         subtitle: `Status: ${selection.status}`,
@@ -281,3 +292,5 @@ export default {
     },
   },
 }
+
+export default quote
