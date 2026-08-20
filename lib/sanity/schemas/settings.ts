@@ -1,4 +1,8 @@
-export default {
+type ValidationRule = {
+  required(): ValidationRule
+}
+
+const settings = {
   name: 'settings',
   title: 'Settings',
   type: 'document',
@@ -7,7 +11,7 @@ export default {
       name: 'title',
       title: 'Site Title',
       type: 'string',
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule: ValidationRule) => Rule.required(),
     },
     {
       name: 'description',
@@ -114,3 +118,5 @@ export default {
     },
   ],
 }
+
+export default settings

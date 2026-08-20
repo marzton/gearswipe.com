@@ -1,4 +1,15 @@
-export default {
+type ValidationRule = {
+  required(): ValidationRule
+  unique(): ValidationRule
+}
+
+type ProductPreviewSelection = {
+  title?: string
+  sku?: string
+  image?: unknown
+}
+
+const product = {
   name: 'product',
   title: 'Products',
   type: 'document',
@@ -7,13 +18,13 @@ export default {
       name: 'sku',
       title: 'SKU',
       type: 'string',
-      validation: (Rule: any) => Rule.required().unique(),
+      validation: (Rule: ValidationRule) => Rule.required().unique(),
     },
     {
       name: 'name',
       title: 'Product Name',
       type: 'string',
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule: ValidationRule) => Rule.required(),
     },
     {
       name: 'description',
@@ -32,7 +43,7 @@ export default {
           { title: 'Configured', value: 'configured' },
         ],
       },
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule: ValidationRule) => Rule.required(),
     },
     {
       name: 'category',
@@ -119,7 +130,7 @@ export default {
       sku: 'sku',
       image: 'heroImage',
     },
-    prepare(selection: any) {
+    prepare(selection: ProductPreviewSelection) {
       return {
         title: `${selection.sku} - ${selection.title}`,
         media: selection.image,
@@ -127,3 +138,5 @@ export default {
     },
   },
 }
+
+export default product

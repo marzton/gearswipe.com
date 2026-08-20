@@ -12,7 +12,11 @@ interface PortableTextBlock {
   }>
   listItem?: string
   level?: number
-  markDefs?: any[]
+  markDefs?: Array<{
+    _key?: string
+    _type?: string
+    href?: string
+  }>
   asset?: {
     url?: string
     metadata?: {
@@ -52,6 +56,8 @@ export default function PortableTextRenderer({ blocks }: PortableTextProps) {
         if (block._type === 'image' && block.asset?.url) {
           return (
             <figure key={idx} className="my-6">
+              {/* Sanity image URLs can be remote and are not preconfigured for next/image here. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={block.asset.url}
                 alt={block.alt || 'Content image'}
