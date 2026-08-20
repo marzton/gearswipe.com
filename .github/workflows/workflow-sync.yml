@@ -22,7 +22,16 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          rm -rf "$GITHUB_WORKSPACE"/*
+          git init "$GITHUB_WORKSPACE"
+          git -C "$GITHUB_WORKSPACE" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          if ! git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_REF"; then
+            git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_SHA"
+          fi
+          git -C "$GITHUB_WORKSPACE" checkout --force FETCH_HEAD
 
       - name: Validate workflow files
         run: |
@@ -53,7 +62,16 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          rm -rf "$GITHUB_WORKSPACE"/*
+          git init "$GITHUB_WORKSPACE"
+          git -C "$GITHUB_WORKSPACE" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          if ! git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_REF"; then
+            git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_SHA"
+          fi
+          git -C "$GITHUB_WORKSPACE" checkout --force FETCH_HEAD
 
       - name: Find outdated action versions
         run: |
@@ -73,7 +91,16 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          rm -rf "$GITHUB_WORKSPACE"/*
+          git init "$GITHUB_WORKSPACE"
+          git -C "$GITHUB_WORKSPACE" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          if ! git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_REF"; then
+            git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_SHA"
+          fi
+          git -C "$GITHUB_WORKSPACE" checkout --force FETCH_HEAD
 
       - name: Verify minimal permissions
         run: |
@@ -97,7 +124,16 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          rm -rf "$GITHUB_WORKSPACE"/*
+          git init "$GITHUB_WORKSPACE"
+          git -C "$GITHUB_WORKSPACE" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          if ! git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_REF"; then
+            git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_SHA"
+          fi
+          git -C "$GITHUB_WORKSPACE" checkout --force FETCH_HEAD
 
       - name: Verify workflow triggers
         run: |
@@ -118,13 +154,13 @@ jobs:
         run: |
           echo "Scanning for hardcoded secrets..."
 
-          if grep -r "\${{ secrets\." .github/workflows/ > /dev/null 2>&1; then
-            echo "ℹ️  Secrets are properly referenced via \${{ secrets.* }}"
+          if grep -r 'secrets\.' .github/workflows/ | grep -q '\$'; then
+            echo "ℹ️  Secrets are properly referenced via GitHub Actions expressions"
           fi
 
           # Check for common secret patterns
           if grep -rE "password|token|key|secret" .github/workflows/ | \
-             grep -v "\${{ secrets" | \
+             grep -v 'secrets\.' | \
              grep -v "# " | \
              grep -v "GITHUB_TOKEN"; then
             echo "⚠️  Potential hardcoded credentials detected. Review manually."
