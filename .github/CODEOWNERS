@@ -4,4 +4,7 @@
 # Deployment and security-sensitive paths
 .github/ @marzton
 SECURITY.md @marzton
+DEPLOYMENT.md @marzton
 wrangler.toml @marzton
+wrangler.quote-api.toml @marzton
+worker/ @marzton

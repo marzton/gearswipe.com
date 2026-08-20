@@ -1,0 +1,156 @@
+name: Auto-Fix Issues
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  autofix:
+    name: Fix linting and formatting issues
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          rm -rf "$GITHUB_WORKSPACE"/*
+          git init "$GITHUB_WORKSPACE"
+          git -C "$GITHUB_WORKSPACE" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          if ! git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_REF"; then
+            git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_SHA"
+          fi
+          git -C "$GITHUB_WORKSPACE" checkout --force FETCH_HEAD
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint with autofix
+        run: |
+          npm run lint -- --fix || true
+          echo "ESLint autofix completed"
+
+      - name: Check for changes
+        id: check-changes
+        run: |
+          if git diff --quiet; then
+            echo "has-changes=false" >> $GITHUB_OUTPUT
+            echo "No changes to commit"
+          else
+            echo "has-changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected, will create PR"
+            git diff --stat
+          fi
+
+      - name: Create Pull Request with fixes
+        if: steps.check-changes.outputs.has-changes == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          branch="chore/autofix-linting"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$branch"
+          git add -A
+          git commit -m "chore: fix linting and formatting issues"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin "$branch"
+
+          if [ "$(gh pr list --head "$branch" --state open --json number --jq 'length')" -eq 0 ]; then
+            body=$'## Automated Linting Fixes\n\nThis PR automatically fixes linting and formatting issues found in the codebase.\n\n**What was fixed**:\n- ESLint auto-fixable issues\n- Code formatting inconsistencies\n\n**No functional changes** - purely style and formatting corrections.\n\n**Action**: Review and merge when satisfied with changes.'
+            gh pr create \
+              --base main \
+              --head "$branch" \
+              --title "chore: auto-fix linting issues" \
+              --body "$body" \
+              --label chore \
+              --label automated
+          fi
+
+  detect-bugs:
+    name: Detect potential bugs
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          rm -rf "$GITHUB_WORKSPACE"/*
+          git init "$GITHUB_WORKSPACE"
+          git -C "$GITHUB_WORKSPACE" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          if ! git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_REF"; then
+            git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_SHA"
+          fi
+          git -C "$GITHUB_WORKSPACE" checkout --force FETCH_HEAD
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify build succeeds
+        run: npm run build
+
+      - name: Check for common bug patterns
+        run: |
+          echo "Scanning for potential bugs..."
+
+          # Check for unhandled promises
+          if grep -r "async\|await\|\.then\|\.catch" app/ lib/ --include="*.ts" --include="*.tsx" | \
+             grep -v "// " | grep -v "/\* " | grep -v "catch" > /dev/null 2>&1; then
+            echo "ℹ️  Found async/await patterns. Verify error handling."
+          fi
+
+          # Check for any errors in production code
+          if grep -r "throw new Error" app/ lib/ --include="*.ts" --include="*.tsx" | \
+             grep -v "// " | grep -v "test" > /dev/null 2>&1; then
+            echo "ℹ️  Found explicit error throws. Verify error handling is appropriate."
+          fi
+
+          echo "✅ Bug scan complete"
+
+  type-check:
+    name: TypeScript type checking
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          rm -rf "$GITHUB_WORKSPACE"/*
+          git init "$GITHUB_WORKSPACE"
+          git -C "$GITHUB_WORKSPACE" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          if ! git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_REF"; then
+            git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_SHA"
+          fi
+          git -C "$GITHUB_WORKSPACE" checkout --force FETCH_HEAD
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript compiler
+        run: npx tsc --noEmit
+
+      - name: Report type check results
+        if: always()
+        run: echo "✅ TypeScript type checking complete"

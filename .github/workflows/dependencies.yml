@@ -1,0 +1,85 @@
+name: Dependencies
+
+on:
+  schedule:
+    # Run weekly on Mondays at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-lockfile:
+    name: Update lockfile and audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          rm -rf "$GITHUB_WORKSPACE"/*
+          git init "$GITHUB_WORKSPACE"
+          git -C "$GITHUB_WORKSPACE" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          if ! git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_REF"; then
+            git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_SHA"
+          fi
+          git -C "$GITHUB_WORKSPACE" checkout --force FETCH_HEAD
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Update npm to latest
+        run: npm install -g npm@latest
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=moderate || true
+
+      - name: Update lockfile (if outdated)
+        run: |
+          npm install --package-lock-only
+          if git diff --quiet package-lock.json; then
+            echo "Lockfile is up to date"
+          else
+            echo "Lockfile was updated"
+          fi
+
+      - name: Verify build still works
+        run: npm run build
+
+      - name: Publish dependency update PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          branch="chore/update-dependencies"
+          if git diff --quiet; then
+            echo "No lockfile changes to publish"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$branch"
+          git add package-lock.json package.json
+          git commit -m "chore: update package-lock.json dependencies"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin "$branch"
+
+          if [ "$(gh pr list --head "$branch" --state open --json number --jq 'length')" -eq 0 ]; then
+            body=$'## Automated Dependency Update\n\nThis PR updates the lockfile to keep dependencies current and security patches applied.\n\n**Changes**:\n- Updated `package-lock.json`\n- Verified production build succeeds\n- Ran npm audit\n\n**Review checklist**:\n- [ ] Verify no breaking changes in dependencies\n- [ ] Test critical paths in application\n- [ ] Merge when ready'
+            gh pr create \
+              --base main \
+              --head "$branch" \
+              --title "chore: update package-lock.json" \
+              --body "$body" \
+              --label chore \
+              --label dependencies
+          fi
