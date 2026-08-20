@@ -18,16 +18,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4.2.2
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+        uses: ./.github/actions/checkout-repo
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4.4.0
-        with:
-          node-version: 22.13.0
-          cache: npm
+        uses: ./.github/actions/setup-node
 
       - name: Install dependencies
         run: npm ci
@@ -51,30 +45,30 @@ jobs:
 
       - name: Create Pull Request with fixes
         if: steps.check-changes.outputs.has-changes == 'true'
-        uses: peter-evans/create-pull-request@v6.1.0
-        with:
-          commit-message: |
-            chore: fix linting and formatting issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
 
-            - Ran ESLint with --fix flag
-            - Auto-corrected formatting issues
-            - No functional code changes
-          title: 'chore: auto-fix linting issues'
-          body: |
-            ## Automated Linting Fixes
+          branch="chore/autofix-linting"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$branch"
+          git add -A
+          git commit -m "chore: fix linting and formatting issues"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin "$branch"
 
-            This PR automatically fixes linting and formatting issues found in the codebase.
-
-            **What was fixed**:
-            - ESLint auto-fixable issues
-            - Code formatting inconsistencies
-
-            **No functional changes** — purely style and formatting corrections.
-
-            **Action**: Review and merge when satisfied with changes.
-          branch: chore/autofix-linting
-          delete-branch: true
-          labels: 'chore,automated'
+          if [ "$(gh pr list --head "$branch" --state open --json number --jq 'length')" -eq 0 ]; then
+            body=$'## Automated Linting Fixes\n\nThis PR automatically fixes linting and formatting issues found in the codebase.\n\n**What was fixed**:\n- ESLint auto-fixable issues\n- Code formatting inconsistencies\n\n**No functional changes** - purely style and formatting corrections.\n\n**Action**: Review and merge when satisfied with changes.'
+            gh pr create \
+              --base main \
+              --head "$branch" \
+              --title "chore: auto-fix linting issues" \
+              --body "$body" \
+              --label chore \
+              --label automated
+          fi
 
   detect-bugs:
     name: Detect potential bugs
@@ -83,13 +77,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4.2.2
+        uses: ./.github/actions/checkout-repo
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4.4.0
-        with:
-          node-version: 22.13.0
-          cache: npm
+        uses: ./.github/actions/setup-node
 
       - name: Install dependencies
         run: npm ci
@@ -122,13 +113,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4.2.2
+        uses: ./.github/actions/checkout-repo
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4.4.0
-        with:
-          node-version: 22.13.0
-          cache: npm
+        uses: ./.github/actions/setup-node
 
       - name: Install dependencies
         run: npm ci

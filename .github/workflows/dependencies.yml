@@ -18,15 +18,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4.2.2
-        with:
-          fetch-depth: 0
+        uses: ./.github/actions/checkout-repo
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4.4.0
-        with:
-          node-version: 22.13.0
-          cache: npm
+        uses: ./.github/actions/setup-node
 
       - name: Update npm to latest
         run: npm install -g npm@latest
@@ -49,25 +44,33 @@ jobs:
       - name: Verify build still works
         run: npm run build
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6.1.0
-        with:
-          commit-message: 'chore: update package-lock.json dependencies'
-          title: 'chore: update package-lock.json'
-          body: |
-            ## Automated Dependency Update
+      - name: Publish dependency update PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
 
-            This PR updates the lockfile to ensure dependencies are current and security patches are applied.
+          branch="chore/update-dependencies"
+          if git diff --quiet; then
+            echo "No lockfile changes to publish"
+            exit 0
+          fi
 
-            **Changes**:
-            - Updated `package-lock.json`
-            - Verified production build succeeds
-            - Ran npm audit
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$branch"
+          git add package-lock.json package.json
+          git commit -m "chore: update package-lock.json dependencies"
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin "$branch"
 
-            **Review checklist**:
-            - [ ] Verify no breaking changes in dependencies
-            - [ ] Test critical paths in application
-            - [ ] Merge when ready
-          branch: chore/update-dependencies
-          delete-branch: true
-          labels: 'chore,dependencies'
+          if [ "$(gh pr list --head "$branch" --state open --json number --jq 'length')" -eq 0 ]; then
+            body=$'## Automated Dependency Update\n\nThis PR updates the lockfile to keep dependencies current and security patches applied.\n\n**Changes**:\n- Updated `package-lock.json`\n- Verified production build succeeds\n- Ran npm audit\n\n**Review checklist**:\n- [ ] Verify no breaking changes in dependencies\n- [ ] Test critical paths in application\n- [ ] Merge when ready'
+            gh pr create \
+              --base main \
+              --head "$branch" \
+              --title "chore: update package-lock.json" \
+              --body "$body" \
+              --label chore \
+              --label dependencies
+          fi
