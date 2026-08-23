@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { comparisons, products } from "@/db/gearswipe-schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 export async function GET(
   request: Request,
@@ -18,13 +18,11 @@ export async function GET(
     }
 
     const comp = comparison[0];
-    const productIds = JSON.parse(comp.productIds || "[]");
+    const productIds = JSON.parse(comp.productIds || "[]") as string[];
 
-    // Fetch all products in this comparison
-    const comparedProducts = await db
-      .select()
-      .from(products)
-      .where(products.id.in(productIds));
+    const comparedProducts = productIds.length
+      ? await db.select().from(products).where(inArray(products.id, productIds))
+      : [];
 
     return Response.json({
       ...comp,
