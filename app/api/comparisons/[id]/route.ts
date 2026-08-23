@@ -1,4 +1,4 @@
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { comparisons, products } from "@/db/gearswipe-schema";
 import { eq, inArray } from "drizzle-orm";
 
@@ -7,6 +7,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const db = getDb();
     const comparison = await db
       .select()
       .from(comparisons)
