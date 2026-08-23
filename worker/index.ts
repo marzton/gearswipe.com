@@ -8,8 +8,6 @@ import { LANDING_PAGE_HTML } from "./landing-page";
 
 export { GearSwipeProductResearchWorkflow } from "./workflows/product-research";
 
-export { GearSwipeProductResearchWorkflow } from "./workflows/product-research";
-
 interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
