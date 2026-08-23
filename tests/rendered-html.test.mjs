@@ -27,21 +27,21 @@ async function render() {
   );
 }
 
-test("server-renders the Gearswipe landing page", async (t) => {
+test("serves the GearSwipe landing page at /", async (t) => {
   try {
     const response = await render();
     assert.equal(response.status, 200);
     assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
     const html = await response.text();
-    assert.match(html, /<title>Gearswipe — Minimal Tech Store<\/title>/i);
+    assert.match(html, /<title>GearSwipe — Quality survives the swipe\.<\/title>/i);
+    assert.match(html, /Quality survives the swipe\./i);
     assert.match(
       html,
-      /Gearswipe is a minimal storefront for custom PC builds/i,
+      /We find products worth owning, test what marketing doesn't/i,
     );
-    assert.match(html, /A minimal tech store for products, builds, and trusted gear/i);
-    assert.match(html, /Shop products/i);
-    assert.match(html, /Standalone brand\. Clean presentation\./i);
+    assert.match(html, /Current field test/i);
+    assert.match(html, /Explore field tests/i);
     assert.doesNotMatch(html, /codex-preview|react-loading-skeleton|Your site is taking shape|instruction/i);
   } catch (error) {
     if (error.code === 'ERR_UNSUPPORTED_ESM_URL_SCHEME' && error.message.includes('cloudflare:')) {
