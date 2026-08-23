@@ -4,7 +4,7 @@ import test from "node:test";
 
 const templateRoot = new URL("../", import.meta.url);
 const pagePath = new URL("../app/page.tsx", import.meta.url);
-const layoutPath = new URL("../app/layout.tsx", import.meta.url);
+const storePagePath = new URL("../app/store/page.tsx", import.meta.url);
 
 async function render() {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
@@ -53,12 +53,14 @@ test("serves the GearSwipe landing page at /", async (t) => {
 });
 
 test("keeps the current site free of starter skeleton fixtures", async () => {
-  const [page, layout] = await Promise.all([
+  const [page, storePage] = await Promise.all([
     readFile(pagePath, "utf8"),
-    readFile(layoutPath, "utf8"),
+    readFile(storePagePath, "utf8"),
   ]);
 
-  assert.match(page, /A minimal tech store for products, builds, and trusted gear/i);
-  assert.match(layout, /Gearswipe — Minimal Tech Store/i);
+  assert.match(page, /Quality survives the swipe\./i);
+  // The storefront home this route replaced still lives at /store, and is the
+  // only UI for the contact form the mail worker routes into.
+  assert.match(storePage, /A minimal tech store for products, builds, and trusted gear/i);
   await assert.rejects(access(new URL("../app/_sites-preview", templateRoot)));
 });
