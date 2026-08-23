@@ -5,8 +5,6 @@ import { resolveMailRoute } from "../lib/mail-routing";
 import { sendAutoReply } from "../lib/email-service";
 import { storeMailSubmission } from "../lib/mail-store";
 
-export { GearSwipeProductResearchWorkflow } from "./workflows/product-research";
-
 interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
