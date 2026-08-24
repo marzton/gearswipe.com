@@ -83,19 +83,31 @@ const worker = {
     (globalThis as typeof globalThis & { __GEARSWIPE_ENV__?: Env }).__GEARSWIPE_ENV__ = env;
     const url = new URL(request.url);
 
-    if (url.pathname === "/_vinext/image") {
-      const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
-      const imageResponse = await handleImageOptimization(request, {
-        fetchAsset: (path) => env.ASSETS.fetch(new Request(new URL(path, request.url))),
-        transformImage: async (body, { width, format, quality }) => {
-          const result = await env.IMAGES.input(body).transform(width > 0 ? { width } : {}).output({ format, quality });
-          return result.response();
-        },
-      }, allowedWidths);
-      return withSecurityHeaders(imageResponse);
-    }
+    try {
+      if (url.pathname === "/_vinext/image") {
+        const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
+        const imageResponse = await handleImageOptimization(request, {
+          fetchAsset: (path) => env.ASSETS.fetch(new Request(new URL(path, request.url))),
+          transformImage: async (body, { width, format, quality }) => {
+            const result = await env.IMAGES.input(body).transform(width > 0 ? { width } : {}).output({ format, quality });
+            return result.response();
+          },
+        }, allowedWidths);
+        return withSecurityHeaders(imageResponse);
+      }
 
-    return withSecurityHeaders(await handler.fetch(request, env, ctx));
+      return withSecurityHeaders(await handler.fetch(request, env, ctx));
+    } catch (error) {
+      // Without this, anything thrown here reaches the client as Cloudflare
+      // error 1101 -- an opaque page with no way to tell what broke. Log the
+      // cause so `wrangler tail` still shows it, and answer with a status the
+      // caller can actually act on.
+      console.error(`Unhandled error serving ${url.pathname}:`, error);
+
+      return withSecurityHeaders(
+        Response.json({ error: "Service temporarily unavailable" }, { status: 503 }),
+      );
+    }
   },
 
   async email(message: {

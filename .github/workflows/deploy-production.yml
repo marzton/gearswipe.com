@@ -1,0 +1,44 @@
+name: Validate GearSwipe for Cloudflare
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "gearswipe-cloudflare-validation"
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Build and validate Worker bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test production build
+        run: npm test
+
+      - name: Validate GearSwipe Worker bundle
+        run: npx wrangler deploy --dry-run
+
+      - name: Deployment ownership note
+        run: |
+          echo "Production deployment is owned by the Cloudflare Git integration for the existing gearswipe Worker."
+          echo "This workflow intentionally does not deploy the retired quote Worker or a GitHub Pages fallback."
+          echo "Do not add npx wrangler deploy here until the dashboard-managed bindings are fully codified in wrangler.toml/jsonc."
