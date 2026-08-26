@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { adminLoginHint } from "@/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,19 +13,14 @@ export default function LoginPage() {
     const candidate = searchParams.get("next") || "/admin";
     return candidate.startsWith("/") ? candidate : "/admin";
   }, [searchParams]);
-  const [email, setEmail] = useState(adminLoginHint.email);
-  const [password, setPassword] = useState(adminLoginHint.password);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleGoogleSignIn() {
     setLoading(true);
     setError(null);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
+    const result = await signIn("google", {
       redirect: false,
       callbackUrl: nextPath,
     });
@@ -64,34 +58,11 @@ export default function LoginPage() {
               Sign in to Gearswipe
             </h1>
             <p className="mt-4 max-w-xl text-base leading-7 text-[#b4c0cf]">
-              Use the standard admin login to access products, vendor licensing, outreach,
-              and store operations. No external provider setup is required.
+              Sign in with an approved Google account to access products, vendor licensing,
+              research, and store operations.
             </p>
 
-            <form onSubmit={handleSubmit} className="mt-8 grid gap-4">
-              <label className="grid gap-2">
-                <span className="text-sm text-[#dbe4ee]">Username</span>
-                <input
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  className="border border-[#263246] bg-[#0f141c] px-4 py-3 text-base text-white outline-none transition placeholder:text-[#64768c] focus:border-[#6bb6ff]"
-                  autoComplete="email"
-                  placeholder="admin@gearswipe.com"
-                />
-              </label>
-
-              <label className="grid gap-2">
-                <span className="text-sm text-[#dbe4ee]">Password</span>
-                <input
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  type="password"
-                  className="border border-[#263246] bg-[#0f141c] px-4 py-3 text-base text-white outline-none transition placeholder:text-[#64768c] focus:border-[#6bb6ff]"
-                  autoComplete="current-password"
-                  placeholder="gearswipe-admin"
-                />
-              </label>
-
+            <div className="mt-8 grid gap-4">
               {error ? (
                 <p className="border border-[#7f2b2b] bg-[#201013] px-4 py-3 text-sm text-[#ffb6b6]">
                   {error}
@@ -100,11 +71,12 @@ export default function LoginPage() {
 
               <div className="flex flex-wrap gap-3 pt-2">
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleGoogleSignIn}
                   disabled={loading}
                   className="border border-[#6bb6ff] bg-[#6bb6ff] px-4 py-3 text-sm font-medium text-[#081018] transition hover:bg-[#89c7ff] disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  {loading ? "Signing in..." : "Sign in"}
+                  {loading ? "Signing in..." : "Continue with Google"}
                 </button>
                 <Link
                   href="/"
@@ -113,17 +85,11 @@ export default function LoginPage() {
                   Back to storefront
                 </Link>
               </div>
-            </form>
+            </div>
 
             <div className="mt-8 border-t border-[#263246] pt-5 text-sm leading-6 text-[#9aa9bb]">
-              <p>
-                Local fallback login: <span className="text-[#e8eef6]">admin@gearswipe.com</span> /{" "}
-                <span className="text-[#e8eef6]">gearswipe-admin</span>
-              </p>
-              <p className="mt-1">
-                You can change the credentials later with environment variables, but you do
-                not need to wire anything up right now.
-              </p>
+              OAuth and administrator allowlisting are required in production. If your account
+              is not approved, request access from the GearSwipe operator.
             </div>
           </div>
         </div>
