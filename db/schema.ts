@@ -92,3 +92,28 @@ export const vendorLicensingItems = sqliteTable("vendor_licensing_items", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+/** Reviewable operator jobs. AI output is evidence, never canonical truth. */
+export const researchJobs = sqliteTable("research_jobs", {
+  id: text("id").primaryKey(),
+  gsId: text("gs_id").notNull().default(""),
+  title: text("title").notNull(),
+  query: text("query").notNull(),
+  status: text("status").notNull().default("queued"),
+  requestedBy: text("requested_by").notNull(),
+  inputJson: text("input_json").notNull().default("{}"),
+  resultJson: text("result_json").notNull().default("{}"),
+  errorCode: text("error_code").notNull().default(""),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const researchEvidence = sqliteTable("research_evidence", {
+  id: text("id").primaryKey(),
+  jobId: text("job_id").notNull().references(() => researchJobs.id, { onDelete: "cascade" }),
+  sourceUrl: text("source_url").notNull().default(""),
+  title: text("title").notNull().default(""),
+  excerpt: text("excerpt").notNull().default(""),
+  score: integer("score").notNull().default(0),
+  retrievedAt: text("retrieved_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
