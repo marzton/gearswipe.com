@@ -4,6 +4,11 @@
 
 GearSwipe uses a modern edge-first architecture managed entirely through the Cloudflare dashboard UI.
 
+> Current production boundary: the storefront Worker (`gearswipe`) is the only
+> deployed GearSwipe Worker. The historical quote-worker configuration remains
+> source material for a future, separately reviewed API rollout; it is not part
+> of the storefront deployment command.
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                     Cloudflare (Global Edge)                │
