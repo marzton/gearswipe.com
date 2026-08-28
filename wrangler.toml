@@ -24,10 +24,17 @@ binding = "DB"
 database_name = "gearswipe"
 database_id = "f6a19265-b859-4573-8815-5e1907a519e3"
 
-# ⚠️  ALL CONFIGURATION IS IN THE CLOUDFLARE DASHBOARD
+# ⚠️  ALL OTHER CONFIGURATION IS IN THE CLOUDFLARE DASHBOARD
 #
-# Do NOT add routes, environment variables, or bindings here.
-# They are configured and managed entirely via:
+# Do NOT add routes, environment variables, or other bindings here.
+# The `[[d1_databases]]` block above is the one deliberate exception: it is
+# version-controlled so `wrangler deploy` always sets it, after the dashboard
+# lacking it took production down (see the comment above that block).
+# Do not also configure a `DB` D1 binding in the dashboard for this Worker —
+# `wrangler deploy` overwrites it from this file on every deploy, so a
+# dashboard-side value would just be silently discarded.
+#
+# Everything else is configured and managed entirely via:
 #   Cloudflare Dashboard → Workers & Pages → gearswipe
 #
 # For complete setup instructions, see DEPLOYMENT.md § Dashboard Configuration
