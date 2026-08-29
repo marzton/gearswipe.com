@@ -23,7 +23,7 @@ export default function ArticlePage({ params }: { params: { slug: string } }) {
   return <article className="min-h-screen bg-[#F2F0EA] px-6 py-12 text-[#111111] sm:px-12">
     <header className="mx-auto max-w-4xl"><Link href="/blog" className="text-xs font-semibold uppercase tracking-widest text-[#FF5A1F]">← Journal</Link>
       <p className="mt-10 text-xs font-semibold uppercase tracking-widest">{article.gsId || "Editorial"}</p><h1 className="mt-4 text-5xl font-bold uppercase leading-none sm:text-7xl">{article.title}</h1>{article.dek && <p className="mt-6 max-w-3xl text-xl leading-8 text-[#555]">{article.dek}</p>}</header>
-    <Image src={article.heroImage || "/brand/gearswipe-logo-dark.jpg"} alt={article.title} width={1600} height={900} className="mx-auto mt-12 aspect-video max-w-4xl object-cover" />
+    <Image src={article.heroImage || "/brand/gearswipe-logo-dark.svg"} alt={article.title} width={1600} height={900} className="mx-auto mt-12 aspect-video max-w-4xl object-cover" />
     <div className="mx-auto max-w-3xl whitespace-pre-wrap py-12 text-lg leading-8">{article.body}</div>
   </article>;
 }

@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   }
   const heroImage = typeof body.heroImage === "string" && body.heroImage.trim().startsWith("/")
     ? body.heroImage.trim()
-    : "/brand/gearswipe-logo-dark.jpg";
+    : "/brand/gearswipe-logo-dark.svg";
   try {
     const result = await getDb().insert(articles).values({
       title, slug, body: body.body.trim(),
