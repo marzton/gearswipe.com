@@ -79,6 +79,21 @@ export const fieldTests = sqliteTable("gearswipe_field_tests", {
   updatedAt: updatedAt(),
 });
 
+/** Editorial records remain linked to the canonical object id when one exists. */
+export const articles = sqliteTable("gearswipe_articles", {
+  id: generatedId(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  dek: text("dek"),
+  body: text("body").notNull(),
+  heroImage: text("hero_image"),
+  gsId: text("gs_id"),
+  status: text("status").notNull().default("draft"),
+  publishedAt: integer("published_at", { mode: "timestamp" }),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
 export const subscribers = sqliteTable("gearswipe_subscribers", {
   id: generatedId(),
   email: text("email").notNull().unique(),

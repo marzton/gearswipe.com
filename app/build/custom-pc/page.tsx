@@ -164,7 +164,7 @@ export default function CustomPcBuildPage() {
           <div className="border border-[#deded7] bg-white p-4 sm:p-5">
             <div className="overflow-hidden border border-[#ededeb] bg-[#fafaf8]">
               <Image
-                src="/brand/gearswipe-logo-dark.jpg"
+                src="/brand/gearswipe-logo-dark.svg"
                 alt="Gearswipe logo"
                 width={1200}
                 height={1200}

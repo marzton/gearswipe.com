@@ -172,6 +172,7 @@ export default function HomePage() {
           <a className="transition hover:text-[#FF5A1F]" href="#search">Search</a>
           <a className="transition hover:text-[#FF5A1F]" href="#field-tests">Field Tests</a>
           <a className="transition hover:text-[#FF5A1F]" href="#compare">Compare</a>
+          <Link className="transition hover:text-[#FF5A1F]" href="/blog">Journal</Link>
           <Link className="transition hover:text-[#FF5A1F]" href="/shop">Shop</Link>
         </nav>
       </header>

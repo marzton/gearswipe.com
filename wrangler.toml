@@ -23,6 +23,7 @@ compatibility_flags = ["nodejs_compat", "enable_nodejs_process_v2"]
 binding = "DB"
 database_name = "gearswipe"
 database_id = "f6a19265-b859-4573-8815-5e1907a519e3"
+migrations_dir = "migrations"
 
 # ⚠️  ALL OTHER CONFIGURATION IS IN THE CLOUDFLARE DASHBOARD
 #
