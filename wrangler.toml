@@ -1,7 +1,20 @@
 name = "gearswipe"
 main = "worker/index.ts"
 compatibility_date = "2025-08-08"
-compatibility_flags = ["nodejs_compat"]
+
+# enable_nodejs_process_v2 is the default from compatibility_date 2025-09-15
+# onward; this Worker is pinned 38 days earlier, so it otherwise gets the old
+# minimal `process` (nextTick/env/exit/getBuiltinModule/platform/features only).
+# The SSR bundle opens with an import.meta.url polyfill that falls back to
+# process.cwd() -- import.meta.url is not a file: URL under workerd -- so the
+# minimal process made every server-rendered route throw
+# "TypeError: e.cwd is not a function" at module scope, which reached the
+# client as Cloudflare error 1101.
+#
+# Setting the flag alone fixes that without pulling in a year of unrelated
+# compatibility changes. Drop it if compatibility_date is ever moved past
+# 2025-09-15, where it becomes redundant.
+compatibility_flags = ["nodejs_compat", "enable_nodejs_process_v2"]
 
 # ⚠️  ALL CONFIGURATION IS IN THE CLOUDFLARE DASHBOARD
 #

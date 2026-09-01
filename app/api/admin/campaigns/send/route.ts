@@ -1,4 +1,4 @@
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { subscribers } from "@/db/gearswipe-schema";
 import { auth } from "@/auth";
 import { eq, and } from "drizzle-orm";
@@ -21,6 +21,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    const db = getDb();
     const body = await request.json();
     const {
       subject,

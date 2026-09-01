@@ -1,4 +1,4 @@
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { subscribers } from "@/db/gearswipe-schema";
 import { auth } from "@/auth";
 import { eq } from "drizzle-orm";
@@ -10,6 +10,7 @@ export async function GET(request: Request) {
   }
 
   try {
+    const db = getDb();
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 500);
     const skip = parseInt(searchParams.get("skip") || "0");
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    const db = getDb();
     const body = await request.json();
     const {
       email,

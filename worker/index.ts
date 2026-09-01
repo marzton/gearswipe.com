@@ -4,6 +4,9 @@ import handler from "vinext/server/app-router-entry";
 import { resolveMailRoute } from "../lib/mail-routing";
 import { sendAutoReply } from "../lib/email-service";
 import { storeMailSubmission } from "../lib/mail-store";
+import { LANDING_PAGE_HTML } from "./landing-page";
+
+export { GearSwipeProductResearchWorkflow } from "./workflows/product-research";
 
 export { GearSwipeProductResearchWorkflow } from "./workflows/product-research";
 
@@ -80,24 +83,62 @@ function withSecurityHeaders(response: Response): Response {
   });
 }
 
+function landingResponse(status = 200): Response {
+  return new Response(LANDING_PAGE_HTML, {
+    status,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      // Short TTL: this page is edited often while the app router is brought up.
+      "cache-control": "public, max-age=0, must-revalidate",
+    },
+  });
+}
+
+function wantsHtml(request: Request): boolean {
+  return (request.headers.get("accept") ?? "").includes("text/html");
+}
+
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     (globalThis as typeof globalThis & { __GEARSWIPE_ENV__?: Env }).__GEARSWIPE_ENV__ = env;
     const url = new URL(request.url);
 
-    if (url.pathname === "/_vinext/image") {
-      const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
-      const imageResponse = await handleImageOptimization(request, {
-        fetchAsset: (path) => env.ASSETS.fetch(new Request(new URL(path, request.url))),
-        transformImage: async (body, { width, format, quality }) => {
-          const result = await env.IMAGES.input(body).transform(width > 0 ? { width } : {}).output({ format, quality });
-          return result.response();
-        },
-      }, allowedWidths);
-      return withSecurityHeaders(imageResponse);
+    // The homepage is served from a self-contained string, ahead of anything
+    // that can fail. See worker/landing-page.ts for why, and for how to remove
+    // this once app/page.tsx renders reliably in production.
+    if (url.pathname === "/" || url.pathname === "/index.html") {
+      return withSecurityHeaders(landingResponse());
     }
 
-    return withSecurityHeaders(await handler.fetch(request, env, ctx));
+    try {
+      if (url.pathname === "/_vinext/image") {
+        const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
+        const imageResponse = await handleImageOptimization(request, {
+          fetchAsset: (path) => env.ASSETS.fetch(new Request(new URL(path, request.url))),
+          transformImage: async (body, { width, format, quality }) => {
+            const result = await env.IMAGES.input(body).transform(width > 0 ? { width } : {}).output({ format, quality });
+            return result.response();
+          },
+        }, allowedWidths);
+        return withSecurityHeaders(imageResponse);
+      }
+
+      return withSecurityHeaders(await handler.fetch(request, env, ctx));
+    } catch (error) {
+      // Anything thrown past this point used to reach the client as Cloudflare
+      // error 1101. While the app router is still being brought up, fail into
+      // the landing page for navigations and JSON for everything else, and log
+      // the cause so `wrangler tail` still shows it.
+      console.error(`Unhandled error serving ${url.pathname}:`, error);
+
+      if (wantsHtml(request)) {
+        return withSecurityHeaders(landingResponse(503));
+      }
+
+      return withSecurityHeaders(
+        Response.json({ error: "Service temporarily unavailable" }, { status: 503 }),
+      );
+    }
   },
 
   async email(message: {
