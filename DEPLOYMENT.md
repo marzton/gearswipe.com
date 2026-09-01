@@ -4,6 +4,11 @@
 
 GearSwipe uses a modern edge-first architecture managed entirely through the Cloudflare dashboard UI.
 
+> Current production boundary: the storefront Worker (`gearswipe`) is the only
+> deployed GearSwipe Worker. The historical quote-worker configuration remains
+> source material for a future, separately reviewed API rollout; it is not part
+> of the storefront deployment command.
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                     Cloudflare (Global Edge)                │
@@ -137,8 +142,11 @@ The `wrangler.toml` files are minimal and only specify entry points. All setting
    - `ASSETS` → Points to static asset namespace
    - `IMAGES` → Points to image optimization service
 
-5. **Database Bindings** (optional):
-   - `DB` → D1 database for sessions/storage
+5. **Database Bindings**:
+   - `DB` → set in `wrangler.toml` (`[[d1_databases]]`), not the dashboard. Do
+     not add a `DB` binding here — `wrangler deploy` overwrites it from the
+     file on every deploy, so a dashboard-side value would be silently
+     discarded.
 
 6. **Email Routing**:
    - Enable Email Routing for domain
