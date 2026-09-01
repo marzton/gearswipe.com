@@ -84,7 +84,7 @@ export async function POST(request: Request) {
 
     // Try to send via EMAIL provider (Cloudflare Email API)
     // This will be available if configured in wrangler.toml
-    const env = (globalThis as any).__GEARSWIPE_ENV__;
+    const env = (globalThis as typeof globalThis & { __GEARSWIPE_ENV__?: { EMAIL?: EmailProvider } }).__GEARSWIPE_ENV__;
     let sent = 0;
     let failed = 0;
 
