@@ -4,6 +4,7 @@ import * as schema from "./schema";
 export type DbEnvironment = {
   DB?: D1Database;
   AI_SEARCH?: unknown;
+  ASSETS_R2?: R2Bucket;
 };
 
 declare global {
