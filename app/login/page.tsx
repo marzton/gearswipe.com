@@ -31,6 +31,11 @@ export default function LoginPage() {
       return;
     }
 
+    if (result?.url) {
+      window.location.href = result.url;
+      return;
+    }
+
     router.push(nextPath);
     router.refresh();
   }
