@@ -106,6 +106,12 @@ export default function AdminDashboard() {
                   <Link href="/admin/research" className="gs-admin-link">
                     Research Workspace →
                   </Link>
+                  <Link href="/admin/production" className="gs-admin-link">
+                    Production Desk →
+                  </Link>
+                  <Link href="/admin/articles" className="gs-admin-link">
+                    Editorial CMS →
+                  </Link>
                 </nav>
               </section>
             </div>

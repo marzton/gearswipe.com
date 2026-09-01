@@ -41,7 +41,7 @@ export default function LoginPage() {
         <div className="grid w-full gap-0 overflow-hidden border border-[#263246] bg-[#10161f] shadow-[0_30px_100px_rgba(0,0,0,0.35)] lg:grid-cols-[0.92fr_1.08fr]">
           <div className="relative min-h-[260px] border-b border-[#263246] bg-[#0b0f14] lg:min-h-full lg:border-b-0 lg:border-r">
             <Image
-              src="/brand/gearswipe-cart-logo.jpg"
+              src="/brand/gearswipe-cart-logo.svg"
               alt="Gearswipe cart logo"
               fill
               priority
