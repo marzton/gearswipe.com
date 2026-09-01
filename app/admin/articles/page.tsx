@@ -13,6 +13,7 @@ export default function AdminArticles() {
   const [gsId, setGsId] = useState("");
   const [body, setBody] = useState("");
   const [message, setMessage] = useState("");
+  const [jobId, setJobId] = useState("");
   const load = () => fetch("/api/admin/articles").then((r) => r.ok ? r.json() : []).then(setItems);
 
   useEffect(() => { load(); }, []);
@@ -28,9 +29,23 @@ export default function AdminArticles() {
     }
   }
 
+  async function generateFromResearch() {
+    const response = await fetch("/api/admin/articles/from-research", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ jobId }),
+    });
+    const result = await response.json() as { error?: string };
+    setMessage(response.ok ? "Reviewable draft generated from research evidence." : result.error ?? "Unable to generate draft.");
+    if (response.ok) { setJobId(""); load(); }
+  }
+
   return <main className="gs-admin-dashboard"><div className="gs-container">
     <h1>EDITORIAL CMS</h1>
     <p className="gs-page-description">Draft object-linked articles. Publishing remains an operator decision.</p>
+    <section className="gs-admin-card">
+      <h2>GENERATE FROM RESEARCH</h2>
+      <input value={jobId} onChange={(e) => setJobId(e.target.value)} placeholder="Research job ID" />
+      <button disabled={!jobId} onClick={() => void generateFromResearch()}>Generate reviewable draft</button>
+    </section>
     <section className="gs-admin-card">
       <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Article title" />
       <input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="lowercase-hyphenated-slug" />
