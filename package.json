@@ -19,9 +19,9 @@
     "logs:api": "wrangler tail -c wrangler.quote-api.toml"
   },
   "dependencies": {
-    "@sanity/client": "^8.0.0",
+    "@sanity/client": "^8.4.0",
     "drizzle-orm": "0.45.2",
-    "next": "16.3.2",
+    "next": "16.3.3",
     "next-auth": "^5.0.0-beta.32",
     "react": "19.2.8",
     "react-dom": "19.2.8"
