@@ -1,4 +1,4 @@
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { subscribers } from "@/db/gearswipe-schema";
 import { auth } from "@/auth";
 import { eq, and } from "drizzle-orm";
@@ -21,6 +21,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    const db = getDb();
     const body = await request.json();
     const {
       subject,
@@ -83,7 +84,7 @@ export async function POST(request: Request) {
 
     // Try to send via EMAIL provider (Cloudflare Email API)
     // This will be available if configured in wrangler.toml
-    const env = (globalThis as any).__GEARSWIPE_ENV__;
+    const env = (globalThis as typeof globalThis & { __GEARSWIPE_ENV__?: { EMAIL?: EmailProvider } }).__GEARSWIPE_ENV__;
     let sent = 0;
     let failed = 0;
 

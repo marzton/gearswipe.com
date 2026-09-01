@@ -1,4 +1,4 @@
-import { db } from "@/db";
+import { getDb } from "@/db";
 import { fieldTests } from "@/db/gearswipe-schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
@@ -10,6 +10,7 @@ export async function GET(request: Request) {
   }
 
   try {
+    const db = getDb();
     const result = await db.select().from(fieldTests).orderBy(fieldTests.createdAt);
     return Response.json(result);
   } catch (error) {
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    const db = getDb();
     const body = await request.json();
     const {
       title,
