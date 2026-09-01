@@ -35,6 +35,8 @@ bucket_name = "gs-assets"
 # are version-controlled because the application depends on these exact named
 # resources. Do not also configure `DB` or `ASSETS_R2` in the dashboard for this
 # Worker — `wrangler deploy` owns these bindings from this file.
+# Workflow declarations are supplied by `vite.config.ts` because the Vinext
+# Cloudflare plugin generates the deploy config and otherwise drops them.
 #
 # Everything else is configured and managed entirely via:
 #   Cloudflare Dashboard → Workers & Pages → gearswipe
