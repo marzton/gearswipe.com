@@ -1,6 +1,6 @@
 'use client';
 
-import { type ChangeEvent, useMemo, useState } from 'react';
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
 
@@ -17,9 +17,20 @@ export default function ProductionDeskPage() {
   const [verified, setVerified] = useState(false);
 
   const ready = useMemo(() => ({ intake: assets.length > 0, research: Boolean(jobId), verified }), [assets, jobId, verified]);
+  const objectUrlsRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    return () => {
+      for (const url of objectUrlsRef.current) URL.revokeObjectURL(url);
+    };
+  }, []);
 
   function addFiles(event: ChangeEvent<HTMLInputElement>) {
-    const incoming = Array.from(event.target.files ?? []).map((file) => ({ id: `${file.name}-${file.lastModified}`, name: file.name, kind: file.type || 'file', url: file.type.startsWith('image/') ? URL.createObjectURL(file) : '' }));
+    const incoming = Array.from(event.target.files ?? []).map((file) => {
+      const url = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
+      if (url) objectUrlsRef.current.push(url);
+      return { id: `${file.name}-${file.lastModified}`, name: file.name, kind: file.type || 'file', url };
+    });
     setAssets((current) => [...current, ...incoming]);
     if (incoming.length) setNotice(`${incoming.length} file${incoming.length === 1 ? '' : 's'} staged locally. Nothing is uploaded by this control.`);
   }
