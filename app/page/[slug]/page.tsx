@@ -7,18 +7,36 @@ interface PageParams {
   slug: string
 }
 
+type PageRecord = {
+  title: string
+  description?: string
+  publishedAt?: string
+  seo?: {
+    title?: string
+    keywords?: string[]
+  }
+}
+
+type PageListing = {
+  slug?: {
+    current?: string
+  }
+}
+
 export async function generateStaticParams() {
-  const pages = await getPages()
-  return pages.map((page: any) => ({
-    slug: page.slug.current,
-  }))
+  const pages = (await getPages()) as PageListing[]
+  return pages
+    .filter((page) => Boolean(page.slug?.current))
+    .map((page) => ({
+      slug: page.slug!.current!,
+    }))
 }
 
 export async function generateMetadata(
   { params }: { params: Promise<PageParams> }
 ): Promise<Metadata> {
   const { slug } = await params
-  const page = await getPage(slug)
+  const page = (await getPage(slug)) as PageRecord | null
 
   if (!page) {
     return {
@@ -35,7 +53,9 @@ export async function generateMetadata(
 
 export default async function Page({ params }: { params: Promise<PageParams> }) {
   const { slug } = await params
-  const page = await getPage(slug)
+  const page = (await getPage(slug)) as (PageRecord & {
+    content?: unknown[]
+  }) | null
 
   if (!page) {
     notFound()

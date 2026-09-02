@@ -1,4 +1,8 @@
-export default {
+type ValidationRule = {
+  required(): ValidationRule
+}
+
+const page = {
   name: 'page',
   title: 'Pages',
   type: 'document',
@@ -7,14 +11,14 @@ export default {
       name: 'title',
       title: 'Page Title',
       type: 'string',
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule: ValidationRule) => Rule.required(),
     },
     {
       name: 'slug',
       title: 'URL Slug',
       type: 'slug',
       options: { source: 'title' },
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule: ValidationRule) => Rule.required(),
     },
     {
       name: 'description',
@@ -52,3 +56,5 @@ export default {
     },
   ],
 }
+
+export default page

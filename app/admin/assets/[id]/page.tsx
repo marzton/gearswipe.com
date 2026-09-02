@@ -180,7 +180,7 @@ function StatusIndicator({ status }: { status: string }) {
   )
 }
 
-function WorkflowStep({ status, label, active }: { status: string; label: string; active: boolean }) {
+function WorkflowStep({ label, active }: { label: string; active: boolean }) {
   return (
     <div className={`flex items-center gap-3 p-2 rounded ${active ? 'bg-purple-600/30 border border-purple-500' : 'text-gray-500'}`}>
       <div className={`w-4 h-4 rounded-full border-2 ${active ? 'border-purple-400 bg-purple-500' : 'border-gray-600'}`} />

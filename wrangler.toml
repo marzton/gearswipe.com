@@ -1,13 +1,41 @@
 name = "gearswipe"
-type = "service"
 main = "worker/index.ts"
-compatibility_date = "2025-08-08"
-compatibility_flags = ["nodejs_compat"]
 
-# ⚠️  ALL CONFIGURATION IS IN THE CLOUDFLARE DASHBOARD
+compatibility_date = "2025-08-08"
+
+# enable_nodejs_process_v2 is the default from compatibility_date 2025-09-15
+# onward; this Worker is pinned 38 days earlier, so it otherwise gets the old
+# minimal `process` (nextTick/env/exit/getBuiltinModule/platform/features only).
+# The SSR bundle opens with an import.meta.url polyfill that falls back to
+# process.cwd() -- import.meta.url is not a file: URL under workerd -- so the
+# minimal process made every server-rendered route throw
+# "TypeError: e.cwd is not a function" at module scope, which reached the
+# client as Cloudflare error 1101.
 #
-# Do NOT add routes, environment variables, or bindings here.
-# They are configured and managed entirely via:
+# Setting the flag alone fixes that without pulling in a year of unrelated
+# compatibility changes. Drop it if compatibility_date is ever moved past
+# 2025-09-15, where it becomes redundant.
+compatibility_flags = ["nodejs_compat", "enable_nodejs_process_v2"]
+
+# Canonical production catalog/job store. The live Worker currently lacks this
+# binding even though `db/index.ts` fails closed when DB is unavailable.
+[[d1_databases]]
+binding = "DB"
+database_name = "gearswipe"
+database_id = "f6a19265-b859-4573-8815-5e1907a519e3"
+migrations_dir = "migrations"
+
+# ⚠️  ALL OTHER CONFIGURATION IS IN THE CLOUDFLARE DASHBOARD
+#
+# Do NOT add routes, environment variables, or other bindings here.
+# The `[[d1_databases]]` block above is the one deliberate exception: it is
+# version-controlled so `wrangler deploy` always sets it, after the dashboard
+# lacking it took production down (see the comment above that block).
+# Do not also configure a `DB` D1 binding in the dashboard for this Worker —
+# `wrangler deploy` overwrites it from this file on every deploy, so a
+# dashboard-side value would just be silently discarded.
+#
+# Everything else is configured and managed entirely via:
 #   Cloudflare Dashboard → Workers & Pages → gearswipe
 #
 # For complete setup instructions, see DEPLOYMENT.md § Dashboard Configuration

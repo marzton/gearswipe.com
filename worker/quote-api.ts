@@ -37,7 +37,7 @@ interface QuoteResponse {
   currency: string;
 }
 
-export default {
+const quoteApiWorker = {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
@@ -77,6 +77,8 @@ export default {
     });
   },
 };
+
+export default quoteApiWorker;
 
 async function handleQuoteRequest(request: Request, env: Env): Promise<Response> {
   try {

@@ -3,7 +3,7 @@
  * Uses Drizzle ORM with D1 (Cloudflare SQLite)
  */
 
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
 import { relations } from 'drizzle-orm'
 
 // Users table
