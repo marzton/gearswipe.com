@@ -1,0 +1,17 @@
+name: Checkout repository
+description: Clone the current repository at the triggering ref
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+
+        git config --global --add safe.directory "$GITHUB_WORKSPACE"
+        rm -rf "$GITHUB_WORKSPACE"/*
+        git init "$GITHUB_WORKSPACE"
+        git -C "$GITHUB_WORKSPACE" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+        if ! git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_REF"; then
+          git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_SHA"
+        fi
+        git -C "$GITHUB_WORKSPACE" checkout --force FETCH_HEAD

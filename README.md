@@ -1,1 +1,175 @@
-# gearswipe.com
+# Gearswipe repo blueprint
+
+Gearswipe is the storefront brand in this workspace. The source of truth for
+cross-site routing, repo ownership, workers, and DNS is the GitHub-backed canon
+at:
+
+`E:\GitHub\marzton\goldshore-ai\docs\canonical-sites-routing.md`
+
+This repo stays focused on the Gearswipe product surface itself. HostGator is
+reserved for backend, storage, backup, and prototype use cases rather than as a
+portfolio router.
+
+The current implementation uses a vinext/Next-based app so the site can be
+developed like a modern component app and deployed on Cloudflare. Because the
+site now includes auth and API routes, it should be treated as a full-stack app
+rather than a pure static export.
+
+## Prerequisites
+
+- Node.js `>=22.13.0`
+
+## Quick Start
+
+```bash
+npm install
+npm run dev
+npm run build
+```
+
+This starter does not use `wrangler.jsonc`.
+
+## Cloudflare deploy shape
+
+Gearswipe is compatible with Cloudflare Pages when the project is deployed as a
+Pages Functions app rather than a plain static export.
+
+Recommended Pages settings:
+
+- Production branch: `main`
+- Build command: `npm run build`
+- Build output directory: `dist`
+
+If a deployment target only accepts static assets, it will not preserve the
+login, admin, quote, or other server-side routes. In that case, deploy the
+full app to Cloudflare Workers instead.
+
+## Repository roles
+
+- GitHub: source of truth
+- VS Code: local editing
+- Codex: implementation and debugging
+- SSH: server inspection and deploy support
+- HostGator: backend/prototype origin
+- Replit: optional browser scratchpad or preview surface
+
+## Included shape
+
+- edit site code under `app/`
+- keep deployment and origin assumptions in this repo instead of in a separate
+  platform
+- `vite.config.ts` simulates declared bindings for local development
+- `db/schema.ts` starts intentionally empty
+- `examples/d1/` contains an optional D1 example surface
+- `drizzle.config.ts` supports local migration generation when needed
+
+## Build and deploy flow
+
+1. Edit the app in this repo.
+2. Run the local build and verify the output.
+3. For Cloudflare Pages, connect the Git repo and use the build settings above.
+4. For HostGator, copy the built frontend output only if you are intentionally
+   using it as a temporary origin or fallback.
+5. Let Cloudflare DNS point `gearswipe.com` and `www.gearswipe.com` at the
+   current public hosting target for this repo.
+
+The live site should stay simple:
+
+- one public product site
+- one deployment target
+- one fallback prototype path if needed
+- no routing hub behavior for the rest of the domain portfolio
+
+## Mobile-friendly editing loop
+
+- Use a browser-based code session or Replit for quick edits on the go.
+- Keep the repo authoritative so work stays portable across desktop and mobile.
+- Use Codex to inspect bugs, fix implementation issues, and keep the site
+  aligned with the production goal.
+
+## WordPress fallback
+
+WordPress is acceptable as a fallback if we need fast visual prototyping or
+theme-style page assembly.
+
+It should stay separate from the primary repo-first path so it does not become
+the main development system.
+
+## Workspace Auth Headers
+
+OpenAI workspace sites can read the current user's email from
+`oai-authenticated-user-email`.
+
+SIWC-authenticated workspace sites may also receive
+`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
+`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
+`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
+
+Treat the full name as optional and fall back to email when it is absent:
+
+```tsx
+import { headers } from "next/headers";
+
+export default async function Home() {
+  const requestHeaders = await headers();
+  const email = requestHeaders.get("oai-authenticated-user-email");
+  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
+  const fullName =
+    encodedFullName &&
+    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
+      "percent-encoded-utf-8"
+      ? decodeURIComponent(encodedFullName)
+      : null;
+
+  const displayName = fullName ?? email;
+  // ...
+}
+```
+
+## Optional Dispatch-Owned ChatGPT Sign-In
+
+Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
+optional or required ChatGPT sign-in:
+
+- Use `getChatGPTUser()` for optional signed-in UI.
+- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
+  anonymous visitors through Sign in with ChatGPT.
+- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
+  browser links or actions.
+- Pass a same-origin relative `returnTo` path for the destination after sign-in
+  or sign-out. The helper validates and safely encodes it.
+- Mark protected pages with `export const dynamic = "force-dynamic"` because
+  they depend on per-request identity headers.
+
+Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
+OAuth cookies, and identity header injection. Do not implement app routes for
+those reserved paths. Routes that do not import and call the helper remain
+anonymous-compatible.
+
+SIWC establishes identity only; it does not prove workspace membership. Use the
+Sites hosting platform's access policy controls for workspace-wide restrictions,
+or enforce explicit server-side membership or allowlist checks.
+
+Use SIWC for account pages, user-specific dashboards, saved records, and write
+actions tied to the current ChatGPT user. Leave public content anonymous.
+
+## Useful commands
+
+- `npm run dev`: start local development
+- `npm run build`: verify the vinext build output
+- `npm test`: build the starter and verify its rendered loading skeleton
+- `npm run db:generate`: generate Drizzle migrations after schema changes
+
+## Current deployment notes
+
+- `gearswipe.com` is configured behind Cloudflare DNS and points at the
+- current public hosting for the storefront.
+- The repo is the implementation source; the hosting target is not the source
+  of truth.
+- Keep the site architecture stable and avoid reintroducing a domain-router
+  homepage.
+
+## Learn More
+
+- [vinext Documentation](https://github.com/cloudflare/vinext)
+- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)

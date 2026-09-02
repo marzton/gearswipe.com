@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate application and Workers
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          rm -rf "$GITHUB_WORKSPACE"/*
+          git init "$GITHUB_WORKSPACE"
+          git -C "$GITHUB_WORKSPACE" remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          if ! git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_REF"; then
+            git -C "$GITHUB_WORKSPACE" fetch --depth 1 origin "$GITHUB_SHA"
+          fi
+          git -C "$GITHUB_WORKSPACE" checkout --force FETCH_HEAD
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test production build
+        run: npm test
+
+      - name: Validate storefront Worker bundle
+        run: npx wrangler deploy --dry-run
+
+      - name: Validate quote API Worker bundle
+        run: npx wrangler deploy --dry-run --config wrangler.quote-api.toml
