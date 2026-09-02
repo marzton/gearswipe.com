@@ -30,6 +30,12 @@ const localBindingConfig = {
         },
       ]
     : [],
+  workflows: [
+    { binding: "GS_DISCOVERY", name: "gearswipe-discovery", class_name: "GearSwipeDiscoveryWorkflow" },
+    { binding: "GS_TARGETED_SEARCH", name: "gearswipe-targeted-search", class_name: "GearSwipeTargetedSearchWorkflow" },
+    { binding: "GS_PRODUCT_RESEARCH", name: "gearswipe-product-research", class_name: "GearSwipeProductResearchWorkflow" },
+    { binding: "GS_EDITORIAL", name: "gearswipe-editorial", class_name: "GearSwipeEditorialWorkflow" },
+  ],
 };
 
 export default defineConfig(async () => {
