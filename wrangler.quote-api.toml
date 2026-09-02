@@ -1,5 +1,4 @@
 name = "gearswipe-quote-api"
-type = "service"
 main = "worker/quote-api.ts"
 compatibility_date = "2025-08-08"
 compatibility_flags = ["nodejs_compat"]

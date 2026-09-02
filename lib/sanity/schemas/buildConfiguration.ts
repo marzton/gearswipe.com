@@ -1,4 +1,14 @@
-export default {
+type ValidationRule = {
+  required(): ValidationRule
+}
+
+type BuildConfigurationPreviewSelection = {
+  title?: string
+  product?: string
+  useCases?: string[]
+}
+
+const buildConfiguration = {
   name: 'buildConfiguration',
   title: 'PC Build Configurations',
   type: 'document',
@@ -8,13 +18,13 @@ export default {
       title: 'Parent Product',
       type: 'reference',
       to: [{ type: 'product' }],
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule: ValidationRule) => Rule.required(),
     },
     {
       name: 'name',
       title: 'Configuration Name',
       type: 'string',
-      validation: (Rule: any) => Rule.required(),
+      validation: (Rule: ValidationRule) => Rule.required(),
       description: 'e.g. "Gaming Build", "Workstation Build"',
     },
     {
@@ -136,7 +146,7 @@ export default {
       product: 'product.name',
       useCases: 'useCases',
     },
-    prepare(selection: any) {
+    prepare(selection: BuildConfigurationPreviewSelection) {
       return {
         title: `${selection.product} - ${selection.title}`,
         subtitle: selection.useCases?.join(', ') || 'No use cases',
@@ -144,3 +154,5 @@ export default {
     },
   },
 }
+
+export default buildConfiguration

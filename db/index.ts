@@ -1,15 +1,16 @@
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./schema";
 
-type DbEnvironment = {
+export type DbEnvironment = {
   DB?: D1Database;
+  AI_SEARCH?: unknown;
 };
 
 declare global {
   var __GEARSWIPE_ENV__: DbEnvironment | undefined;
 }
 
-function getRuntimeEnv(): DbEnvironment | undefined {
+export function getRuntimeEnv(): DbEnvironment | undefined {
   return globalThis.__GEARSWIPE_ENV__;
 }
 
