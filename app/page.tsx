@@ -151,6 +151,8 @@ const FOOTER_LINKS = [
   { label: "Worth Owning", href: "#worth-owning" },
   { label: "Heritage", href: "#still-here" },
   { label: "Under the Surface", href: "#under-the-surface" },
+  { label: "Privacy", href: "/privacy" },
+  { label: "Terms", href: "/terms" },
 ];
 
 export default function HomePage() {
@@ -172,6 +174,7 @@ export default function HomePage() {
           <a className="transition hover:text-[#FF5A1F]" href="#search">Search</a>
           <a className="transition hover:text-[#FF5A1F]" href="#field-tests">Field Tests</a>
           <a className="transition hover:text-[#FF5A1F]" href="#compare">Compare</a>
+          <Link className="transition hover:text-[#FF5A1F]" href="/blog">Journal</Link>
           <Link className="transition hover:text-[#FF5A1F]" href="/shop">Shop</Link>
         </nav>
       </header>

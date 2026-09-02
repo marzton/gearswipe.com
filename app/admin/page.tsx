@@ -26,7 +26,9 @@ export default function AdminDashboard() {
           fetch('/api/admin/subscribers').then((r) => r.json()),
         ]);
 
-        const confirmedSubs = subscribers.filter((s: any) => s.confirmed).length;
+        const confirmedSubs = Array.isArray(subscribers)
+          ? subscribers.filter((s: { confirmed?: boolean }) => s.confirmed).length
+          : 0;
 
         setStats({
           fieldTests: Array.isArray(fieldTests) ? fieldTests.length : 0,
@@ -100,6 +102,15 @@ export default function AdminDashboard() {
                   </Link>
                   <Link href="/admin/campaigns" className="gs-admin-link">
                     Email Campaigns →
+                  </Link>
+                  <Link href="/admin/research" className="gs-admin-link">
+                    Research Workspace →
+                  </Link>
+                  <Link href="/admin/production" className="gs-admin-link">
+                    Production Desk →
+                  </Link>
+                  <Link href="/admin/articles" className="gs-admin-link">
+                    Editorial CMS →
                   </Link>
                 </nav>
               </section>
