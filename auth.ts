@@ -4,6 +4,16 @@ import Google from "next-auth/providers/google";
 import type { JWT } from "next-auth/jwt";
 import type { Session, User } from "next-auth";
 
+// CF Access auth (production)
+export function getCFAccessEmail(headers: Headers): string | null {
+  return headers.get("CF-Access-Authenticated-User-Email");
+}
+
+export function getCFAccessUserId(headers: Headers): string | null {
+  return headers.get("CF-Access-Authenticated-User-Id");
+}
+
+// NextAuth fallback (local dev)
 const GOOGLE_CLIENT_ID = process.env.AUTH_GOOGLE_ID?.trim();
 const GOOGLE_CLIENT_SECRET = process.env.AUTH_GOOGLE_SECRET?.trim();
 const LOCAL_ADMIN_EMAIL = process.env.GEARSWIPE_ADMIN_EMAIL?.trim();
