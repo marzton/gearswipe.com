@@ -7,6 +7,9 @@ import { storeMailSubmission } from "../lib/mail-store";
 import { LANDING_PAGE_HTML } from "./landing-page";
 
 export { GearSwipeProductResearchWorkflow } from "./workflows/product-research";
+export { GearSwipeDiscoveryWorkflow } from "./workflows/discovery";
+export { GearSwipeTargetedSearchWorkflow } from "./workflows/targeted-search";
+export { GearSwipeEditorialWorkflow } from "./workflows/editorial";
 
 interface Env {
   ASSETS: Fetcher;
