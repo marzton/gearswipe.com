@@ -12,7 +12,7 @@ function BrandMark() {
     <div className="flex items-center gap-3">
       <div className="relative h-11 w-11 overflow-hidden border border-[#d8d8d3] bg-white">
         <Image
-          src="/brand/gearswipe-cart-logo.jpg"
+          src="/brand/gearswipe-cart-logo.svg"
           alt="Gearswipe cart logo"
           fill
           sizes="44px"
@@ -252,7 +252,7 @@ function MailForms() {
           <SectionLabel>Store snapshot</SectionLabel>
           <div className="mt-4 overflow-hidden border border-[#ededeb] bg-[#fafaf8] p-4">
             <Image
-              src="/brand/gearswipe-logo-dark.jpg"
+              src="/brand/gearswipe-logo-dark.svg"
               alt="Gearswipe logo"
               width={1200}
               height={1200}
@@ -379,7 +379,7 @@ export default function StorePage() {
 
             <div className="mt-4 overflow-hidden border border-[#ededeb] bg-[#fafaf8]">
               <Image
-                src="/brand/gearswipe-cart-logo.jpg"
+                src="/brand/gearswipe-cart-logo.svg"
                 alt="Gearswipe cart logo"
                 width={1200}
                 height={1200}
@@ -463,7 +463,7 @@ export default function StorePage() {
         <footer className="mt-auto border-t border-[#deded7] py-5 text-sm text-[#5f5f59]">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p>Gearswipe is a focused tech storefront for practical products.</p>
-            <p className="text-[#111111]">Standalone brand. Clean presentation.</p>
+            <p className="flex gap-4 text-[#111111]"><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/accessibility">Accessibility</Link></p>
           </div>
         </footer>
       </div>
