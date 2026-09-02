@@ -26,7 +26,7 @@ export default function LoginPage() {
     });
 
     if (result?.error) {
-      setError("That username or password did not work.");
+      setError("Google sign-in could not be completed. Please try again or contact the GearSwipe operator.");
       setLoading(false);
       return;
     }
