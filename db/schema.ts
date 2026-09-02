@@ -117,3 +117,21 @@ export const researchEvidence = sqliteTable("research_evidence", {
   score: integer("score").notNull().default(0),
   retrievedAt: text("retrieved_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const contentObjects = sqliteTable("gearswipe_content_objects", {
+  gsId: text("gs_id").primaryKey(),
+  title: text("title").notNull(),
+  status: text("status").notNull().default("intake"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const intakeAssets = sqliteTable("gearswipe_intake_assets", {
+  id: text("id").primaryKey(),
+  gsId: text("gs_id").notNull(),
+  objectKey: text("object_key").notNull().unique(),
+  filename: text("filename").notNull(),
+  contentType: text("content_type").notNull().default("application/octet-stream"),
+  sizeBytes: integer("size_bytes").notNull().default(0),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
