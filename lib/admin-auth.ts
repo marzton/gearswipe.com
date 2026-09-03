@@ -1,6 +1,5 @@
 import { auth, getCFAccessEmail } from "@/auth";
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
 
 const ADMIN_EMAILS = new Set(
   (process.env.GEARSWIPE_ADMIN_EMAILS ?? "admin@goldshore.org,admin@gearswipe.com")
@@ -9,11 +8,11 @@ const ADMIN_EMAILS = new Set(
     .filter(Boolean),
 );
 
-export async function getAdminEmail(): Promise<string | null> {
-  const requestHeaders = await headers();
+const CF_TEAM_NAME = process.env.CLOUDFLARE_TEAM_NAME ?? "gearswipe";
 
-  // Primary: CF Access header (production)
-  const cfEmail = getCFAccessEmail(requestHeaders);
+export async function getAdminEmail(): Promise<string | null> {
+  // Primary: CF Access email (production, JWT-verified)
+  const cfEmail = await getCFAccessEmail(CF_TEAM_NAME);
   if (cfEmail) return cfEmail.toLowerCase();
 
   // Fallback: NextAuth session (local dev)
