@@ -1,13 +1,34 @@
-import { auth } from "@/auth";
+import { auth, getCFAccessEmail } from "@/auth";
 import { redirect } from "next/navigation";
 
-export async function requireAdminAuth(returnTo = "/admin") {
+const ADMIN_EMAILS = new Set(
+  (process.env.GEARSWIPE_ADMIN_EMAILS ?? "admin@goldshore.org,admin@gearswipe.com")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean),
+);
+
+const CF_TEAM_NAME = process.env.CLOUDFLARE_TEAM_NAME ?? "gearswipe";
+
+export async function getAdminEmail(): Promise<string | null> {
+  // Primary: CF Access email (production, JWT-verified)
+  const cfEmail = await getCFAccessEmail(CF_TEAM_NAME);
+  if (cfEmail) return cfEmail.toLowerCase();
+
+  // Fallback: NextAuth session (local dev)
   const session = await auth();
-  if (!session?.user || session.user.role !== "admin") {
+  return session?.user?.email?.toLowerCase() ?? null;
+}
+
+export async function requireAdminAuth(returnTo = "/admin") {
+  const email = await getAdminEmail();
+
+  if (!email || !ADMIN_EMAILS.has(email)) {
     const safeReturnTo = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/admin";
     redirect(`/login?next=${encodeURIComponent(safeReturnTo)}`);
   }
-  return session;
+
+  return { email };
 }
 
 export async function getAdminSession() {
