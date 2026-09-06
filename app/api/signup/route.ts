@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { storeRewardSignup } from "../../../lib/rewards-store";
 import { resolveMailRoute } from "../../../lib/mail-routing";
 import { sendMailRouteNotification } from "../../../lib/email-service";
+import { verifyTurnstile } from "../../../lib/turnstile";
 
 export const runtime = "edge";
 
@@ -12,6 +13,9 @@ function asString(value: FormDataEntryValue | null) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!(await verifyTurnstile(request, "signup"))) {
+    return Response.json({ ok: false, message: "Please complete the bot verification." }, { status: 403 });
+  }
   const formData = await request.formData().catch(() => null);
   if (!formData) {
     return Response.json({ ok: false, message: "Invalid form submission." }, { status: 400 });
