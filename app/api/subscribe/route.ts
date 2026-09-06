@@ -1,8 +1,7 @@
 import type { NextRequest } from "next/server";
 import { storeNewsletterSignup } from "../../../lib/mail-store";
 import { resolveMailRoute } from "../../../lib/mail-routing";
-import { sendMailRouteNotification } from "../../../lib/email-service";
-import { verifyTurnstile } from "../../../lib/turnstile";
+import { sendMailRouteNotification } from "../../../lib/email-service";\nimport { verifyTurnstile } from "../../../lib/turnstile";
 
 export const runtime = "edge";
 
@@ -16,25 +15,7 @@ function json(message: string, status = 200, extra: Record<string, unknown> = {}
   return Response.json({ ok: status < 400, message, ...extra }, { status });
 }
 
-export async function POST(request: NextRequest) {
-  const runtimeEnv = (globalThis as typeof globalThis & {
-    __GEARSWIPE_ENV__?: { GS_API?: { fetch(input: Request): Promise<Response> } };
-  }).__GEARSWIPE_ENV__;
-  if (runtimeEnv?.GS_API) {
-    const formData = await request.clone().formData().catch(() => null);
-    const email = asString(formData?.get("email")).toLowerCase();
-    const name = asString(formData?.get("name"));
-    const turnstileToken = asString(formData?.get("cf-turnstile-response"));
-    const response = await runtimeEnv.GS_API.fetch(new Request("https://gs-api.internal/v1/forms/newsletter/submissions", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email, name, source: "gearswipe-subscribe", turnstileToken }),
-    }));
-    return new Response(response.body, { status: response.status, headers: response.headers });
-  }
-  if (!(await verifyTurnstile(request, "subscribe"))) {
-    return json("Please complete the bot verification.", 403);
-  }
+export async function POST(request: NextRequest) {\n  const runtimeEnv = (globalThis as typeof globalThis & { __GEARSWIPE_ENV__?: { GS_API?: { fetch(input: Request): Promise<Response> } } }).__GEARSWIPE_ENV__;\n  if (runtimeEnv?.GS_API) {\n    const formData = await request.clone().formData().catch(() => null);\n    const email = asString(formData?.get("email")).toLowerCase();\n    const name = asString(formData?.get("name"));\n    const turnstileToken = asString(formData?.get("cf-turnstile-response"));\n    const response = await runtimeEnv.GS_API.fetch(new Request("https://gs-api.internal/v1/forms/newsletter/submissions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, name, source: "gearswipe-subscribe", turnstileToken }) }));\n    return new Response(response.body, { status: response.status, headers: response.headers });\n  }\n  if (!(await verifyTurnstile(request, "subscribe"))) return json("Please complete the bot verification.", 403);
   const formData = await request.formData().catch(() => null);
   if (!formData) {
     return json("Invalid form submission.", 400);
