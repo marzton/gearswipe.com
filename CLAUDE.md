@@ -79,22 +79,28 @@ currently-undeployed Worker config (`wrangler.quote-api.toml` → `worker/quote-
 `db/index.ts#getDb()` throws if the `DB` binding is missing rather than silently degrading — call
 sites are expected to let that propagate or catch it explicitly, not paper over it.
 
-**Auth**: NextAuth v5 (`auth.ts`), Google OAuth as the real provider plus an opt-in Credentials
-provider gated to `NODE_ENV !== "production"` and `GEARSWIPE_ENABLE_LOCAL_CREDENTIALS=true` (local
-dev only — `tests/operator-workflow-contract.test.mjs` asserts no default credential ships).
-Session strategy is JWT; role (`admin`/`user`) is derived at `jwt`/`session` callback time from
-`GEARSWIPE_ADMIN_EMAILS`, not stored as a separate DB flag. `proxy.ts` is the edge-level gate for
-`/admin/:path*` and `/api/admin/:path*` (redirects to `/login`, or 401s for API routes), but
-`lib/admin-auth.ts` (`requireAdminAuth`, page-level, redirects) and `lib/operator-auth.ts`
-(`requireOperator`, API-route-level, returns a 401 `Response`) re-check `session.user.role ===
-"admin"` inside route/page code too — the comment in `operator-auth.ts` explains why: "route-level
-protection remains effective even if deployment middleware is omitted." Keep both layers when
-adding new admin/operator routes. In practice only `app/api/admin/research/jobs/route.ts`,
-`[id]/route.ts`, and `app/api/admin/state/route.ts` import the shared `requireOperator` helper;
-the rest of `app/api/admin/*` (`articles`, `comparisons`, `field-tests`, `products`, `subscribers`,
-`campaigns/send`) duplicate an equivalent `session.user.role === "admin"` check inline via `auth()`
-instead of importing it — an existing inconsistency, not a security gap, but prefer importing
-`requireOperator` from `lib/operator-auth.ts` for new routes rather than adding another inline copy.
+**Auth**: Two-layer system for admin access.
+
+1. **Production (Cloudflare Access)**: Admin endpoints (`/admin/:path*`, `/api/admin/:path*`) are protected by Cloudflare Access at the policy level. The `CF-Access-Jwt-Assertion` header is verified cryptographically in `lib/cf-access-auth.ts`:
+   - `getCFAccessEmailVerified(teamName)` — fetches the CF team's public key, verifies the JWT signature, checks expiration, and returns the authenticated email
+   - `getCFAccessEmail(teamName)` in `auth.ts` wraps this for use in async route/page code
+   - `getCFAccessEmailDirect(headers)` provides unsafe header-only reading for the middleware layer (headers already authenticated by CF Access policy, so signature verification is redundant but recommended for defense-in-depth)
+
+2. **Local dev (NextAuth v5)**: Falls back to Google OAuth (`auth.ts`, `auth.ts`), plus an opt-in Credentials provider gated to `NODE_ENV !== "production"` and `GEARSWIPE_ENABLE_LOCAL_CREDENTIALS=true` (tests enforce this via `tests/operator-workflow-contract.test.mjs`). Session strategy is JWT; role (`admin`/`user`) is derived at `jwt`/`session` callback time from `GEARSWIPE_ADMIN_EMAILS`.
+
+**Protection layers** (both must pass for admin access):
+- `proxy.ts` — edge-level gate for `/admin/:path*` and `/api/admin/:path*`. Checks CF Access headers first (fast, no JWKS fetch), then NextAuth session. Redirects to `/login` for pages, 401s for API routes.
+- `lib/admin-auth.ts` (`requireAdminAuth`) — page-level, checks verified CF Access email first (async JWT verification), falls back to NextAuth session. Redirects to `/login` if not admin.
+- `lib/operator-auth.ts` (`requireOperator`) — API-route-level, checks verified CF Access email first, falls back to NextAuth session. Returns 401 `Response` if not admin.
+
+The comment in `operator-auth.ts` explains why route-level protection remains in place: "route-level protection remains effective even if deployment middleware is omitted." Keep both layers when adding new admin/operator routes. In practice only `app/api/admin/research/jobs/route.ts`, `[id]/route.ts`, and `app/api/admin/state/route.ts` import the shared `requireOperator` helper; the rest of `app/api/admin/*` duplicate an equivalent admin check inline — prefer importing `requireOperator` for new routes.
+
+**Environment variables**:
+- `CLOUDFLARE_TEAM_NAME` — the Cloudflare Access team name (defaults to "gearswipe"). Required for CF Access JWT verification.
+- `GEARSWIPE_ADMIN_EMAILS` — comma-separated list of admin email addresses (both CF Access and NextAuth).
+- `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` — Google OAuth credentials (production only).
+- `GEARSWIPE_ENABLE_LOCAL_CREDENTIALS` — set to "true" to enable local email/password login in dev (`NODE_ENV !== "production"` only).
+- `AUTH_SECRET` — NextAuth session secret.
 
 A separate `app/chatgpt-auth.ts` implements optional/required "Sign in with ChatGPT" against
 headers injected by the OpenAI Sites hosting platform's Dispatch layer

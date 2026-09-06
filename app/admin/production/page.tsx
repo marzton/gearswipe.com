@@ -4,7 +4,7 @@ import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
 
-type Asset = { id: string; name: string; url: string; kind: string };
+type Asset = { id: string; name: string; url: string; kind: string; file: File };
 
 /** Production desk module: local previews, server-backed research, human gate. */
 export default function ProductionDeskPage() {
@@ -15,6 +15,7 @@ export default function ProductionDeskPage() {
   const [notice, setNotice] = useState('Add media, then request a cited research brief. Publishing is never automatic.');
   const [jobId, setJobId] = useState<string | null>(null);
   const [verified, setVerified] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const ready = useMemo(() => ({ intake: assets.length > 0, research: Boolean(jobId), verified }), [assets, jobId, verified]);
   const objectUrlsRef = useRef<string[]>([]);
@@ -29,10 +30,23 @@ export default function ProductionDeskPage() {
     const incoming = Array.from(event.target.files ?? []).map((file) => {
       const url = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
       if (url) objectUrlsRef.current.push(url);
-      return { id: `${file.name}-${file.lastModified}`, name: file.name, kind: file.type || 'file', url };
+      return { id: `${file.name}-${file.lastModified}`, name: file.name, kind: file.type || 'file', url, file };
     });
     setAssets((current) => [...current, ...incoming]);
     if (incoming.length) setNotice(`${incoming.length} file${incoming.length === 1 ? '' : 's'} staged locally. Nothing is uploaded by this control.`);
+  }
+
+  async function uploadAsset(asset: Asset) {
+    if (!gsId.trim() || !title.trim()) return setNotice('Enter a GS_ID and object title before uploading.');
+    setUploading(true);
+    const form = new FormData();
+    form.set('gsId', gsId.trim());
+    form.set('title', title.trim());
+    form.set('file', asset.file);
+    const response = await fetch('/api/admin/intake', { method: 'POST', body: form });
+    const body = await response.json() as { error?: string };
+    setUploading(false);
+    setNotice(response.ok ? `${asset.name} uploaded to the GS_ID intake record.` : body.error ?? 'Upload failed.');
   }
 
   async function requestResearch() {
@@ -53,7 +67,7 @@ export default function ProductionDeskPage() {
   }
 
   return <><Header /><main className="gs-container" style={{ padding: '2rem 0 4rem' }}><p className="text-sm uppercase tracking-[0.2em] text-slate-500">Operator</p><h1>Production desk</h1><p>Object-first intake, cited research, and human verification for GearSwipe.</p><p role="status" style={{ margin: '1rem 0', padding: '0.75rem', border: '1px solid var(--gs-color-border)' }}>{notice}</p>
-    <section className="gs-admin-card" style={{ marginTop: '1.5rem' }}><h2>1. Intake preview</h2><label>Choose images or scans<input type="file" multiple accept="image/*,.pdf,.tif,.tiff,.heic,.webp" onChange={addFiles} /></label><div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1rem' }}>{assets.map((asset) => <div key={asset.id} style={{ width: 150, border: '1px solid var(--gs-color-border)', padding: '.5rem' }}>{asset.url ? <img src={asset.url} alt={asset.name} style={{ width: '100%', height: 90, objectFit: 'cover' }} /> : <div style={{ height: 90, display: 'grid', placeItems: 'center', background: '#eee' }}>{asset.kind.toUpperCase()}</div>}<small>{asset.name}</small></div>)}</div></section>
+    <section className="gs-admin-card" style={{ marginTop: '1.5rem' }}><h2>1. Intake and GS_ID</h2><input placeholder="Canonical GS_ID (for example GS-0018)" value={gsId} onChange={(event) => setGsId(event.target.value)} /><input placeholder="Object title" value={title} onChange={(event) => setTitle(event.target.value)} /><label>Choose images or scans<input type="file" multiple accept="image/*,.pdf,.tif,.tiff,.heic,.webp" onChange={addFiles} /></label><div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1rem' }}>{assets.map((asset) => <div key={asset.id} style={{ width: 150, border: '1px solid var(--gs-color-border)', padding: '.5rem' }}>{asset.url ? <img src={asset.url} alt={asset.name} style={{ width: '100%', height: 90, objectFit: 'cover' }} /> : <div style={{ height: 90, display: 'grid', placeItems: 'center', background: '#eee' }}>{asset.kind.toUpperCase()}</div>}<small>{asset.name}</small><button disabled={uploading} onClick={() => void uploadAsset(asset)}>Upload to GS_ID</button></div>)}</div></section>
     <section className="gs-admin-card" style={{ marginTop: '1.5rem' }}><h2>2. Cited research</h2><input placeholder="Object title" value={title} onChange={(event) => setTitle(event.target.value)} /><input placeholder="Canonical gs_id (optional)" value={gsId} onChange={(event) => setGsId(event.target.value)} /><textarea placeholder="Research question" value={query} onChange={(event) => setQuery(event.target.value)} style={{ minHeight: 100 }} /><button onClick={() => void requestResearch()}>Request evidence</button>{jobId ? <p style={{ marginTop: '.75rem' }}>Job <code>{jobId}</code> created. <Link href={`/admin/research`}>Review evidence →</Link></p> : null}</section>
     <section className="gs-admin-card" style={{ marginTop: '1.5rem' }}><h2>3. Release gate</h2><ul><li>Intake: {ready.intake ? 'ready' : 'waiting'}</li><li>Research: {ready.research ? 'ready' : 'waiting'}</li><li>Human verification: {ready.verified ? 'verified' : 'required'}</li></ul><button disabled={!jobId || verified} onClick={() => void approveResearch()}>{verified ? 'Verified for draft' : 'Record human verification'}</button><p style={{ marginTop: '.75rem' }}>No storefront listing, social post, or external publication is performed by this module.</p></section>
   </main></>;
