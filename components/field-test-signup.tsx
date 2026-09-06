@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";\nimport { TurnstileField } from "./turnstile-field";
+import { useState, type FormEvent } from "react";
+import { TurnstileField } from "./turnstile-field";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
@@ -65,7 +66,8 @@ export function FieldTestSignup() {
         >
           {status === "submitting" ? "..." : "Subscribe"}
         </button>
-      </form>\n      <TurnstileField action="subscribe" />
+      </form>
+      <TurnstileField action="subscribe" />
       {message ? (
         <p
           className={`mt-2 font-mono text-[11px] ${
