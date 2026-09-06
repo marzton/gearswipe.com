@@ -26,7 +26,7 @@ export default function LoginPage() {
     });
 
     if (result?.error) {
-      setError("Google sign-in could not be completed. Please try again or contact the GearSwipe operator.");
+      setError("Google sign-in failed or this account is not approved for Gearswipe admin access.");
       setLoading(false);
       return;
     }
