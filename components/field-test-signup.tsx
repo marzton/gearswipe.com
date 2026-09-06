@@ -66,8 +66,8 @@ export function FieldTestSignup() {
         >
           {status === "submitting" ? "..." : "Subscribe"}
         </button>
-      </form>
       <TurnstileField action="subscribe" />
+      </form>
       {message ? (
         <p
           className={`mt-2 font-mono text-[11px] ${
