@@ -5,6 +5,6 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requireAdminAuth("/admin");
+  await requireAdminAuth();
   return children;
 }

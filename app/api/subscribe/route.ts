@@ -17,16 +17,24 @@ function json(message: string, status = 200, extra: Record<string, unknown> = {}
 }
 
 export async function POST(request: NextRequest) {
-  const runtimeEnv = (globalThis as typeof globalThis & { __GEARSWIPE_ENV__?: { GS_API?: { fetch(input: Request): Promise<Response> } } }).__GEARSWIPE_ENV__;
+  const runtimeEnv = (globalThis as typeof globalThis & {
+    __GEARSWIPE_ENV__?: { GS_API?: { fetch(input: Request): Promise<Response> } };
+  }).__GEARSWIPE_ENV__;
   if (runtimeEnv?.GS_API) {
     const formData = await request.clone().formData().catch(() => null);
     const email = asString(formData?.get("email")).toLowerCase();
     const name = asString(formData?.get("name"));
     const turnstileToken = asString(formData?.get("cf-turnstile-response"));
-    const response = await runtimeEnv.GS_API.fetch(new Request("https://gs-api.internal/v1/forms/newsletter/submissions", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, name, source: "gearswipe-subscribe", turnstileToken }) }));
+    const response = await runtimeEnv.GS_API.fetch(new Request("https://gs-api.internal/v1/forms/newsletter/submissions", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email, name, source: "gearswipe-subscribe", turnstileToken }),
+    }));
     return new Response(response.body, { status: response.status, headers: response.headers });
   }
-  if (!(await verifyTurnstile(request, "subscribe"))) return json("Please complete the bot verification.", 403);
+  if (!(await verifyTurnstile(request, "subscribe"))) {
+    return json("Please complete the bot verification.", 403);
+  }
   const formData = await request.formData().catch(() => null);
   if (!formData) {
     return json("Invalid form submission.", 400);
