@@ -14,6 +14,7 @@ export { GearSwipeEditorialWorkflow } from "./workflows/editorial";
 interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
+  GS_API: Fetcher;
   EMAIL?: {
     send(input: {
       to: string | string[];
