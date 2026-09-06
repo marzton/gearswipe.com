@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { auth, getCFAccessEmail } from "@/auth";
 import { redirect } from "next/navigation";
 
 export async function requireAdminAuth(returnTo = "/admin") {
@@ -7,7 +7,8 @@ export async function requireAdminAuth(returnTo = "/admin") {
     const safeReturnTo = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/admin";
     redirect(`/login?next=${encodeURIComponent(safeReturnTo)}`);
   }
-  return session;
+
+  return { email };
 }
 
 export async function getAdminSession() {

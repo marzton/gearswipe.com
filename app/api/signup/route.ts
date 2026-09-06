@@ -48,7 +48,8 @@ export async function POST(request: NextRequest) {
     subject: `${workspace} signup and access`,
     name,
     email,
-    message: `Reward signup received.\nInterest: ${interest || "not provided"}`,
+    message: `Reward signup received.
+Interest: ${interest || "not provided"}`,
     formType: "auth",
   }).catch(() => null);
 

@@ -151,6 +151,8 @@ const FOOTER_LINKS = [
   { label: "Worth Owning", href: "#worth-owning" },
   { label: "Heritage", href: "#still-here" },
   { label: "Under the Surface", href: "#under-the-surface" },
+  { label: "Privacy", href: "/privacy" },
+  { label: "Terms", href: "/terms" },
 ];
 
 export default function HomePage() {
