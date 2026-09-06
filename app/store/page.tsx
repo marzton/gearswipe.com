@@ -6,6 +6,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { StorefrontCatalog } from "../../components/storefront-catalog";
 import { siteGraphLinks } from "../../lib/admin-data";
 import { storeCollections, storeTrustPoints } from "../../lib/store-catalog";
+import { TurnstileField } from "../../components/turnstile-field";
 
 function BrandMark() {
   return (
@@ -232,6 +233,7 @@ function MailForms() {
           <p className={`mt-4 border px-3 py-2 text-sm ${statusClass(subscribeState.status)}`}>
             {subscribeState.message || "Clean signup. Fast reward entry."}
           </p>
+          <TurnstileField action="subscribe" />
           <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
             <input
               name="email"
@@ -463,7 +465,7 @@ export default function StorePage() {
         <footer className="mt-auto border-t border-[#deded7] py-5 text-sm text-[#5f5f59]">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p>Gearswipe is a focused tech storefront for practical products.</p>
-            <p className="flex gap-4 text-[#111111]"><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/accessibility">Accessibility</Link></p>
+            <p className="text-[#111111]">Standalone brand. Clean presentation.</p>
           </div>
         </footer>
       </div>
