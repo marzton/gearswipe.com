@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";\nimport { TurnstileField } from "../../components/turnstile-field";
+import { useState, type FormEvent } from "react";
+import { TurnstileField } from "../../components/turnstile-field";
 
 export default function SignupPage() {
   const [message, setMessage] = useState("Join with email to get 100 points.");
@@ -91,7 +92,8 @@ export default function SignupPage() {
                 placeholder="Builds, keys, security, parts..."
               />
             </label>
-            <TurnstileField action="signup" />\n            <button
+            <TurnstileField action="signup" />
+            <button
               type="submit"
               disabled={loading}
               className="mt-5 border border-[#111111] bg-[#111111] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#262626] disabled:opacity-70"
