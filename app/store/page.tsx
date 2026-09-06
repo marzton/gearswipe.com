@@ -6,6 +6,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { StorefrontCatalog } from "../../components/storefront-catalog";
 import { siteGraphLinks } from "../../lib/admin-data";
 import { storeCollections, storeTrustPoints } from "../../lib/store-catalog";
+import { TurnstileField } from "../../components/turnstile-field";
 
 function BrandMark() {
   return (
@@ -232,6 +233,7 @@ function MailForms() {
           <p className={`mt-4 border px-3 py-2 text-sm ${statusClass(subscribeState.status)}`}>
             {subscribeState.message || "Clean signup. Fast reward entry."}
           </p>
+          <TurnstileField action="subscribe" />
           <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
             <input
               name="email"

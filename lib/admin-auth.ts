@@ -20,11 +20,12 @@ export async function getAdminEmail(): Promise<string | null> {
   return session?.user?.email?.toLowerCase() ?? null;
 }
 
-export async function requireAdminAuth() {
+export async function requireAdminAuth(returnTo = "/admin") {
   const email = await getAdminEmail();
 
   if (!email || !ADMIN_EMAILS.has(email)) {
-    redirect("/login");
+    const safeReturnTo = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/admin";
+    redirect(`/login?next=${encodeURIComponent(safeReturnTo)}`);
   }
 
   return { email };

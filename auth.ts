@@ -54,6 +54,7 @@ function isAdminEmail(email: string | null | undefined): boolean {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.AUTH_SECRET?.trim() || process.env.NEXTAUTH_SECRET?.trim(),
+  trustHost: true,
   // GearSwipe runs behind the Cloudflare Worker/custom-domain proxy. Explicitly
   // trust the forwarded production host so Auth.js can create the OAuth state
   // redirect instead of returning error=Configuration at /api/auth/signin/*.
@@ -96,7 +97,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.name = user.name ?? token.name;
         token.email = user.email ?? token.email;
-        token.role = isAdminEmail(user.email) ? "admin" : "user";
+        token.role = user.role === "admin" || isAdminEmail(user.email) ? "admin" : "user";
       }
       return token;
     },
