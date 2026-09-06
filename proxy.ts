@@ -37,9 +37,7 @@ export default auth((request) => {
   }
 
   if (isAdminPage) {
-    const loginUrl = new URL("/login", request.nextUrl.origin);
-    loginUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL("/", request.nextUrl.origin));
   }
 
   return NextResponse.next();

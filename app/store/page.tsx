@@ -306,12 +306,6 @@ export default function StorePage() {
                 Cart
               </Link>
               <Link
-                href="/login"
-                className="border border-[#deded7] px-3 py-2 text-sm text-[#111111] transition hover:border-[#111111]"
-              >
-                Login
-              </Link>
-              <Link
                 href="/admin"
                 className="border border-[#111111] bg-[#111111] px-3 py-2 text-sm text-white transition hover:bg-[#262626]"
               >
@@ -346,12 +340,6 @@ export default function StorePage() {
                   className="border border-[#deded7] px-4 py-3 text-sm text-[#111111] transition hover:border-[#111111]"
                 >
                   Join rewards
-                </Link>
-                <Link
-                  href="/login"
-                  className="border border-[#deded7] px-4 py-3 text-sm text-[#111111] transition hover:border-[#111111]"
-                >
-                  Sign in
                 </Link>
               </div>
             </div>
