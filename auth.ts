@@ -29,6 +29,7 @@ function isAdminEmail(email: string | null | undefined): boolean {
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.AUTH_SECRET?.trim() || process.env.NEXTAUTH_SECRET?.trim(),
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
@@ -67,7 +68,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.name = user.name ?? token.name;
         token.email = user.email ?? token.email;
-        token.role = isAdminEmail(user.email) ? "admin" : "user";
+        token.role = user.role === "admin" || isAdminEmail(user.email) ? "admin" : "user";
       }
       return token;
     },

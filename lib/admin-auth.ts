@@ -1,10 +1,11 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 
-export async function requireAdminAuth() {
+export async function requireAdminAuth(returnTo = "/admin") {
   const session = await auth();
   if (!session?.user || session.user.role !== "admin") {
-    redirect("/login");
+    const safeReturnTo = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/admin";
+    redirect(`/login?next=${encodeURIComponent(safeReturnTo)}`);
   }
   return session;
 }

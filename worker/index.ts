@@ -8,6 +8,7 @@ import { storeMailSubmission } from "../lib/mail-store";
 interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
+  GS_API: Fetcher;
   EMAIL?: {
     send(input: {
       to: string | string[];

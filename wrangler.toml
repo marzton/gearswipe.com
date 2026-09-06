@@ -25,9 +25,15 @@ database_name = "gearswipe"
 database_id = "f6a19265-b859-4573-8815-5e1907a519e3"
 migrations_dir = "migrations"
 
+# Canonical backend boundary for GearSwipe-originated API operations.
+[[services]]
+binding = "GS_API"
+service = "gs-api"
+
 # ⚠️  ALL OTHER CONFIGURATION IS IN THE CLOUDFLARE DASHBOARD
 #
-# Do NOT add routes, environment variables, or other bindings here.
+# Do NOT add routes or environment variables here. Service bindings that are
+# part of the canonical application contract are version-controlled here.
 # The `[[d1_databases]]` block above is the one deliberate exception: it is
 # version-controlled so `wrangler deploy` always sets it, after the dashboard
 # lacking it took production down (see the comment above that block).

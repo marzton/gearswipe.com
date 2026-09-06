@@ -26,7 +26,7 @@ export default function LoginPage() {
     });
 
     if (result?.error) {
-      setError("That username or password did not work.");
+      setError("Google sign-in failed or this account is not approved for Gearswipe admin access.");
       setLoading(false);
       return;
     }
