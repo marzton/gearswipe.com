@@ -96,7 +96,7 @@ repository-visible approval for:
 1. the exact GOL-11 acceptance criteria and the boundary with later Phase 0 work;
 2. any canonical schema or migration, especially destructive or irreversible
    changes;
-3. any production binding, route, IAM, secret, OAuth-client, or deployment
+3. any production binding, route, IAM, secret, Access policy, or deployment
    change;
 4. any real-money settlement or payout capability and any physical
    retrieval/treasure contract; and

@@ -2,23 +2,43 @@ import { auth } from "@/auth";
 import { authorizeOperator, operatorApiFailure } from "@/lib/operator-auth";
 import { NextResponse } from "next/server";
 
-export default auth(async (request) => {
+const ADMIN_EMAILS = new Set(
+  (process.env.GEARSWIPE_ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean),
+);
+
+export default auth((request) => {
   const { pathname } = request.nextUrl;
   const isAdminPage = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");
 
-  const decision = await authorizeOperator({ headers: request.headers, session: request.auth });
-  if (decision.authorized) return NextResponse.next();
+  const cfEmail = getCFAccessEmailDirect(request.headers)?.toLowerCase();
+
+  // Cloudflare Access owns the unauthenticated challenge before production
+  // requests reach this Worker. A supplied edge identity must still pass the
+  // application's authorization check.
+  if (cfEmail) {
+    if (ADMIN_EMAILS.has(cfEmail)) return NextResponse.next();
+    if (isAdminApi) {
+      return NextResponse.json({ ok: false, message: "Forbidden" }, { status: 403 });
+    }
+    return NextResponse.redirect(new URL("/access-denied", request.nextUrl.origin));
+  }
+
+  // NextAuth is deliberately a local-development fallback, not a second
+  // production sign-in path.
+  if (process.env.NODE_ENV !== "production" && request.auth?.user?.role === "admin") {
+    return NextResponse.next();
+  }
 
   if (isAdminApi) {
     return operatorApiFailure(decision);
   }
 
   if (isAdminPage) {
-    const destination = decision.status === 401
-      ? `/cdn-cgi/access/login?redirect_url=${encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search)}`
-      : "/access-denied";
-    return NextResponse.redirect(new URL(destination, request.nextUrl.origin));
+    return NextResponse.redirect(new URL("/access-denied", request.nextUrl.origin));
   }
 
   return NextResponse.next();

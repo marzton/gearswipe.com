@@ -2,25 +2,38 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { authorizeOperator } from "@/lib/operator-auth";
 
-function accessLoginUrl(requestUrl: string | null): string {
-  const configured = process.env.CLOUDFLARE_ACCESS_LOGIN_URL?.trim();
-  if (configured) return configured;
-  const returnTo = requestUrl?.startsWith("/") ? requestUrl : "/admin";
-  return `/cdn-cgi/access/login?redirect_url=${encodeURIComponent(returnTo)}`;
-}
+const ADMIN_EMAILS = new Set(
+  (process.env.GEARSWIPE_ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean),
+);
+
+const CF_TEAM_NAME = process.env.CLOUDFLARE_TEAM_NAME ?? "gearswipe";
 
 export async function getAdminEmail(): Promise<string | null> {
-  const result = await authorizeOperator();
-  return result.authorized ? result.identity.email : null;
+  // Primary: CF Access email (production, JWT-verified)
+  const cfEmail = await getCFAccessEmail(CF_TEAM_NAME);
+  if (cfEmail) return cfEmail.toLowerCase();
+
+  // NextAuth is an explicitly enabled local-development fallback. Production
+  // identity is established only by Cloudflare Access before this app runs.
+  if (process.env.NODE_ENV !== "production") {
+    const session = await auth();
+    return session?.user?.role === "admin"
+      ? session.user.email?.toLowerCase() ?? null
+      : null;
+  }
+
+  return null;
 }
 
 export async function requireAdminAuth() {
   const result = await authorizeOperator();
   if (result.authorized) return result.identity;
 
-  if (result.status === 401) {
-    const request = await headers();
-    redirect(accessLoginUrl(request.get("x-pathname")));
+  if (!email || !ADMIN_EMAILS.has(email)) {
+    redirect("/access-denied");
   }
   redirect("/access-denied");
 }
