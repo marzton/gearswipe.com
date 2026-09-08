@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
 import type { JWT } from "next-auth/jwt";
 import type { Session, User } from "next-auth";
 import {
@@ -46,8 +45,6 @@ const localCredentialsEnabled =
   process.env.GEARSWIPE_ENABLE_LOCAL_CREDENTIALS === "true" &&
   Boolean(LOCAL_ADMIN_EMAIL && LOCAL_ADMIN_PASSWORD);
 
-export const isGoogleAuthConfigured = Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET);
-
 function isAdminEmail(email: string | null | undefined): boolean {
   return Boolean(email && adminEmails.has(email.toLowerCase()));
 }
@@ -57,9 +54,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
   session: { strategy: "jwt" },
   providers: [
-    ...(isGoogleAuthConfigured
-      ? [Google({ clientId: GOOGLE_CLIENT_ID!, clientSecret: GOOGLE_CLIENT_SECRET! })]
-      : []),
     ...(localCredentialsEnabled
       ? [Credentials({
       credentials: {
