@@ -1,6 +1,43 @@
 import { sql } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+/**
+ * The immutable policy snapshot used to rank submissions. A published revision
+ * is locked; finalization never reads mutable bounty settings.
+ */
+export const bountyRevisions = sqliteTable("bounty_revisions", {
+  id: text("id").primaryKey(),
+  bountyId: text("bounty_id").notNull(),
+  revision: integer("revision").notNull(),
+  collisionWindowMs: integer("collision_window_ms").notNull(),
+  tiePolicy: text("tie_policy").notNull(),
+  lockedAt: text("locked_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+/** Append-only, server-stamped event/receipt stream. `receiptId` is its order. */
+export const auditEvents = sqliteTable("audit_events", {
+  receiptId: integer("receipt_id").primaryKey({ autoIncrement: true }),
+  eventUuid: text("event_uuid").notNull().unique(),
+  eventType: text("event_type").notNull(),
+  actorRef: text("actor_ref").notNull(),
+  bountyId: text("bounty_id"),
+  relatedEntityId: text("related_entity_id"),
+  occurredAt: text("occurred_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+  requestId: text("request_id").notNull().unique(),
+  correlationId: text("correlation_id").notNull(),
+  policyVersion: text("policy_version").notNull(),
+  provenancePointer: text("provenance_pointer").notNull(),
+});
+
+/** Materialized finalization result; its receipt links back to the audit stream. */
+export const bountyFinalizations = sqliteTable("bounty_finalizations", {
+  bountyRevisionId: text("bounty_revision_id").primaryKey(),
+  winningSubmissionId: text("winning_submission_id").notNull(),
+  receiptId: integer("receipt_id").notNull().unique(),
+  requestId: text("request_id").notNull().unique(),
+  finalizedAt: text("finalized_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 export const adminQueueItems = sqliteTable("admin_queue_items", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   workspace: text("workspace").notNull(),
