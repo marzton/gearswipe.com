@@ -6,6 +6,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { StorefrontCatalog } from "../../components/storefront-catalog";
 import { siteGraphLinks } from "../../lib/admin-data";
 import { storeCollections, storeTrustPoints } from "../../lib/store-catalog";
+import { TurnstileField } from "../../components/turnstile-field";
 
 function BrandMark() {
   return (
@@ -232,6 +233,7 @@ function MailForms() {
           <p className={`mt-4 border px-3 py-2 text-sm ${statusClass(subscribeState.status)}`}>
             {subscribeState.message || "Clean signup. Fast reward entry."}
           </p>
+          <TurnstileField action="subscribe" />
           <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
             <input
               name="email"
@@ -304,12 +306,6 @@ export default function StorePage() {
                 Cart
               </Link>
               <Link
-                href="/login"
-                className="border border-[#deded7] px-3 py-2 text-sm text-[#111111] transition hover:border-[#111111]"
-              >
-                Login
-              </Link>
-              <Link
                 href="/admin"
                 className="border border-[#111111] bg-[#111111] px-3 py-2 text-sm text-white transition hover:bg-[#262626]"
               >
@@ -344,12 +340,6 @@ export default function StorePage() {
                   className="border border-[#deded7] px-4 py-3 text-sm text-[#111111] transition hover:border-[#111111]"
                 >
                   Join rewards
-                </Link>
-                <Link
-                  href="/login"
-                  className="border border-[#deded7] px-4 py-3 text-sm text-[#111111] transition hover:border-[#111111]"
-                >
-                  Sign in
                 </Link>
               </div>
             </div>
