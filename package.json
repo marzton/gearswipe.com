@@ -11,6 +11,8 @@
     "start": "vinext start",
     "test": "npm run build && node --experimental-strip-types --test tests/*.test.mjs tests/*.test.ts",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "test": "npm run build && node --test tests/rendered-html.test.mjs",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern .wrangler --ignore-pattern .wrangler-dry-run",
     "db:generate": "drizzle-kit generate",
     "deploy": "npm run build && npm run deploy:workers",
     "deploy:workers": "wrangler deploy",
@@ -45,7 +47,9 @@
     "wrangler": "4.127.1"
   },
   "overrides": {
-    "esbuild": "0.28.1"
+    "esbuild": "0.28.1",
+    "fast-uri": ">=3.1.6",
+    "fflate": ">=0.7.5"
   },
   "type": "module"
 }
