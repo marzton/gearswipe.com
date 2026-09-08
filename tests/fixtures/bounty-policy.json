@@ -1,0 +1,20 @@
+[
+  { "name": "private-person location", "input": { "categories": ["private_person_location"] }, "expected": "reject", "reason": "PRIVATE_PERSON_PRECISE_LOCATION" },
+  { "name": "doxxing", "input": { "categories": ["doxxing"] }, "expected": "reject", "reason": "DOXXING_OR_PRIVATE_DATA" },
+  { "name": "stalking", "input": { "categories": ["stalking"] }, "expected": "reject", "reason": "STALKING_OR_TARGETED_SURVEILLANCE" },
+  { "name": "private data", "input": { "categories": ["private_data"] }, "expected": "reject", "reason": "DOXXING_OR_PRIVATE_DATA" },
+  { "name": "unauthorized surveillance", "input": { "categories": ["unauthorized_surveillance"] }, "expected": "reject", "reason": "UNAUTHORIZED_SURVEILLANCE" },
+  { "name": "unauthorized security testing", "input": { "categories": ["security_testing"] }, "expected": "reject", "reason": "SECURITY_AUTHORIZATION_INCOMPLETE" },
+  { "name": "credential theft", "input": { "categories": ["credential_theft"] }, "expected": "reject", "reason": "CREDENTIAL_THEFT" },
+  { "name": "trespass", "input": { "categories": ["trespass"] }, "expected": "reject", "reason": "TRESPASS_REQUIRED" },
+  { "name": "stolen item", "input": { "categories": ["stolen_items"] }, "expected": "reject", "reason": "STOLEN_OR_DANGEROUS_ITEM" },
+  { "name": "dangerous item", "input": { "categories": ["dangerous_items"] }, "expected": "reject", "reason": "STOLEN_OR_DANGEROUS_ITEM" },
+  { "name": "prohibited promotional-code method", "input": { "categories": ["prohibited_promo_method"] }, "expected": "reject", "reason": "PROHIBITED_PROMOTIONAL_CODE_METHOD" },
+  { "name": "sensitive infrastructure", "input": { "categories": ["sensitive_infrastructure"] }, "expected": "manual_review", "reason": "SENSITIVE_INFRASTRUCTURE_REVIEW" },
+  { "name": "minors", "input": { "categories": ["minors"] }, "expected": "manual_review", "reason": "MINOR_SAFETY_REVIEW" },
+  { "name": "incident media", "input": { "categories": ["incident_media"] }, "expected": "manual_review", "reason": "INCIDENT_MEDIA_REVIEW" },
+  { "name": "physical retrieval", "input": { "categories": ["physical_retrieval"] }, "expected": "governed_not_available_in_phase_0", "reason": "PHYSICAL_RETRIEVAL_NOT_AVAILABLE_PHASE_0" },
+  { "name": "unrestricted precise location", "input": { "categories": ["ordinary_research"], "requestsPreciseLocation": true }, "expected": "governed_not_available_in_phase_0", "reason": "UNRESTRICTED_PRECISE_LOCATION_NOT_AVAILABLE_PHASE_0" },
+  { "name": "real-money settlement", "input": { "categories": ["ordinary_research"], "realMoneySettlement": true }, "expected": "governed_not_available_in_phase_0", "reason": "REAL_MONEY_SETTLEMENT_NOT_AVAILABLE_PHASE_0" },
+  { "name": "fully authorized future security test", "input": { "categories": ["security_testing"], "securityAuthorization": { "authorizedBy": "system owner", "authorizationReference": "contract-123", "scope": ["staging.example.test"], "safeHarborTerms": "Good-faith testing is protected.", "disclosureRules": "Report privately within 24 hours.", "testBoundaries": ["No production data", "No denial of service"] } }, "expected": "governed_not_available_in_phase_0", "reason": "AUTHORIZED_SECURITY_NOT_AVAILABLE_PHASE_0" }
+]

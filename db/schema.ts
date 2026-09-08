@@ -172,3 +172,25 @@ export const intakeAssets = sqliteTable("gearswipe_intake_assets", {
   sizeBytes: integer("size_bytes").notNull().default(0),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+/** Immutable bounty revisions include the deterministic policy snapshot used at submission. */
+export const bountyRevisions = sqliteTable("bounty_revisions", {
+  id: text("id").primaryKey(),
+  bountyId: text("bounty_id").notNull(),
+  revision: integer("revision").notNull(),
+  policyInputJson: text("policy_input_json").notNull(),
+  policyDisposition: text("policy_disposition").notNull(),
+  policyReasonCodesJson: text("policy_reason_codes_json").notNull(),
+  policyVersion: text("policy_version").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
+/** Append-only accountability record corresponding to a persisted policy evaluation. */
+export const bountyAuditEvents = sqliteTable("bounty_audit_events", {
+  id: text("id").primaryKey(),
+  bountyId: text("bounty_id").notNull(),
+  bountyRevisionId: text("bounty_revision_id").notNull().references(() => bountyRevisions.id),
+  eventType: text("event_type").notNull(),
+  policyDecisionJson: text("policy_decision_json").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
