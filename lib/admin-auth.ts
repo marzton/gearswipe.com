@@ -1,33 +1,26 @@
-import { auth, getCFAccessEmail } from "@/auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { authorizeOperator } from "@/lib/operator-auth";
 
-const ADMIN_EMAILS = new Set(
-  (process.env.GEARSWIPE_ADMIN_EMAILS ?? "admin@goldshore.org,admin@gearswipe.com")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean),
-);
+function accessLoginUrl(requestUrl: string | null): string {
+  const configured = process.env.CLOUDFLARE_ACCESS_LOGIN_URL?.trim();
+  if (configured) return configured;
+  const returnTo = requestUrl?.startsWith("/") ? requestUrl : "/admin";
+  return `/cdn-cgi/access/login?redirect_url=${encodeURIComponent(returnTo)}`;
+}
 
 export async function getAdminEmail(): Promise<string | null> {
-  // Primary: CF Access email (production, JWT-verified)
-  const cfEmail = await getCFAccessEmail();
-  if (cfEmail) return cfEmail.toLowerCase();
-
-  // Fallback: NextAuth session (local dev)
-  const session = await auth();
-  return session?.user?.email?.toLowerCase() ?? null;
+  const result = await authorizeOperator();
+  return result.authorized ? result.identity.email : null;
 }
 
 export async function requireAdminAuth() {
-  const email = await getAdminEmail();
+  const result = await authorizeOperator();
+  if (result.authorized) return result.identity;
 
-  if (!email || !ADMIN_EMAILS.has(email)) {
-    redirect("/");
+  if (result.status === 401) {
+    const request = await headers();
+    redirect(accessLoginUrl(request.get("x-pathname")));
   }
-
-  return { email };
-}
-
-export async function getAdminSession() {
-  return await auth();
+  redirect("/access-denied");
 }

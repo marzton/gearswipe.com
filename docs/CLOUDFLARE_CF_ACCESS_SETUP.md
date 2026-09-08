@@ -129,7 +129,7 @@ If email matches policy:
   ↓
 Request reaches /admin with CF headers
   ↓
-Server-side requireAdminAuth() verifies CF-Access-Jwt-Assertion
+Server-side authorizeOperator() verifies the Access assertion
   ↓
 Email in allowlist (admin@goldshore.org, admin@gearswipe.com)?
   → Yes: Render admin panel
@@ -215,7 +215,7 @@ Status:     ✅ Active
 npm run dev
 # Visit http://localhost:3000/admin
 # Should redirect to /login (CF headers not present)
-# Local NextAuth fallback should work (if Google creds set)
+# Local NextAuth fallback works only when explicitly enabled (see below)
 ```
 
 ### Staging Testing (With CF Enabled)
@@ -272,12 +272,84 @@ wrangler deploy --env prod
 **Expected**: CF Access headers not present locally
 **Workaround**: Set local Google OAuth env vars (if needed for testing):
 ```bash
-curl -sS -o /dev/null -D - https://gearswipe.com/
-curl -sS -o /dev/null -D - https://gearswipe.com/blog
-curl -sS -o /dev/null -D - https://gearswipe.com/shop
-# Replace with the actual public beta path when that route is deployed.
-curl -sS -o /dev/null -D - https://gearswipe.com/<bounty-beta-path>
-curl -sS -o /dev/null -D - https://gearswipe.com/admin
+export AUTH_GOOGLE_ID=your-google-client-id
+export AUTH_GOOGLE_SECRET=your-google-client-secret
+export GEARSWIPE_ENABLE_NEXTAUTH_OPERATOR_FALLBACK=true
+```
+
+## Admin Email Allowlist
+
+**Location**: `GEARSWIPE_ADMIN_EMAILS`. The same normalized allowlist is used by
+the proxy, pages, and APIs through `lib/operator-auth.ts`.
+
+**To add admins**:
+1. **Primary way**: Update CF Access policy regex in Cloudflare Dashboard
+2. **Application enforcement**: Update `GEARSWIPE_ADMIN_EMAILS` in the runtime
+   secret/configuration store. Keep it aligned with the Access policy.
+
+**Example**: Add `operator@gearswipe.com` to admins
+```
+CF Access Policy Regex: ^(admin@goldshore\.org|admin@gearswipe\.com|operator@gearswipe\.com)$
+```
+
+## Admin Session Management
+
+Production must configure `CLOUDFLARE_ACCESS_AUD` with the Access application
+AUD tag. Assertions with the wrong issuer, audience, signature, or lifetime are
+rejected. `CLOUDFLARE_TEAM_NAME` defaults to `gearswipe`.
+
+NextAuth is never a production operator credential. For local development it
+must be opted into with `GEARSWIPE_ENABLE_NEXTAUTH_OPERATOR_FALLBACK=true`; local
+credentials additionally require `GEARSWIPE_ENABLE_LOCAL_CREDENTIALS=true` and
+the existing local email/password variables. The session must have the admin
+role and its email must be in `GEARSWIPE_ADMIN_EMAILS`.
+
+### Getting Current Admin Email
+```typescript
+// In server components or API routes
+import { getAdminEmail } from "@/lib/admin-auth";
+
+const email = await getAdminEmail();
+console.log(`Logged in as: ${email}`);
+```
+
+### Protecting Routes
+```typescript
+// In app/admin/layout.tsx (already done)
+import { requireAdminAuth } from "@/lib/admin-auth";
+
+export default async function AdminLayout({ children }) {
+  await requireAdminAuth();  // Redirects if not admin
+  return children;
+}
+```
+
+## Monitoring & Audit Logs
+
+### CF Access Logs
+**Location**: Cloudflare Dashboard → Analytics & Logs → Access
+
+Logs show:
+- User email
+- Authentication timestamp
+- Policy evaluated
+- Allow/Deny decision
+
+**Example log entry**:
+```
+User:     admin@goldshore.org
+Action:   Allowed
+Reason:   Matched policy: GearSwipe Admin
+Time:     2026-09-02 10:30:45 UTC
+```
+
+### Admin Action Audit
+Apps also log admin actions to D1:
+```sql
+SELECT * FROM audit_events
+WHERE actor = 'admin@goldshore.org'
+  AND action LIKE 'admin.%'
+ORDER BY occurred_at DESC;
 ```
 
 Acceptance criteria:

@@ -1,43 +1,24 @@
-import { auth, getCFAccessEmailDirect } from "@/auth";
+import { auth } from "@/auth";
+import { authorizeOperator, operatorApiFailure } from "@/lib/operator-auth";
 import { NextResponse } from "next/server";
 
-const ADMIN_EMAILS = new Set(
-  (process.env.GEARSWIPE_ADMIN_EMAILS ?? "admin@goldshore.org,admin@gearswipe.com")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean),
-);
-
-function isCFAccessAuthed(request: any): boolean {
-  // Check if CF Access has authenticated the user
-  const cfEmail = getCFAccessEmailDirect(request.headers);
-  if (cfEmail && ADMIN_EMAILS.has(cfEmail.toLowerCase())) {
-    return true;
-  }
-  return false;
-}
-
-export default auth((request) => {
+export default auth(async (request) => {
   const { pathname } = request.nextUrl;
   const isAdminPage = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");
 
-  // Check CF Access first (production)
-  if (isCFAccessAuthed(request)) {
-    return NextResponse.next();
-  }
-
-  // Fall back to NextAuth session
-  if (request.auth) {
-    return NextResponse.next();
-  }
+  const decision = await authorizeOperator({ headers: request.headers, session: request.auth });
+  if (decision.authorized) return NextResponse.next();
 
   if (isAdminApi) {
-    return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+    return operatorApiFailure(decision);
   }
 
   if (isAdminPage) {
-    return NextResponse.redirect(new URL("/", request.nextUrl.origin));
+    const destination = decision.status === 401
+      ? `/cdn-cgi/access/login?redirect_url=${encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search)}`
+      : "/access-denied";
+    return NextResponse.redirect(new URL(destination, request.nextUrl.origin));
   }
 
   return NextResponse.next();
