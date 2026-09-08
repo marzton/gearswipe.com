@@ -1,10 +1,9 @@
-import { auth, getCFAccessEmail } from "@/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { authorizeOperator } from "@/lib/operator-auth";
 
 const ADMIN_EMAILS = new Set(
-  (process.env.GEARSWIPE_ADMIN_EMAILS ?? "admin@goldshore.org,admin@gearswipe.com")
+  (process.env.GEARSWIPE_ADMIN_EMAILS ?? "")
     .split(",")
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean),
@@ -17,19 +16,6 @@ export async function getAdminEmail(): Promise<string | null> {
   const cfEmail = await getCFAccessEmail(CF_TEAM_NAME);
   if (cfEmail) return cfEmail.toLowerCase();
 
-  // Fallback: NextAuth session (local dev)
-  const session = await auth();
-  return session?.user?.email?.toLowerCase() ?? null;
-}
-
-export async function requireAdminAuth() {
-  const email = await getAdminEmail();
-
-  if (!email || !ADMIN_EMAILS.has(email)) {
-    redirect("/");
-  }
-
-  return { email };
   // NextAuth is an explicitly enabled local-development fallback. Production
   // identity is established only by Cloudflare Access before this app runs.
   if (process.env.NODE_ENV !== "production") {
