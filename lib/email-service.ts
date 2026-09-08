@@ -86,10 +86,10 @@ export async function sendWelcomeEmail(
     html: `
       <h1>Welcome, ${name}!</h1>
       <p>Your account has been created successfully.</p>
-      <p>You can now log in and start exploring.</p>
-      <a href="${process.env.NEXTAUTH_URL}/login">Sign In</a>
+      <p>Start exploring below.</p>
+      <a href="${process.env.NEXTAUTH_URL}/">Visit ${siteName}</a>
     `,
-    text: `Welcome to ${siteName}! You can now log in at ${process.env.NEXTAUTH_URL}/login`,
+    text: `Welcome to ${siteName}! Visit us at ${process.env.NEXTAUTH_URL}/`,
   })
 }
 
