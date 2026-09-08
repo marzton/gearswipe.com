@@ -1,5 +1,6 @@
-import { auth, getCFAccessEmail } from "@/auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { authorizeOperator } from "@/lib/operator-auth";
 
 const ADMIN_EMAILS = new Set(
   (process.env.GEARSWIPE_ADMIN_EMAILS ?? "")
@@ -28,15 +29,11 @@ export async function getAdminEmail(): Promise<string | null> {
 }
 
 export async function requireAdminAuth() {
-  const email = await getAdminEmail();
+  const result = await authorizeOperator();
+  if (result.authorized) return result.identity;
 
   if (!email || !ADMIN_EMAILS.has(email)) {
     redirect("/access-denied");
   }
-
-  return { email };
-}
-
-export async function getAdminSession() {
-  return await auth();
+  redirect("/access-denied");
 }

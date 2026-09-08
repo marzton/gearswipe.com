@@ -1,4 +1,5 @@
-import { auth, getCFAccessEmailDirect } from "@/auth";
+import { auth } from "@/auth";
+import { authorizeOperator, operatorApiFailure } from "@/lib/operator-auth";
 import { NextResponse } from "next/server";
 
 const ADMIN_EMAILS = new Set(
@@ -33,7 +34,7 @@ export default auth((request) => {
   }
 
   if (isAdminApi) {
-    return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+    return operatorApiFailure(decision);
   }
 
   if (isAdminPage) {

@@ -2,31 +2,6 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import type { JWT } from "next-auth/jwt";
 import type { Session, User } from "next-auth";
-import {
-  getCFAccessEmailVerified,
-  getCFAccessUserIdVerified,
-  getCFAccessEmailUnsafe,
-  getCFAccessUserIdUnsafe,
-} from "@/lib/cf-access-auth";
-
-// CF Access auth (production) - VERIFIED with JWT signature
-export async function getCFAccessEmail(teamName: string): Promise<string | null> {
-  return getCFAccessEmailVerified(teamName);
-}
-
-export async function getCFAccessUserId(teamName: string): Promise<string | null> {
-  return getCFAccessUserIdVerified(teamName);
-}
-
-// Unsafe fallback - only use if headers are already verified elsewhere
-export function getCFAccessEmailDirect(headers: Headers): string | null {
-  return getCFAccessEmailUnsafe(headers);
-}
-
-export function getCFAccessUserIdDirect(headers: Headers): string | null {
-  return getCFAccessUserIdUnsafe(headers);
-}
-
 // NextAuth fallback (local dev)
 const LOCAL_ADMIN_EMAIL = process.env.GEARSWIPE_ADMIN_EMAIL?.trim();
 const LOCAL_ADMIN_PASSWORD = process.env.GEARSWIPE_ADMIN_PASSWORD?.trim();

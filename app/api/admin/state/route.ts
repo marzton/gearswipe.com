@@ -1,5 +1,5 @@
 import { desc, eq } from "drizzle-orm";
-import { requireOperator } from "@/lib/operator-auth";
+import { authorizeOperator, operatorApiFailure } from "@/lib/operator-auth";
 import { getDb } from "../../../../db";
 import {
   adminQueueItems,
@@ -69,8 +69,8 @@ async function loadState(workspace: AdminWorkspace) {
 }
 
 export async function GET(request: Request) {
-  const operator = await requireOperator();
-  if (operator instanceof Response) return operator;
+  const authorization = await authorizeOperator();
+  if (!authorization.authorized) return operatorApiFailure(authorization);
   const url = new URL(request.url);
   const workspace = normalizeWorkspace(url.searchParams.get("workspace"));
   const state = await loadState(workspace);
@@ -81,8 +81,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const operator = await requireOperator();
-  if (operator instanceof Response) return operator;
+  const authorization = await authorizeOperator();
+  if (!authorization.authorized) return operatorApiFailure(authorization);
   const body = (await request.json()) as {
     workspace?: string;
     kind?: AdminItemKind | VendorOperationKind;
@@ -245,8 +245,8 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const operator = await requireOperator();
-  if (operator instanceof Response) return operator;
+  const authorization = await authorizeOperator();
+  if (!authorization.authorized) return operatorApiFailure(authorization);
   const body = (await request.json()) as {
     workspace?: string;
     kind?: AdminItemKind | VendorOperationKind;
