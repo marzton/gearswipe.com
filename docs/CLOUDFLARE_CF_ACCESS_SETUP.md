@@ -1,251 +1,178 @@
-# GearSwipe CF Access IdP Setup Guide
+# GearSwipe Cloudflare Access setup and change record
 
-## Overview
+## Scope and ownership
 
-GearSwipe admin routes now use **Cloudflare Access Identity Provider (CF Access)** for authentication instead of Google OAuth. CF Access handles identity verification at the edge and injects authenticated user headers into requests.
+This runbook governs the **operator identity/edge-access layer**. It does not
+change the public storefront, the canonical object model, or application-level
+authorization. Cloudflare Access is the first gate; the Worker still validates
+the Access JWT and the GearSwipe admin allowlist.
 
-## Architecture
+The public storefront must remain anonymous. A commercial or inherited Gold
+Shore Access application must never make GearSwipe's public content private.
 
-```
-User → gearswipe.com/admin
-  ↓
-CF Access Policy checks authentication
-  ↓
-If not authenticated:
-  → Show CF Access login page
-  → User signs in with Google (or other provider)
-  ↓
-CF Access validates against email policy
-  ↓
-If email matches policy:
-  → Injects headers:
-     - CF-Access-Authenticated-User-Email: user@example.com
-     - CF-Access-Authenticated-User-Id: xxxxx
-  ↓
-Request reaches /admin with CF headers
-  ↓
-Server-side requireAdminAuth() reads headers
-  ↓
-Email in allowlist (admin@goldshore.org, admin@gearswipe.com)?
-  → Yes: Render admin panel
-  → No: Redirect to /login
-```
+## Required production boundary
 
-## Configuration Steps
+The self-hosted application named `GearSwipe Admin` may contain only these
+public hostnames:
 
-### Phase 1: Create CF Access Application
+| Hostname | Path | Required | Reason |
+| --- | --- | --- | --- |
+| `gearswipe.com` | `/admin` | yes | Protect the route root exactly. |
+| `gearswipe.com` | `/admin/*` | yes | Protect all operator pages below the root. |
+| `gearswipe.com` | `/api/admin/*` | conditional | Include only while admin APIs are intentionally edge-protected. The application also returns `401` without authenticated admin context. |
 
-**Location**: Cloudflare Dashboard → Zero Trust → Applications
+Do not use `/admin*`: it is broader than the intended route boundary. Do not
+add the apex without a path, `/*`, `/login`, `/login*`, or a wildcard hostname.
+`www.gearswipe.com` is not an operator hostname and must remain public.
 
-**Steps**:
-1. Click **+ Add an application**
-2. Select **Self-hosted**
+Application-side protection currently has the same boundary: middleware
+matches `/admin/:path*` and `/api/admin/:path*`, while the admin layout performs
+the second authorization check. `/login` is not an application route and must
+not be placed behind Access.
 
-**Application Settings**:
-```
-Name:               GearSwipe Admin
-Domain:             gearswipe.com
-Path:               /admin*
-```
+## Governed dashboard procedure
 
-3. Click **Next** to configure policies
+Changes require a Cloudflare identity permitted to administer both Zero Trust
+and the `gearswipe.com` zone. Before editing anything:
 
-### Phase 2: Create Authentication Policy
+1. Export or screenshot the existing application and policy configuration for
+   rollback. Do not commit user emails, tokens, session cookies, or screenshots
+   containing identity data.
+2. In **Zero Trust → Access → Applications**, inspect every self-hosted
+   application. Search each application's public hostnames, not just its name,
+   for:
+   - `gearswipe.com` and `www.gearswipe.com`;
+   - `*.gearswipe.com`;
+   - an apex or wildcard application inherited from Gold Shore that can match
+     GearSwipe;
+   - `/*`, `/login*`, or any path overlapping `/`, `/blog`, `/shop`, or the
+     public bounty beta.
+3. Record all matching applications in the sanitized inventory below. Remove
+   GearSwipe hostnames from inherited portfolio-wide applications rather than
+   relying on application precedence.
+4. Edit `GearSwipe Admin` so its public hostnames are exactly the table in
+   **Required production boundary**. Preserve the existing allow policy and
+   configured identity provider unless the approved change says otherwise.
+5. Save the application, then record the application ID, policy ID/revision,
+   UTC deployment time, and rollback snapshot reference. Application and policy
+   IDs are configuration identifiers and may be recorded; identity records may
+   not.
 
-**Action**: Allow
-**Rules**:
-```
-AND
-  Identity Provider: Google
-AND
-  Email matches: Regex: ^(admin@goldshore\.org|admin@gearswipe\.com)$
-```
+### Sanitized application inventory
 
-**To add the rule**:
-1. Click **+ Add a rule**
-2. Select **Identity Provider**
-3. Choose **Google**
-4. Click **+ Add another condition**
-5. Select **Email**
-6. Choose **matches regex**
-7. Enter: `^(admin@goldshore\.org|admin@gearswipe\.com)$`
+| Application | Application ID | Public hostname/path | Policy revision | Result |
+| --- | --- | --- | --- | --- |
+| _Pending privileged dashboard inspection_ | _Not observed_ | _Not observed_ | _Not observed_ | **Not verified** |
 
-8. Click **Save application**
+## Access log audit
 
-### Phase 3: Verify Application Created
+In **Zero Trust → Logs → Access**, query a window spanning immediately before
+and after deployment. Filter separately for `/admin` and `/login`. Record one
+row per distinct outcome, removing user email, IP address, user ID, device ID,
+and session identifiers.
 
-In CF Access Applications list, you should see:
-```
-Name:       GearSwipe Admin
-Domain:     gearswipe.com/admin*
-Status:     ✅ Active
-```
+| UTC time | Requested hostname/path | Matched application | Policy/revision | Identity provider | Decision |
+| --- | --- | --- | --- | --- | --- |
+| _Pending privileged log access_ | `/admin` | _Not observed_ | _Not observed_ | _Not observed_ | **Not verified** |
+| _Pending privileged log access_ | `/login` | _Not observed_ | _Not observed_ | _Not observed_ | **Not verified** |
 
-## Testing
+The expected `/admin` row matches `GearSwipe Admin`. The expected `/login` row
+matches no Access application because login is public/application-owned. If
+`/login` matches an inherited application, stop validation and remove that
+overlap before proceeding.
 
-### Local Testing (Before CF Deployment)
+## DNS and Worker routing audit
+
+In **DNS → Records**, inspect the apex and `www` records without changing mail,
+TXT, DKIM, DMARC, CAA, or unrelated subdomains. In **Workers & Pages →
+gearswipe → Settings → Domains & Routes**, confirm `gearswipe.com` is the active
+custom domain/route for the intended `gearswipe` Worker. A proxied public A/AAAA
+answer proves only that Cloudflare is in front; it does **not** prove the Worker
+rather than a stale GCP load balancer receives the request.
+
+Record the apex record content and Worker route in the private change evidence,
+then put only the non-sensitive conclusion here:
+
+| Check | Expected | Recorded result |
+| --- | --- | --- |
+| Apex DNS | Proxied by Cloudflare | Public DNS returned Cloudflare anycast A/AAAA addresses on 2026-09-08; origin/Worker binding **not verified** without zone access. |
+| Worker custom domain/route | `gearswipe.com` → `gearswipe` | **Not verified**; no authenticated Cloudflare session was available. |
+| Stale GCP origin/load balancer | No active apex route | **Not verified**; proxied DNS cannot establish origin ownership. |
+
+## Post-deployment validation
+
+Use a new private browser session with no Access cookies. Preserve status,
+`Location`, and hostname/path evidence, but do not preserve cookies or identity
+headers.
+
 ```bash
-# Local dev: CF Access not available
-npm run dev
-# Visit http://localhost:3000/admin
-# Should redirect to /login (CF headers not present)
-# Local NextAuth fallback should work (if Google creds set)
+curl -sS -o /dev/null -D - https://gearswipe.com/
+curl -sS -o /dev/null -D - https://gearswipe.com/blog
+curl -sS -o /dev/null -D - https://gearswipe.com/shop
+# Replace with the actual public beta path when that route is deployed.
+curl -sS -o /dev/null -D - https://gearswipe.com/<bounty-beta-path>
+curl -sS -o /dev/null -D - https://gearswipe.com/admin
 ```
 
-### Staging Testing (With CF Enabled)
-```bash
-# Deploy to staging subdomain with CF Access enabled
-wrangler deploy --env preview
-# Visit https://staging.gearswipe.com/admin
-# Should show CF Access login page
-# Sign in with Google (email: admin@goldshore.org)
-# Should grant access to /admin
-```
+Acceptance criteria:
 
-### Production Testing
-```bash
-# After verifying staging:
-wrangler deploy --env prod
-# Visit https://gearswipe.com/admin
-# Should show CF Access login page
-# Sign in with Google
-# Should grant access if email in allowlist
-```
+- `/`, `/blog`, `/shop`, and the deployed bounty beta path render without an
+  Access challenge.
+- `/admin` redirects to the Cloudflare Access authentication flow.
+- After successful authentication, the browser returns to the exact original
+  `https://gearswipe.com/admin` URL (not `/`, `/login`, or another hostname).
+- `/login` does not trigger Access. At present it may return the application's
+  normal not-found response because there is no `/login` route.
+- If `/api/admin/*` remains in the Access application, an anonymous request is
+  challenged at the edge. Otherwise the application must return `401`.
 
-## Troubleshooting
+### Validation record
 
-### Issue: "Access Denied" after signing in
+| URL | Expected anonymous result | Recorded result |
+| --- | --- | --- |
+| `https://gearswipe.com/` | Public | **Not verified**: execution environment's outbound proxy returned `403` before reaching Cloudflare. |
+| `https://gearswipe.com/blog` | Public | **Not verified**: same environment limitation. |
+| `https://gearswipe.com/shop` | Public | **Not verified**: same environment limitation. |
+| Future public bounty beta | Public | **Not runnable**: no public route/path is deployed in this branch. |
+| `https://gearswipe.com/admin` | Access challenge | **Not verified**: same environment limitation. |
+| Successful sign-in return | Original `/admin` URL | **Not verified**: requires an approved interactive identity session. |
 
-**Cause**: Email not in CF Access policy
+## Deployment record
 
-**Fix**:
-1. Cloudflare Dashboard → Zero Trust → Applications → GearSwipe Admin
-2. Edit policy rules
-3. Add email to regex: `^(admin@goldshore\.org|admin@gearswipe\.com|newemail@example\.com)$`
+This section is intentionally explicit: the 2026-09-08 repository run had no
+authenticated Cloudflare dashboard/API session (`wrangler whoami` reported
+unauthenticated). Therefore no governed dashboard change was applied and no
+application ID, policy revision, Access log result, or deployment timestamp can
+be truthfully recorded yet. Do not interpret this documentation commit as a
+Cloudflare deployment.
 
-### Issue: "Configuration error" when accessing /admin
+| Field | Value |
+| --- | --- |
+| Access application ID | **Pending privileged inspection** |
+| Protected paths | Intended: `/admin`, `/admin/*`; conditional: `/api/admin/*` |
+| Policy ID/revision | **Pending privileged inspection** |
+| Dashboard deployment timestamp (UTC) | **Not deployed** |
+| Change evidence | **Pending** |
 
-**Cause**: CF Access policy not active or path mismatch
+The operator who performs the dashboard change must replace the pending values
+in the same change window and rerun every validation above.
 
-**Fix**:
-1. Verify application domain: `gearswipe.com`
-2. Verify path: `/admin*` (wildcard catches `/admin`, `/admin/users`, etc.)
-3. Verify policy has at least one rule configured
+## Rollback procedure
 
-### Issue: Stuck on "Sign in with Google" page
+1. Open `GearSwipe Admin` in **Zero Trust → Access → Applications**.
+2. Restore the pre-change public-hostname list and policy revision from the
+   private snapshot recorded before deployment. Prefer restoring the application
+   over deleting it so IDs and audit continuity remain intact.
+3. If the incident is an accidental storefront challenge, first remove or
+   disable the broad/apex/wildcard application capturing public routes; do not
+   weaken the application-level admin allowlist.
+4. Confirm `/`, `/blog`, `/shop`, and the bounty beta are anonymous again, then
+   confirm `/admin` has returned to the prior known behavior.
+5. Record rollback UTC time, actor in the restricted change system, restored
+   policy revision, reason, and validation result. Do not put personal identity
+   data in this repository.
 
-**Cause**: Google OAuth not configured in CF Access
-
-**Fix**:
-1. Cloudflare Dashboard → Zero Trust → Settings → Authentication
-2. Ensure **Google** is listed under "Add an identity provider"
-3. Verify Google OAuth credentials are configured (may auto-configure if org has Google workspace)
-
-### Issue: Local dev can't access /admin
-
-**Expected**: CF Access headers not present locally
-**Workaround**: Set local Google OAuth env vars (if needed for testing):
-```bash
-export AUTH_GOOGLE_ID=your-google-client-id
-export AUTH_GOOGLE_SECRET=your-google-client-secret
-```
-
-## Admin Email Allowlist
-
-**Location**: Environment variable (fallback only)
-
-The admin email list is hardcoded in `lib/admin-auth.ts`:
-```typescript
-const ADMIN_EMAILS = new Set([
-  "admin@goldshore.org",
-  "admin@gearswipe.com"
-]);
-```
-
-**To add admins**:
-1. **Primary way**: Update CF Access policy regex in Cloudflare Dashboard
-2. **Secondary way** (dev only): Update `GEARSWIPE_ADMIN_EMAILS` env var in `.env` or Cloudflare Worker settings
-
-**Example**: Add `operator@gearswipe.com` to admins
-```
-CF Access Policy Regex: ^(admin@goldshore\.org|admin@gearswipe\.com|operator@gearswipe\.com)$
-```
-
-## Admin Session Management
-
-### Getting Current Admin Email
-```typescript
-// In server components or API routes
-import { getAdminEmail } from "@/lib/admin-auth";
-
-const email = await getAdminEmail();
-console.log(`Logged in as: ${email}`);
-```
-
-### Protecting Routes
-```typescript
-// In app/admin/layout.tsx (already done)
-import { requireAdminAuth } from "@/lib/admin-auth";
-
-export default async function AdminLayout({ children }) {
-  await requireAdminAuth();  // Redirects if not admin
-  return children;
-}
-```
-
-## Monitoring & Audit Logs
-
-### CF Access Logs
-**Location**: Cloudflare Dashboard → Analytics & Logs → Access
-
-Logs show:
-- User email
-- Authentication timestamp
-- Policy evaluated
-- Allow/Deny decision
-
-**Example log entry**:
-```
-User:     admin@goldshore.org
-Action:   Allowed
-Reason:   Matched policy: GearSwipe Admin
-Time:     2026-09-02 10:30:45 UTC
-```
-
-### Admin Action Audit
-Apps also log admin actions to D1:
-```sql
-SELECT * FROM audit_events
-WHERE actor = 'admin@goldshore.org'
-  AND action LIKE 'admin.%'
-ORDER BY occurred_at DESC;
-```
-
-## Rollback Plan
-
-If CF Access causes issues:
-
-1. **Disable CF Access policy**:
-   - Cloudflare Dashboard → Zero Trust → Applications
-   - Delete "GearSwipe Admin" application
-
-2. **Re-enable Google OAuth** (if needed):
-   - Set env vars: `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`
-   - Redeploy: `wrangler deploy --env prod`
-
-3. **Time to rollback**: <5 minutes
-
-## Next Steps
-
-1. ✅ Code deployed (CF Access headers supported)
-2. **Create CF Access application** (this guide)
-3. **Test on staging** subdomain
-4. **Deploy to production**
-5. **Monitor** access logs for issues
-6. **Remove** NextAuth Google OAuth config (optional, after verifying CF works)
-
----
-
-**For questions**, see:
-- [Cloudflare Access Docs](https://developers.cloudflare.com/cloudflare-one/identity/idp-integration/)
-- [CF Access with Custom Apps](https://developers.cloudflare.com/cloudflare-one/applications/configure-apps/self-hosted-apps/)
+Application authentication remains defense in depth during an Access rollback:
+admin pages redirect unauthenticated users to `/`, and admin APIs return `401`.
+If Access must be temporarily removed, monitor the application audit trail and
+restore the exact-path edge policy as soon as the incident is resolved.
