@@ -23,6 +23,6 @@ test("research agent remains evidence-only", async () => {
   ]);
   assert.match(agent, /namespace\.get\(instanceName\)\.search/);
   assert.doesNotMatch(agent, /\.create\(|uploadAndPoll/);
-  assert.match(route, /requireOperator/);
+  assert.match(route, /authorizeOperator/);
   assert.match(route, /researchEvidence/);
 });
