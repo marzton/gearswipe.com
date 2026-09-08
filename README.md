@@ -41,7 +41,7 @@ Recommended Pages settings:
 - Build output directory: `dist`
 
 If a deployment target only accepts static assets, it will not preserve the
-operator, admin, quote, or other server-side routes. In that case, deploy the
+login, admin, quote, or other server-side routes. In that case, deploy the
 full app to Cloudflare Workers instead.
 
 ## Repository roles
