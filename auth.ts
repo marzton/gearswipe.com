@@ -11,12 +11,12 @@ import {
 } from "@/lib/cf-access-auth";
 
 // CF Access auth (production) - VERIFIED with JWT signature
-export async function getCFAccessEmail(teamName: string): Promise<string | null> {
-  return getCFAccessEmailVerified(teamName);
+export async function getCFAccessEmail(): Promise<string | null> {
+  return getCFAccessEmailVerified();
 }
 
-export async function getCFAccessUserId(teamName: string): Promise<string | null> {
-  return getCFAccessUserIdVerified(teamName);
+export async function getCFAccessUserId(): Promise<string | null> {
+  return getCFAccessUserIdVerified();
 }
 
 // Unsafe fallback - only use if headers are already verified elsewhere

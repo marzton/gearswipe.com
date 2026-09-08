@@ -8,11 +8,9 @@ const ADMIN_EMAILS = new Set(
     .filter(Boolean),
 );
 
-const CF_TEAM_NAME = process.env.CLOUDFLARE_TEAM_NAME ?? "gearswipe";
-
 export async function getAdminEmail(): Promise<string | null> {
   // Primary: CF Access email (production, JWT-verified)
-  const cfEmail = await getCFAccessEmail(CF_TEAM_NAME);
+  const cfEmail = await getCFAccessEmail();
   if (cfEmail) return cfEmail.toLowerCase();
 
   // Fallback: NextAuth session (local dev)
