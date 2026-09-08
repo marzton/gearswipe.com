@@ -24,7 +24,7 @@ If email matches policy:
   ↓
 Request reaches /admin with CF headers
   ↓
-Server-side requireAdminAuth() reads headers
+Server-side requireAdminAuth() verifies CF-Access-Jwt-Assertion
   ↓
 Email in allowlist (admin@goldshore.org, admin@gearswipe.com)?
   → Yes: Render admin panel
@@ -32,6 +32,27 @@ Email in allowlist (admin@goldshore.org, admin@gearswipe.com)?
 ```
 
 ## Configuration Steps
+
+### Runtime bindings
+
+Configure these server-only text bindings for every deployed environment in
+**Workers & Pages → gearswipe → Settings → Variables and Secrets**:
+
+- `CLOUDFLARE_ACCESS_TEAM_DOMAIN`: the complete Access team domain, for example
+  `your-team.cloudflareaccess.com` (not the protected application hostname).
+- `CLOUDFLARE_ACCESS_AUDIENCE`: the Access application **AUD tag** shown on the
+  application's overview/configuration page.
+
+Neither value is an authentication credential, so encrypted secrets are not
+required; keeping both as server-side bindings prevents deployment identity
+configuration from entering source or client bundles. Use environment-specific
+values for preview and production. The runtime deliberately has no default and
+rejects Access assertions when either binding is absent.
+
+The verifier downloads the team's JWK set from
+`https://<team-domain>/cdn-cgi/access/certs`, selects the `RS256` key by the
+token header's `kid`, and refreshes its bounded one-hour cache when a new `kid`
+appears during key rotation.
 
 ### Phase 1: Create CF Access Application
 

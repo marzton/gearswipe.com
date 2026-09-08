@@ -9,12 +9,10 @@ const ADMIN_EMAILS = new Set(
     .filter(Boolean),
 );
 
-const CF_TEAM_NAME = process.env.CLOUDFLARE_TEAM_NAME ?? "gearswipe";
-
 /** Route-level protection remains effective even if deployment middleware is omitted. */
 export async function requireOperator(): Promise<OperatorIdentity | Response> {
   // Primary: CF Access email (production, JWT-verified)
-  const cfEmail = await getCFAccessEmail(CF_TEAM_NAME);
+  const cfEmail = await getCFAccessEmail();
   if (cfEmail && ADMIN_EMAILS.has(cfEmail.toLowerCase())) {
     return { email: cfEmail.toLowerCase() };
   }
