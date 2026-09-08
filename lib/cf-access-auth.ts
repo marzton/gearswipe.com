@@ -184,6 +184,18 @@ export async function verifyCFAccessToken(
   return payload as CFAccessToken;
 }
 
+export type CFAccessVerification = { valid: true; email: string } | { valid: false };
+
+export async function verifyCFAccessIdentity(requestHeaders: Headers): Promise<CFAccessVerification> {
+  const token = requestHeaders.get("cf-access-jwt-assertion");
+  if (!token) return { valid: false };
+  try {
+    const payload = await verifyCFAccessToken(token, getAccessConfiguration());
+    if (typeof payload.email !== "string" || !payload.email.trim()) return { valid: false };
+    return { valid: true, email: payload.email.trim().toLowerCase() };
+  } catch { return { valid: false }; }
+}
+
 async function getVerifiedTokenFromRequest(): Promise<CFAccessToken | null> {
   try {
     const { headers } = await import("next/headers");

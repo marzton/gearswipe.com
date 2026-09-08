@@ -18,11 +18,11 @@ export type OperatorAuthorizationInput = {
   verifyAccess?: typeof verifyCFAccessIdentity;
 };
 
-const DEFAULT_OPERATOR_EMAILS = "admin@goldshore.org,admin@gearswipe.com";
+const DEFAULT_OPERATOR_EMAILS = "";
 
 export function getOperatorAllowlist(): ReadonlySet<string> {
   return new Set(
-    (process.env.GEARSWIPE_ADMIN_EMAILS ?? DEFAULT_OPERATOR_EMAILS)
+    (String((globalThis as typeof globalThis & { __GEARSWIPE_ENV__?: Record<string, unknown> }).__GEARSWIPE_ENV__?.GEARSWIPE_ADMIN_EMAILS ?? process.env.GEARSWIPE_ADMIN_EMAILS ?? DEFAULT_OPERATOR_EMAILS))
       .split(",")
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean),
@@ -41,7 +41,7 @@ function developmentFallbackAllowed(environment: string): boolean {
  * merely because a session exists.
  */
 export async function authorizeOperator(input: OperatorAuthorizationInput = {}): Promise<OperatorAuthorization> {
-  const headers = input.headers ?? await (await import("next/headers.js")).headers();
+  const headers = input.headers ?? await (await import("next/headers")).headers();
   const assertion = headers.get("cf-access-jwt-assertion");
   const allowlist = getOperatorAllowlist();
 
@@ -57,6 +57,9 @@ export async function authorizeOperator(input: OperatorAuthorizationInput = {}):
   }
 
   let session = input.session;
+  if (session === undefined && !developmentFallbackAllowed(input.environment ?? process.env.NODE_ENV ?? "production")) {
+    return { authorized: false, status: 401, reason: "missing_identity" };
+  }
   if (session === undefined) {
     const { auth } = await import("../auth.ts");
     session = await auth();
