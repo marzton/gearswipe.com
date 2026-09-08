@@ -1,5 +1,7 @@
 import { auth, getCFAccessEmail } from "@/auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { authorizeOperator } from "@/lib/operator-auth";
 
 const ADMIN_EMAILS = new Set(
   (process.env.GEARSWIPE_ADMIN_EMAILS ?? "admin@goldshore.org,admin@gearswipe.com")
@@ -28,8 +30,24 @@ export async function requireAdminAuth() {
   }
 
   return { email };
+  // NextAuth is an explicitly enabled local-development fallback. Production
+  // identity is established only by Cloudflare Access before this app runs.
+  if (process.env.NODE_ENV !== "production") {
+    const session = await auth();
+    return session?.user?.role === "admin"
+      ? session.user.email?.toLowerCase() ?? null
+      : null;
+  }
+
+  return null;
 }
 
-export async function getAdminSession() {
-  return await auth();
+export async function requireAdminAuth() {
+  const result = await authorizeOperator();
+  if (result.authorized) return result.identity;
+
+  if (!email || !ADMIN_EMAILS.has(email)) {
+    redirect("/access-denied");
+  }
+  redirect("/access-denied");
 }

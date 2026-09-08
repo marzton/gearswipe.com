@@ -1,9 +1,12 @@
-import { auth, getCFAccessEmail } from "@/auth";
+import { verifyCFAccessIdentity } from "./cf-access-auth.ts";
 
-export type OperatorIdentity = { email: string };
+export type OperatorIdentity = {
+  email: string;
+  source: "cloudflare-access" | "nextauth-development";
+};
 
 const ADMIN_EMAILS = new Set(
-  (process.env.GEARSWIPE_ADMIN_EMAILS ?? "admin@goldshore.org,admin@gearswipe.com")
+  (process.env.GEARSWIPE_ADMIN_EMAILS ?? "")
     .split(",")
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean),
@@ -24,5 +27,13 @@ export async function requireOperator(): Promise<OperatorIdentity | Response> {
   if (!session?.user?.email || session.user.role !== "admin") {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
-  return { email: session.user.email };
+
+  return { authorized: false, status: 401, reason: "missing_identity" };
+}
+
+export function operatorApiFailure(result: Exclude<OperatorAuthorization, { authorized: true }>): Response {
+  return Response.json(
+    { ok: false, error: result.status === 401 ? "unauthenticated" : "forbidden", reason: result.reason },
+    { status: result.status },
+  );
 }
