@@ -1,14 +1,11 @@
-import { auth } from "@/auth";
+import { authorizeOperator, operatorApiFailure } from "@/lib/operator-auth";
 import { getDb } from "@/db";
 import { articles } from "@/db/gearswipe-schema";
 
-const requireOperator = async () => {
-  const session = await auth();
-  return session?.user?.role === "admin";
-};
 
 export async function GET() {
-  if (!(await requireOperator())) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const authorization = await authorizeOperator();
+  if (!authorization.authorized) return operatorApiFailure(authorization);
   try {
     return Response.json(await getDb().select().from(articles).orderBy(articles.updatedAt));
   } catch (error) {
@@ -18,7 +15,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (!(await requireOperator())) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const authorization = await authorizeOperator();
+  if (!authorization.authorized) return operatorApiFailure(authorization);
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   if (!body || typeof body.title !== "string" || typeof body.slug !== "string" || typeof body.body !== "string") {
     return Response.json({ error: "title, slug, and body are required" }, { status: 400 });

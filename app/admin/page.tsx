@@ -1,42 +1,133 @@
-import Link from "next/link";
-import { Header } from "@/components/Header";
-import { getAdminEmail } from "@/lib/admin-auth";
-import { loadAdminModuleStatuses } from "./modules";
+'use client';
 
-export const dynamic = "force-dynamic";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Header } from '@/components/Header';
+import {
+  type DashboardSummaryResponse,
+  isDashboardSummaryResponse,
+} from '@/lib/admin-dashboard';
 
-export default async function AdminDashboard() {
-  const email = await getAdminEmail();
-  const modules = await loadAdminModuleStatuses(Boolean(email));
+type DashboardState =
+  | { status: 'loading' }
+  | { status: 'success'; summary: DashboardSummaryResponse }
+  | { status: 'access-denied' }
+  | { status: 'missing-binding' }
+  | { status: 'upstream-failure' };
 
-  return <>
-    <Header />
-    <main className="gs-admin-shell">
-      <div className="gs-container">
-        <header className="gs-page-header gs-admin-shell-header">
-          <p className="gs-admin-eyebrow">Operator tooling</p>
-          <h1>GearSwipe operations</h1>
-          <p className="gs-page-description">Choose a focused module. Canonical facts, evidence, publishing, and commercial controls remain separate responsibilities.</p>
-          <p className="gs-admin-access"><strong>Authorization:</strong> {email ? `Operator access verified for ${email}` : "Authorization required"}</p>
-        </header>
+export default function AdminDashboard() {
+  const [state, setState] = useState<DashboardState>({ status: 'loading' });
 
-        <nav className="gs-admin-module-grid" aria-label="Operator modules">
-          {modules.map(({ module, status }) => (
-            <Link className="gs-admin-module" href={module.href} key={module.href}>
-              <div className="gs-admin-module-heading">
-                <h2>{module.label}</h2>
-                {module.beta ? <span className="gs-admin-beta">Beta</span> : null}
-              </div>
-              <p>{module.description}</p>
-              <dl>
-                <div><dt>Status</dt><dd><span className={`gs-admin-status gs-admin-status-${status.kind}`}>{status.label}</span></dd></div>
-                <div><dt>Runtime</dt><dd>{module.dependency}</dd></div>
-              </dl>
-              <p className="gs-admin-status-detail">{status.detail}</p>
-              <span className="gs-admin-module-action">Open module →</span>
-            </Link>
-          ))}
-        </nav>
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const response = await fetch('/api/admin/dashboard', {
+          headers: { Accept: 'application/json' },
+        });
+        const body: unknown = await response.json().catch(() => null);
+
+        if (response.status === 401 || response.status === 403) {
+          setState({ status: 'access-denied' });
+        } else if (response.status === 503 &&
+          (body as { error?: { code?: string } } | null)?.error?.code === 'D1_BINDING_MISSING') {
+          setState({ status: 'missing-binding' });
+        } else if (!response.ok || !isDashboardSummaryResponse(body)) {
+          setState({ status: 'upstream-failure' });
+        } else {
+          setState({ status: 'success', summary: body });
+        }
+      } catch (err) {
+        console.error('Failed to load stats:', err);
+        setState({ status: 'upstream-failure' });
+      }
+    }
+
+    loadStats();
+  }, []);
+
+  return (
+    <>
+      <Header />
+      <div className="gs-admin-dashboard">
+        <div className="gs-container">
+          <header className="gs-page-header">
+            <h1>ADMIN DASHBOARD</h1>
+            <p className="gs-page-description">Manage all Gearswipe content and campaigns.</p>
+          </header>
+
+          {state.status === 'loading' && <div role="status">Loading dashboard stats...</div>}
+          {state.status === 'access-denied' && (
+            <div role="alert">Access denied. Sign in with an authorized operator account.</div>
+          )}
+          {state.status === 'missing-binding' && (
+            <div role="alert">Dashboard storage is not configured. The D1 binding is missing.</div>
+          )}
+          {state.status === 'upstream-failure' && (
+            <div role="alert">Dashboard statistics are temporarily unavailable. Try again later.</div>
+          )}
+          {state.status === 'success' && (
+            <div className="gs-admin-grid">
+              <section className="gs-admin-card">
+                <h2>CONTENT OVERVIEW</h2>
+                {state.summary.health.status === 'degraded' && (
+                  <p role="alert">
+                    Some modules are unavailable ({state.summary.degradedCodes.join(', ')}).
+                  </p>
+                )}
+                <div className="gs-stat-item">
+                  <span className="gs-stat-label">Field Tests</span>
+                  <span className="gs-stat-value">{state.summary.counts.fieldTests ?? 'Unavailable'}</span>
+                </div>
+                <div className="gs-stat-item">
+                  <span className="gs-stat-label">Products</span>
+                  <span className="gs-stat-value">{state.summary.counts.products ?? 'Unavailable'}</span>
+                </div>
+                <div className="gs-stat-item">
+                  <span className="gs-stat-label">Comparisons</span>
+                  <span className="gs-stat-value">{state.summary.counts.comparisons ?? 'Unavailable'}</span>
+                </div>
+                <div className="gs-stat-item">
+                  <span className="gs-stat-label">Total Subscribers</span>
+                  <span className="gs-stat-value">{state.summary.counts.subscribers ?? 'Unavailable'}</span>
+                </div>
+                <div className="gs-stat-item">
+                  <span className="gs-stat-label">Confirmed Subscribers</span>
+                  <span className="gs-stat-value">{state.summary.counts.confirmedSubscribers ?? 'Unavailable'}</span>
+                </div>
+              </section>
+
+              <section className="gs-admin-card">
+                <h2>MANAGEMENT</h2>
+                <nav className="gs-admin-nav">
+                  <Link href="/admin/field-tests" className="gs-admin-link">
+                    Field Tests →
+                  </Link>
+                  <Link href="/admin/products" className="gs-admin-link">
+                    Products →
+                  </Link>
+                  <Link href="/admin/comparisons" className="gs-admin-link">
+                    Comparisons →
+                  </Link>
+                  <Link href="/admin/subscribers" className="gs-admin-link">
+                    Subscribers →
+                  </Link>
+                  <Link href="/admin/campaigns" className="gs-admin-link">
+                    Email Campaigns →
+                  </Link>
+                  <Link href="/admin/research" className="gs-admin-link">
+                    Research Workspace →
+                  </Link>
+                  <Link href="/admin/production" className="gs-admin-link">
+                    Production Desk →
+                  </Link>
+                  <Link href="/admin/articles" className="gs-admin-link">
+                    Editorial CMS →
+                  </Link>
+                </nav>
+              </section>
+            </div>
+          )}
+        </div>
       </div>
     </main>
   </>;
