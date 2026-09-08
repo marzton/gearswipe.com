@@ -15,8 +15,6 @@ interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
   GS_API: Fetcher;
-  CLOUDFLARE_ACCESS_AUDIENCE?: string;
-  CLOUDFLARE_ACCESS_TEAM_DOMAIN?: string;
   EMAIL?: {
     send(input: {
       to: string | string[];

@@ -1,89 +1,142 @@
 import { createVerify } from "crypto";
+import { headers } from "next/headers";
 
 interface CFAccessToken {
-  aud?: string | string[];
-  email?: string;
-  exp?: number;
-  iat?: number;
-  iss?: string;
+  aud: string[];
+  email: string;
+  exp: number;
+  iat: number;
+  iss: string;
+  sub: string;
+  type: string;
+  [key: string]: unknown;
 }
 
-type AccessCertificate = { kid?: string; cert?: string; pub_cert?: string };
-let cachedCertificates: AccessCertificate[] | null = null;
-let cachedCertificateTime = 0;
-const JWKS_CACHE_TTL = 3_600_000;
+let cachedPublicKey: string | null = null;
+let cachedPublicKeyTime = 0;
+const JWKS_CACHE_TTL = 3600000; // 1 hour
 
-function accessConfig() {
-  const teamName = (process.env.CLOUDFLARE_TEAM_NAME ?? "gearswipe").trim();
-  return {
-    teamName,
-    issuer: `https://${teamName}.cloudflareaccess.com`,
-    audience: process.env.CLOUDFLARE_ACCESS_AUD?.trim() || null,
-  };
-}
-
-async function fetchCertificates(teamName: string): Promise<AccessCertificate[]> {
+async function fetchPublicKey(teamName: string): Promise<string> {
   const now = Date.now();
-  if (cachedCertificates && now - cachedCertificateTime < JWKS_CACHE_TTL) return cachedCertificates;
-
-  const response = await fetch(`https://${teamName}.cloudflareaccess.com/cdn-cgi/access/certs`);
-  if (!response.ok) throw new Error("CF Access certificate fetch failed");
-  const data = await response.json() as {
-    public_certs?: AccessCertificate[];
-    certs?: AccessCertificate[];
-    public_cert?: string;
-  };
-  const certificates = data.public_certs ?? data.certs ?? (data.public_cert ? [{ cert: data.public_cert }] : []);
-  if (!certificates.length) throw new Error("CF Access returned no certificates");
-  cachedCertificates = certificates;
-  cachedCertificateTime = now;
-  return certificates;
-}
-
-function decodePart<T>(part: string): T {
-  return JSON.parse(Buffer.from(part, "base64url").toString("utf8")) as T;
-}
-
-export type CFAccessVerification =
-  | { valid: true; email: string }
-  | { valid: false };
-
-/** Verifies the Access signature and security claims before exposing identity. */
-export async function verifyCFAccessIdentity(requestHeaders: Headers): Promise<CFAccessVerification> {
-  const token = requestHeaders.get("cf-access-jwt-assertion");
-  if (!token) return { valid: false };
+  if (cachedPublicKey && now - cachedPublicKeyTime < JWKS_CACHE_TTL) {
+    return cachedPublicKey;
+  }
 
   try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return { valid: false };
-    const header = decodePart<{ alg?: string; kid?: string }>(parts[0]);
-    const payload = decodePart<CFAccessToken>(parts[1]);
-    if (header.alg !== "RS256") return { valid: false };
+    const jwksUrl = `https://${teamName}.cloudflareaccess.com/cdn-cgi/access/certs`;
+    const response = await fetch(jwksUrl);
+    const data = (await response.json()) as {
+      certs: Array<{ pub_cert: string }>;
+    };
 
-    const config = accessConfig();
-    const certificates = await fetchCertificates(config.teamName);
-    const candidates = header.kid ? certificates.filter((certificate) => certificate.kid === header.kid) : certificates;
-    const signature = Buffer.from(parts[2], "base64url");
-    const signed = `${parts[0]}.${parts[1]}`;
-    const signatureValid = candidates.some((certificate) => {
-      const key = certificate.cert ?? certificate.pub_cert;
-      if (!key) return false;
-      const verifier = createVerify("RSA-SHA256");
-      verifier.update(signed);
-      verifier.end();
-      return verifier.verify(key, signature);
-    });
-    if (!signatureValid) return { valid: false };
+    if (!data.certs || !data.certs[0]) {
+      throw new Error("No certificates found in JWKS response");
+    }
 
-    const now = Math.floor(Date.now() / 1000);
-    const audiences = Array.isArray(payload.aud) ? payload.aud : payload.aud ? [payload.aud] : [];
-    if (!payload.email || !payload.exp || payload.exp <= now || (payload.iat && payload.iat > now)) return { valid: false };
-    if (payload.iss !== config.issuer && payload.iss !== `${config.issuer}/`) return { valid: false };
-    if (config.audience && !audiences.includes(config.audience)) return { valid: false };
-    if (process.env.NODE_ENV === "production" && !config.audience) return { valid: false };
-    return { valid: true, email: payload.email.trim().toLowerCase() };
+    cachedPublicKey = data.certs[0].pub_cert;
+    cachedPublicKeyTime = now;
+    return cachedPublicKey;
   } catch (error) {
-    console.error("CF Access verification failed", error);
-    return { valid: false };
+    console.error("Failed to fetch CF Access public key:", error);
+    throw new Error("CF Access public key fetch failed");
   }
+}
+
+function decodeJWT(token: string): CFAccessToken {
+  const parts = token.split(".");
+  if (parts.length !== 3) {
+    throw new Error("Invalid JWT format");
+  }
+
+  try {
+    const payload = JSON.parse(
+      Buffer.from(parts[1], "base64").toString("utf-8")
+    ) as CFAccessToken;
+    return payload;
+  } catch (error) {
+    throw new Error("Failed to decode JWT payload");
+  }
+}
+
+function verifyJWTSignature(
+  token: string,
+  publicKey: string
+): CFAccessToken {
+  const payload = decodeJWT(token);
+
+  // Verify signature
+  const [headerB64, payloadB64, signatureB64] = token.split(".");
+  const signatureBuffer = Buffer.from(signatureB64, "base64");
+  const message = `${headerB64}.${payloadB64}`;
+
+  const verifier = createVerify("RSA-SHA256");
+  verifier.update(message);
+  const isValid = verifier.verify(publicKey, signatureBuffer);
+
+  if (!isValid) {
+    throw new Error("JWT signature verification failed");
+  }
+
+  // Verify claims
+  const now = Math.floor(Date.now() / 1000);
+  if (payload.exp && payload.exp < now) {
+    throw new Error("JWT token expired");
+  }
+
+  if (payload.iat && payload.iat > now) {
+    throw new Error("JWT token used before valid");
+  }
+
+  return payload;
+}
+
+export async function getCFAccessEmailVerified(
+  teamName: string
+): Promise<string | null> {
+  try {
+    const requestHeaders = await headers();
+    const token = requestHeaders.get("CF-Access-Jwt-Assertion");
+
+    if (!token) {
+      return null;
+    }
+
+    const publicKey = await fetchPublicKey(teamName);
+    const payload = verifyJWTSignature(token, publicKey);
+
+    return payload.email || null;
+  } catch (error) {
+    console.error("CF Access verification failed:", error);
+    // Don't return email if verification fails
+    return null;
+  }
+}
+
+export async function getCFAccessUserIdVerified(
+  teamName: string
+): Promise<string | null> {
+  try {
+    const requestHeaders = await headers();
+    const token = requestHeaders.get("CF-Access-Jwt-Assertion");
+
+    if (!token) {
+      return null;
+    }
+
+    const publicKey = await fetchPublicKey(teamName);
+    const payload = verifyJWTSignature(token, publicKey);
+
+    return payload.sub || null;
+  } catch (error) {
+    console.error("CF Access verification failed:", error);
+    return null;
+  }
+}
+
+export function getCFAccessEmailUnsafe(requestHeaders: Headers): string | null {
+  return requestHeaders.get("CF-Access-Authenticated-User-Email");
+}
+
+export function getCFAccessUserIdUnsafe(requestHeaders: Headers): string | null {
+  return requestHeaders.get("CF-Access-Authenticated-User-Id");
 }

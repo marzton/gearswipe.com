@@ -2,15 +2,14 @@ import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { researchEvidence, researchJobs } from "@/db/schema";
 import { articles } from "@/db/gearswipe-schema";
-import { authorizeOperator, operatorApiFailure } from "@/lib/operator-auth";
+import { requireOperator } from "@/lib/operator-auth";
 
 const slugify = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 72);
 
 /** Creates a reviewable, citation-preserving draft. It does not publish or call an LLM. */
 export async function POST(request: Request) {
-  const authorization = await authorizeOperator();
-  if (!authorization.authorized) return operatorApiFailure(authorization);
-  const operator = authorization.identity;
+  const operator = await requireOperator();
+  if (operator instanceof Response) return operator;
   const body = await request.json().catch(() => null) as { jobId?: string } | null;
   if (!body?.jobId) return Response.json({ error: "jobId is required" }, { status: 400 });
   const db = getDb();

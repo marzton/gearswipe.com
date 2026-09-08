@@ -1,24 +1,22 @@
 import { desc, eq } from "drizzle-orm";
 import { getDb, getRuntimeEnv } from "@/db";
 import { contentObjects, intakeAssets } from "@/db/schema";
-import { authorizeOperator, operatorApiFailure } from "@/lib/operator-auth";
+import { requireOperator } from "@/lib/operator-auth";
 
 const GS_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{1,63}$/;
 const MAX_FILE_BYTES = 15 * 1024 * 1024;
 
 export async function GET() {
-  const authorization = await authorizeOperator();
-  if (!authorization.authorized) return operatorApiFailure(authorization);
-  const operator = authorization.identity;
+  const operator = await requireOperator();
+  if (operator instanceof Response) return operator;
   const db = getDb();
   const objects = await db.select().from(contentObjects).orderBy(desc(contentObjects.updatedAt)).limit(50);
   return Response.json({ objects });
 }
 
 export async function POST(request: Request) {
-  const authorization = await authorizeOperator();
-  if (!authorization.authorized) return operatorApiFailure(authorization);
-  const operator = authorization.identity;
+  const operator = await requireOperator();
+  if (operator instanceof Response) return operator;
   const env = getRuntimeEnv();
   if (!env?.ASSETS_R2) return Response.json({ error: "Asset storage is not configured for this runtime." }, { status: 503 });
 

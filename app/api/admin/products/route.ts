@@ -1,10 +1,12 @@
 import { getDb } from "@/db";
 import { products } from "@/db/gearswipe-schema";
-import { authorizeOperator, operatorApiFailure } from "@/lib/operator-auth";
+import { auth } from "@/auth";
 
 export async function GET(request: Request) {
-  const authorization = await authorizeOperator();
-  if (!authorization.authorized) return operatorApiFailure(authorization);
+  const session = await auth();
+  if (!session?.user || session.user.role !== "admin") {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   try {
     const db = getDb();
@@ -17,8 +19,10 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const authorization = await authorizeOperator();
-  if (!authorization.authorized) return operatorApiFailure(authorization);
+  const session = await auth();
+  if (!session?.user || session.user.role !== "admin") {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   try {
     const db = getDb();
