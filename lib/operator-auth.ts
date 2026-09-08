@@ -5,9 +5,12 @@ export type OperatorIdentity = {
   source: "cloudflare-access" | "nextauth-development";
 };
 
-export type OperatorAuthorization =
-  | { authorized: true; identity: OperatorIdentity }
-  | { authorized: false; status: 401 | 403; reason: "missing_identity" | "invalid_access_assertion" | "operator_not_allowed" | "development_fallback_disabled" };
+const ADMIN_EMAILS = new Set(
+  (process.env.GEARSWIPE_ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean),
+);
 
 type SessionIdentity = { user?: { email?: string | null; role?: string | null } | null } | null;
 
