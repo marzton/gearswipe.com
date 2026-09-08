@@ -11,7 +11,7 @@ async function source(path) {
 test("production admin auth has no shipped default credential", async () => {
   const auth = await source("auth.ts");
   assert.doesNotMatch(auth, /gearswipe-local-auth-secret|gearswipe-admin/);
-  assert.match(auth, /AUTH_GOOGLE_ID/);
+  assert.doesNotMatch(auth, /providers\/google|AUTH_GOOGLE_ID|AUTH_GOOGLE_SECRET/);
   assert.match(auth, /GEARSWIPE_ADMIN_EMAILS/);
   assert.match(auth, /GEARSWIPE_ENABLE_LOCAL_CREDENTIALS/);
 });

@@ -3,7 +3,7 @@ import { auth, getCFAccessEmail } from "@/auth";
 export type OperatorIdentity = { email: string };
 
 const ADMIN_EMAILS = new Set(
-  (process.env.GEARSWIPE_ADMIN_EMAILS ?? "admin@goldshore.org,admin@gearswipe.com")
+  (process.env.GEARSWIPE_ADMIN_EMAILS ?? "")
     .split(",")
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean),
@@ -19,8 +19,8 @@ export async function requireOperator(): Promise<OperatorIdentity | Response> {
     return { email: cfEmail.toLowerCase() };
   }
 
-  // Fallback: NextAuth session (local dev)
-  const session = await auth();
+  // NextAuth is local-only; Cloudflare Access owns production identity.
+  const session = process.env.NODE_ENV !== "production" ? await auth() : null;
   if (!session?.user?.email || session.user.role !== "admin") {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
