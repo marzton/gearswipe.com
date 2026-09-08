@@ -3,44 +3,42 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
+import {
+  type DashboardSummaryResponse,
+  isDashboardSummaryResponse,
+} from '@/lib/admin-dashboard';
 
-interface DashboardStats {
-  fieldTests: number;
-  products: number;
-  comparisons: number;
-  subscribers: number;
-  confirmedSubscribers: number;
-}
+type DashboardState =
+  | { status: 'loading' }
+  | { status: 'success'; summary: DashboardSummaryResponse }
+  | { status: 'access-denied' }
+  | { status: 'missing-binding' }
+  | { status: 'upstream-failure' };
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [state, setState] = useState<DashboardState>({ status: 'loading' });
 
   useEffect(() => {
     async function loadStats() {
       try {
-        const [fieldTests, products, comparisons, subscribers] = await Promise.all([
-          fetch('/api/admin/field-tests').then((r) => r.json()),
-          fetch('/api/admin/products').then((r) => r.json()),
-          fetch('/api/admin/comparisons').then((r) => r.json()),
-          fetch('/api/admin/subscribers').then((r) => r.json()),
-        ]);
-
-        const confirmedSubs = Array.isArray(subscribers)
-          ? subscribers.filter((s: { confirmed?: boolean }) => s.confirmed).length
-          : 0;
-
-        setStats({
-          fieldTests: Array.isArray(fieldTests) ? fieldTests.length : 0,
-          products: Array.isArray(products) ? products.length : 0,
-          comparisons: Array.isArray(comparisons) ? comparisons.length : 0,
-          subscribers: Array.isArray(subscribers) ? subscribers.length : 0,
-          confirmedSubscribers: confirmedSubs,
+        const response = await fetch('/api/admin/dashboard', {
+          headers: { Accept: 'application/json' },
         });
+        const body: unknown = await response.json().catch(() => null);
+
+        if (response.status === 401 || response.status === 403) {
+          setState({ status: 'access-denied' });
+        } else if (response.status === 503 &&
+          (body as { error?: { code?: string } } | null)?.error?.code === 'D1_BINDING_MISSING') {
+          setState({ status: 'missing-binding' });
+        } else if (!response.ok || !isDashboardSummaryResponse(body)) {
+          setState({ status: 'upstream-failure' });
+        } else {
+          setState({ status: 'success', summary: body });
+        }
       } catch (err) {
         console.error('Failed to load stats:', err);
-      } finally {
-        setLoading(false);
+        setState({ status: 'upstream-failure' });
       }
     }
 
@@ -57,31 +55,44 @@ export default function AdminDashboard() {
             <p className="gs-page-description">Manage all Gearswipe content and campaigns.</p>
           </header>
 
-          {loading ? (
-            <div>Loading dashboard stats...</div>
-          ) : (
+          {state.status === 'loading' && <div role="status">Loading dashboard stats...</div>}
+          {state.status === 'access-denied' && (
+            <div role="alert">Access denied. Sign in with an authorized operator account.</div>
+          )}
+          {state.status === 'missing-binding' && (
+            <div role="alert">Dashboard storage is not configured. The D1 binding is missing.</div>
+          )}
+          {state.status === 'upstream-failure' && (
+            <div role="alert">Dashboard statistics are temporarily unavailable. Try again later.</div>
+          )}
+          {state.status === 'success' && (
             <div className="gs-admin-grid">
               <section className="gs-admin-card">
                 <h2>CONTENT OVERVIEW</h2>
+                {state.summary.health.status === 'degraded' && (
+                  <p role="alert">
+                    Some modules are unavailable ({state.summary.degradedCodes.join(', ')}).
+                  </p>
+                )}
                 <div className="gs-stat-item">
                   <span className="gs-stat-label">Field Tests</span>
-                  <span className="gs-stat-value">{stats?.fieldTests || 0}</span>
+                  <span className="gs-stat-value">{state.summary.counts.fieldTests ?? 'Unavailable'}</span>
                 </div>
                 <div className="gs-stat-item">
                   <span className="gs-stat-label">Products</span>
-                  <span className="gs-stat-value">{stats?.products || 0}</span>
+                  <span className="gs-stat-value">{state.summary.counts.products ?? 'Unavailable'}</span>
                 </div>
                 <div className="gs-stat-item">
                   <span className="gs-stat-label">Comparisons</span>
-                  <span className="gs-stat-value">{stats?.comparisons || 0}</span>
+                  <span className="gs-stat-value">{state.summary.counts.comparisons ?? 'Unavailable'}</span>
                 </div>
                 <div className="gs-stat-item">
                   <span className="gs-stat-label">Total Subscribers</span>
-                  <span className="gs-stat-value">{stats?.subscribers || 0}</span>
+                  <span className="gs-stat-value">{state.summary.counts.subscribers ?? 'Unavailable'}</span>
                 </div>
                 <div className="gs-stat-item">
                   <span className="gs-stat-label">Confirmed Subscribers</span>
-                  <span className="gs-stat-value">{stats?.confirmedSubscribers || 0}</span>
+                  <span className="gs-stat-value">{state.summary.counts.confirmedSubscribers ?? 'Unavailable'}</span>
                 </div>
               </section>
 
@@ -108,9 +119,6 @@ export default function AdminDashboard() {
                   </Link>
                   <Link href="/admin/production" className="gs-admin-link">
                     Production Desk →
-                  </Link>
-                  <Link href="/admin/articles" className="gs-admin-link">
-                    Editorial CMS →
                   </Link>
                   <Link href="/admin/articles" className="gs-admin-link">
                     Editorial CMS →
