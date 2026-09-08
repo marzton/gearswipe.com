@@ -1,43 +1,44 @@
-import { auth, getCFAccessEmailDirect } from "@/auth";
+import { auth } from "@/auth";
+import { authorizeOperator, operatorApiFailure } from "@/lib/operator-auth";
 import { NextResponse } from "next/server";
 
 const ADMIN_EMAILS = new Set(
-  (process.env.GEARSWIPE_ADMIN_EMAILS ?? "admin@goldshore.org,admin@gearswipe.com")
+  (process.env.GEARSWIPE_ADMIN_EMAILS ?? "")
     .split(",")
     .map((email) => email.trim().toLowerCase())
     .filter(Boolean),
 );
-
-function isCFAccessAuthed(request: any): boolean {
-  // Check if CF Access has authenticated the user
-  const cfEmail = getCFAccessEmailDirect(request.headers);
-  if (cfEmail && ADMIN_EMAILS.has(cfEmail.toLowerCase())) {
-    return true;
-  }
-  return false;
-}
 
 export default auth((request) => {
   const { pathname } = request.nextUrl;
   const isAdminPage = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");
 
-  // Check CF Access first (production)
-  if (isCFAccessAuthed(request)) {
-    return NextResponse.next();
+  const cfEmail = getCFAccessEmailDirect(request.headers)?.toLowerCase();
+
+  // Cloudflare Access owns the unauthenticated challenge before production
+  // requests reach this Worker. A supplied edge identity must still pass the
+  // application's authorization check.
+  if (cfEmail) {
+    if (ADMIN_EMAILS.has(cfEmail)) return NextResponse.next();
+    if (isAdminApi) {
+      return NextResponse.json({ ok: false, message: "Forbidden" }, { status: 403 });
+    }
+    return NextResponse.redirect(new URL("/access-denied", request.nextUrl.origin));
   }
 
-  // Fall back to NextAuth session
-  if (request.auth) {
+  // NextAuth is deliberately a local-development fallback, not a second
+  // production sign-in path.
+  if (process.env.NODE_ENV !== "production" && request.auth?.user?.role === "admin") {
     return NextResponse.next();
   }
 
   if (isAdminApi) {
-    return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+    return operatorApiFailure(decision);
   }
 
   if (isAdminPage) {
-    return NextResponse.redirect(new URL("/", request.nextUrl.origin));
+    return NextResponse.redirect(new URL("/access-denied", request.nextUrl.origin));
   }
 
   return NextResponse.next();
