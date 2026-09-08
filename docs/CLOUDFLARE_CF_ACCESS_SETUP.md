@@ -105,13 +105,251 @@ Use a new private browser session with no Access cookies. Preserve status,
 `Location`, and hostname/path evidence, but do not preserve cookies or identity
 headers.
 
+## Overview
+
+GearSwipe admin routes now use **Cloudflare Access Identity Provider (CF Access)** for authentication instead of Google OAuth. CF Access handles identity verification at the edge and injects authenticated user headers into requests.
+
+## Architecture
+
+```
+User → gearswipe.com/admin
+  ↓
+CF Access Policy checks authentication
+  ↓
+If not authenticated:
+  → Show CF Access login page
+  → User signs in with Google (or other provider)
+  ↓
+CF Access validates against email policy
+  ↓
+If email matches policy:
+  → Injects headers:
+     - CF-Access-Authenticated-User-Email: user@example.com
+     - CF-Access-Authenticated-User-Id: xxxxx
+  ↓
+Request reaches /admin with CF headers
+  ↓
+Server-side authorizeOperator() verifies the Access assertion
+  ↓
+Email in allowlist (admin@goldshore.org, admin@gearswipe.com)?
+  → Yes: Render admin panel
+  → No: Redirect to /login
+```
+
+## Configuration Steps
+
+### Runtime bindings
+
+Configure these server-only text bindings for every deployed environment in
+**Workers & Pages → gearswipe → Settings → Variables and Secrets**:
+
+- `CLOUDFLARE_ACCESS_TEAM_DOMAIN`: the complete Access team domain, for example
+  `your-team.cloudflareaccess.com` (not the protected application hostname).
+- `CLOUDFLARE_ACCESS_AUDIENCE`: the Access application **AUD tag** shown on the
+  application's overview/configuration page.
+
+Neither value is an authentication credential, so encrypted secrets are not
+required; keeping both as server-side bindings prevents deployment identity
+configuration from entering source or client bundles. Use environment-specific
+values for preview and production. The runtime deliberately has no default and
+rejects Access assertions when either binding is absent.
+
+The verifier downloads the team's JWK set from
+`https://<team-domain>/cdn-cgi/access/certs`, selects the `RS256` key by the
+token header's `kid`, and refreshes its bounded one-hour cache when a new `kid`
+appears during key rotation.
+
+### Phase 1: Create CF Access Application
+
+**Location**: Cloudflare Dashboard → Zero Trust → Applications
+
+**Steps**:
+1. Click **+ Add an application**
+2. Select **Self-hosted**
+
+**Application Settings**:
+```
+Name:               GearSwipe Admin
+Domain:             gearswipe.com
+Path:               /admin*
+```
+
+3. Click **Next** to configure policies
+
+### Phase 2: Create Authentication Policy
+
+**Action**: Allow
+**Rules**:
+```
+AND
+  Identity Provider: Google
+AND
+  Email matches: Regex: ^(admin@goldshore\.org|admin@gearswipe\.com)$
+```
+
+**To add the rule**:
+1. Click **+ Add a rule**
+2. Select **Identity Provider**
+3. Choose **Google**
+4. Click **+ Add another condition**
+5. Select **Email**
+6. Choose **matches regex**
+7. Enter: `^(admin@goldshore\.org|admin@gearswipe\.com)$`
+
+8. Click **Save application**
+
+### Phase 3: Verify Application Created
+
+In CF Access Applications list, you should see:
+```
+Name:       GearSwipe Admin
+Domain:     gearswipe.com/admin*
+Status:     ✅ Active
+```
+
+## Testing
+
+### Local Testing (Before CF Deployment)
 ```bash
-curl -sS -o /dev/null -D - https://gearswipe.com/
-curl -sS -o /dev/null -D - https://gearswipe.com/blog
-curl -sS -o /dev/null -D - https://gearswipe.com/shop
-# Replace with the actual public beta path when that route is deployed.
-curl -sS -o /dev/null -D - https://gearswipe.com/<bounty-beta-path>
-curl -sS -o /dev/null -D - https://gearswipe.com/admin
+# Local dev: CF Access not available
+npm run dev
+# Visit http://localhost:3000/admin
+# Should redirect to /login (CF headers not present)
+# Local NextAuth fallback works only when explicitly enabled (see below)
+```
+
+### Staging Testing (With CF Enabled)
+```bash
+# Deploy to staging subdomain with CF Access enabled
+wrangler deploy --env preview
+# Visit https://staging.gearswipe.com/admin
+# Should show CF Access login page
+# Sign in with Google (email: admin@goldshore.org)
+# Should grant access to /admin
+```
+
+### Production Testing
+```bash
+# After verifying staging:
+wrangler deploy --env prod
+# Visit https://gearswipe.com/admin
+# Should show CF Access login page
+# Sign in with Google
+# Should grant access if email in allowlist
+```
+
+## Troubleshooting
+
+### Issue: "Access Denied" after signing in
+
+**Cause**: Email not in CF Access policy
+
+**Fix**:
+1. Cloudflare Dashboard → Zero Trust → Applications → GearSwipe Admin
+2. Edit policy rules
+3. Add email to regex: `^(admin@goldshore\.org|admin@gearswipe\.com|newemail@example\.com)$`
+
+### Issue: "Configuration error" when accessing /admin
+
+**Cause**: CF Access policy not active or path mismatch
+
+**Fix**:
+1. Verify application domain: `gearswipe.com`
+2. Verify path: `/admin*` (wildcard catches `/admin`, `/admin/users`, etc.)
+3. Verify policy has at least one rule configured
+
+### Issue: Stuck on "Sign in with Google" page
+
+**Cause**: Google OAuth not configured in CF Access
+
+**Fix**:
+1. Cloudflare Dashboard → Zero Trust → Settings → Authentication
+2. Ensure **Google** is listed under "Add an identity provider"
+3. Verify Google OAuth credentials are configured (may auto-configure if org has Google workspace)
+
+### Issue: Local dev can't access /admin
+
+**Expected**: CF Access headers not present locally
+**Workaround**: Set local Google OAuth env vars (if needed for testing):
+```bash
+export AUTH_GOOGLE_ID=your-google-client-id
+export AUTH_GOOGLE_SECRET=your-google-client-secret
+export GEARSWIPE_ENABLE_NEXTAUTH_OPERATOR_FALLBACK=true
+```
+
+## Admin Email Allowlist
+
+**Location**: `GEARSWIPE_ADMIN_EMAILS`. The same normalized allowlist is used by
+the proxy, pages, and APIs through `lib/operator-auth.ts`.
+
+**To add admins**:
+1. **Primary way**: Update CF Access policy regex in Cloudflare Dashboard
+2. **Application enforcement**: Update `GEARSWIPE_ADMIN_EMAILS` in the runtime
+   secret/configuration store. Keep it aligned with the Access policy.
+
+**Example**: Add `operator@gearswipe.com` to admins
+```
+CF Access Policy Regex: ^(admin@goldshore\.org|admin@gearswipe\.com|operator@gearswipe\.com)$
+```
+
+## Admin Session Management
+
+Production must configure `CLOUDFLARE_ACCESS_AUD` with the Access application
+AUD tag. Assertions with the wrong issuer, audience, signature, or lifetime are
+rejected. `CLOUDFLARE_TEAM_NAME` defaults to `gearswipe`.
+
+NextAuth is never a production operator credential. For local development it
+must be opted into with `GEARSWIPE_ENABLE_NEXTAUTH_OPERATOR_FALLBACK=true`; local
+credentials additionally require `GEARSWIPE_ENABLE_LOCAL_CREDENTIALS=true` and
+the existing local email/password variables. The session must have the admin
+role and its email must be in `GEARSWIPE_ADMIN_EMAILS`.
+
+### Getting Current Admin Email
+```typescript
+// In server components or API routes
+import { getAdminEmail } from "@/lib/admin-auth";
+
+const email = await getAdminEmail();
+console.log(`Logged in as: ${email}`);
+```
+
+### Protecting Routes
+```typescript
+// In app/admin/layout.tsx (already done)
+import { requireAdminAuth } from "@/lib/admin-auth";
+
+export default async function AdminLayout({ children }) {
+  await requireAdminAuth();  // Redirects if not admin
+  return children;
+}
+```
+
+## Monitoring & Audit Logs
+
+### CF Access Logs
+**Location**: Cloudflare Dashboard → Analytics & Logs → Access
+
+Logs show:
+- User email
+- Authentication timestamp
+- Policy evaluated
+- Allow/Deny decision
+
+**Example log entry**:
+```
+User:     admin@goldshore.org
+Action:   Allowed
+Reason:   Matched policy: GearSwipe Admin
+Time:     2026-09-02 10:30:45 UTC
+```
+
+### Admin Action Audit
+Apps also log admin actions to D1:
+```sql
+SELECT * FROM audit_events
+WHERE actor = 'admin@goldshore.org'
+  AND action LIKE 'admin.%'
+ORDER BY occurred_at DESC;
 ```
 
 Acceptance criteria:

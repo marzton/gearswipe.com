@@ -65,10 +65,14 @@ export async function authorizeOperator(input: OperatorAuthorizationInput = {}):
     session = await auth();
   }
 
-  // NextAuth is local-only; Cloudflare Access owns production identity.
-  const session = process.env.NODE_ENV !== "production" ? await auth() : null;
-  if (!session?.user?.email || session.user.role !== "admin") {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const sessionEmail = session?.user?.email?.trim().toLowerCase();
+  if (sessionEmail) {
+    if (!developmentFallbackAllowed(input.environment ?? process.env.NODE_ENV ?? "development")) {
+      return { authorized: false, status: 403, reason: "development_fallback_disabled" };
+    }
+    return session?.user?.role === "admin" && allowlist.has(sessionEmail)
+      ? { authorized: true, identity: { email: sessionEmail, source: "nextauth-development" } }
+      : { authorized: false, status: 403, reason: "operator_not_allowed" };
   }
 
   return { authorized: false, status: 401, reason: "missing_identity" };
