@@ -352,6 +352,34 @@ WHERE actor = 'admin@goldshore.org'
 ORDER BY occurred_at DESC;
 ```
 
+## Rollback Plan
+
+If CF Access causes issues:
+
+1. **Disable CF Access policy**:
+   - Cloudflare Dashboard → Zero Trust → Applications
+   - Delete "GearSwipe Admin" application
+
+2. **Re-enable Google OAuth** (if needed):
+   - Set env vars: `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`
+   - Redeploy: `wrangler deploy --env prod`
+
+3. **Time to rollback**: <5 minutes
+
+## Next Steps
+
+1. ✅ Code deployed (CF Access headers supported)
+2. **Create CF Access application** (this guide)
+3. **Test on staging** subdomain
+4. **Deploy to production**
+5. **Monitor** access logs for issues
+6. **Remove** NextAuth Google OAuth config (optional, after verifying CF works)
+
+---
+
+**For questions**, see:
+- [Cloudflare Access Docs](https://developers.cloudflare.com/cloudflare-one/identity/idp-integration/)
+- [CF Access with Custom Apps](https://developers.cloudflare.com/cloudflare-one/applications/configure-apps/self-hosted-apps/)
 Acceptance criteria:
 
 - `/`, `/blog`, `/shop`, and the deployed bounty beta path render without an

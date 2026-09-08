@@ -123,6 +123,9 @@ export default function AdminDashboard() {
                   <Link href="/admin/articles" className="gs-admin-link">
                     Editorial CMS →
                   </Link>
+                  <Link href="/admin/articles" className="gs-admin-link">
+                    Editorial CMS →
+                  </Link>
                 </nav>
               </section>
             </div>
