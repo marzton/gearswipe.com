@@ -9,7 +9,7 @@ const ADMIN_EMAILS = new Set(
     .filter(Boolean),
 );
 
-export default auth((request) => {
+export default auth(async (request) => {
   const { pathname } = request.nextUrl;
   const isAdminPage = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");
@@ -27,11 +27,13 @@ export default auth((request) => {
     return NextResponse.redirect(new URL("/access-denied", request.nextUrl.origin));
   }
 
-  // NextAuth is deliberately a local-development fallback, not a second
-  // production sign-in path.
-  if (process.env.NODE_ENV !== "production" && request.auth?.user?.role === "admin") {
-    return NextResponse.next();
-  }
+  const decision = await authorizeOperator({
+    headers: request.headers,
+    session: request.auth,
+    environment: process.env.NODE_ENV,
+  });
+
+  if (decision.authorized) return NextResponse.next();
 
   if (isAdminApi) {
     return operatorApiFailure(decision);
