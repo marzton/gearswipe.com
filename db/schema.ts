@@ -11,6 +11,11 @@ export const bountyRevisions = sqliteTable("bounty_revisions", {
   revision: integer("revision").notNull(),
   collisionWindowMs: integer("collision_window_ms").notNull(),
   tiePolicy: text("tie_policy").notNull(),
+  policyInputJson: text("policy_input_json").notNull(),
+  policyDisposition: text("policy_disposition").notNull(),
+  policyReasonCodesJson: text("policy_reason_codes_json").notNull(),
+  policyVersion: text("policy_version").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   lockedAt: text("locked_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
@@ -173,6 +178,15 @@ export const intakeAssets = sqliteTable("gearswipe_intake_assets", {
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+/** Append-only accountability record corresponding to a persisted policy evaluation. */
+export const bountyAuditEvents = sqliteTable("bounty_audit_events", {
+  id: text("id").primaryKey(),
+  bountyId: text("bounty_id").notNull(),
+  bountyRevisionId: text("bounty_revision_id").notNull().references(() => bountyRevisions.id),
+  eventType: text("event_type").notNull(),
+  policyDecisionJson: text("policy_decision_json").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
 /** Accountable identities that may submit evidence against a bounty. */
 export const bountyHunters = sqliteTable("bounty_hunters", {
   hunterId: text("hunter_id").primaryKey(),
