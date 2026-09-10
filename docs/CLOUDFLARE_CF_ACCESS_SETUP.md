@@ -24,7 +24,7 @@ If email matches policy:
   ↓
 Request reaches /admin with CF headers
   ↓
-Server-side requireAdminAuth() reads headers
+Server-side authorizeOperator() verifies the Access assertion
   ↓
 Email in allowlist (admin@goldshore.org, admin@gearswipe.com)?
   → Yes: Render admin panel
@@ -89,7 +89,7 @@ Status:     ✅ Active
 npm run dev
 # Visit http://localhost:3000/admin
 # Should redirect to /login (CF headers not present)
-# Local NextAuth fallback should work (if Google creds set)
+# Local NextAuth fallback works only when explicitly enabled (see below)
 ```
 
 ### Staging Testing (With CF Enabled)
@@ -148,23 +148,18 @@ wrangler deploy --env prod
 ```bash
 export AUTH_GOOGLE_ID=your-google-client-id
 export AUTH_GOOGLE_SECRET=your-google-client-secret
+export GEARSWIPE_ENABLE_NEXTAUTH_OPERATOR_FALLBACK=true
 ```
 
 ## Admin Email Allowlist
 
-**Location**: Environment variable (fallback only)
-
-The admin email list is hardcoded in `lib/admin-auth.ts`:
-```typescript
-const ADMIN_EMAILS = new Set([
-  "admin@goldshore.org",
-  "admin@gearswipe.com"
-]);
-```
+**Location**: `GEARSWIPE_ADMIN_EMAILS`. The same normalized allowlist is used by
+the proxy, pages, and APIs through `lib/operator-auth.ts`.
 
 **To add admins**:
 1. **Primary way**: Update CF Access policy regex in Cloudflare Dashboard
-2. **Secondary way** (dev only): Update `GEARSWIPE_ADMIN_EMAILS` env var in `.env` or Cloudflare Worker settings
+2. **Application enforcement**: Update `GEARSWIPE_ADMIN_EMAILS` in the runtime
+   secret/configuration store. Keep it aligned with the Access policy.
 
 **Example**: Add `operator@gearswipe.com` to admins
 ```
@@ -172,6 +167,16 @@ CF Access Policy Regex: ^(admin@goldshore\.org|admin@gearswipe\.com|operator@gea
 ```
 
 ## Admin Session Management
+
+Production must configure `CLOUDFLARE_ACCESS_AUD` with the Access application
+AUD tag. Assertions with the wrong issuer, audience, signature, or lifetime are
+rejected. `CLOUDFLARE_TEAM_NAME` defaults to `gearswipe`.
+
+NextAuth is never a production operator credential. For local development it
+must be opted into with `GEARSWIPE_ENABLE_NEXTAUTH_OPERATOR_FALLBACK=true`; local
+credentials additionally require `GEARSWIPE_ENABLE_LOCAL_CREDENTIALS=true` and
+the existing local email/password variables. The session must have the admin
+role and its email must be in `GEARSWIPE_ADMIN_EMAILS`.
 
 ### Getting Current Admin Email
 ```typescript
