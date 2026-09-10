@@ -8,7 +8,7 @@ const ADMIN_EMAILS = new Set(
     .filter(Boolean),
 );
 
-function isCFAccessAuthed(request: Request): boolean {
+function isCFAccessAuthed(request: any): boolean {
   // Check if CF Access has authenticated the user
   const cfEmail = getCFAccessEmailDirect(request.headers);
   if (cfEmail && ADMIN_EMAILS.has(cfEmail.toLowerCase())) {
