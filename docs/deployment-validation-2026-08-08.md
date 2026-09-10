@@ -29,7 +29,7 @@ production:
 | Route | Build classification | Live |
 |---|---|---|
 | `/shop` | static/unknown | ❌ 404 |
-| `/login` | compatibility redirect | `307` to `/admin` (no OAuth flow) |
+| `/login` | static/unknown | ❌ 404 |
 | `/signup` | static/unknown | ❌ 404 |
 | `/rewards` | static/unknown | ❌ 404 |
 | `/build/custom-pc` | static/unknown | ❌ 404 |

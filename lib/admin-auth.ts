@@ -2,8 +2,15 @@ import { authorizeOperator } from "@/lib/operator-auth";
 import { redirect } from "next/navigation";
 
 export async function requireAdminAuth() {
-  const result = await authorizeOperator();
-  if (result.authorized) return result.identity;
+  const email = await getAdminEmail();
 
-  redirect("/access-denied");
+  if (!email || !ADMIN_EMAILS.has(email)) {
+    redirect("/");
+  }
+
+  return { email };
+}
+
+export async function getAdminSession() {
+  return await auth();
 }

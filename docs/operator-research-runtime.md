@@ -7,8 +7,9 @@ This branch adds an operator-only research surface at `/admin/research` and
 
 Set these runtime secrets/variables before enabling the interface:
 
-- Cloudflare Access protection for `/admin*` and `/api/admin*`
-- `CLOUDFLARE_TEAM_NAME`
+- `AUTH_SECRET` (or `NEXTAUTH_SECRET`)
+- `AUTH_GOOGLE_ID`
+- `AUTH_GOOGLE_SECRET`
 - `GEARSWIPE_ADMIN_EMAILS` as a comma-separated allowlist
 - `GEARSWIPE_AI_SEARCH_INSTANCE` once an approved index exists
 
@@ -18,6 +19,5 @@ source fragments for human review. It never creates an index, uploads source
 material, publishes content, enables commerce, or alters canonical facts.
 
 Apply `migrations/0002_operator_research_jobs.sql` to the GearSwipe D1 database
-before using the endpoint. Production binding and Cloudflare Access policy
-changes remain separate, reviewed operations. `/admin` is the production
-authentication entry point; the NextAuth credentials fallback is local-only.
+before using the endpoint. Production binding changes and OAuth-client creation
+remain separate, reviewed operations.
