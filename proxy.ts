@@ -27,10 +27,13 @@ export default auth((request) => {
     return NextResponse.next();
   }
 
-  // Fall back to NextAuth session
-  if (request.auth) {
-    return NextResponse.next();
-  }
+  const decision = await authorizeOperator({
+    headers: request.headers,
+    session: request.auth,
+    environment: process.env.NODE_ENV,
+  });
+
+  if (decision.authorized) return NextResponse.next();
 
   if (isAdminApi) {
     return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
