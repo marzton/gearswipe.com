@@ -6,13 +6,14 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { StorefrontCatalog } from "../../components/storefront-catalog";
 import { siteGraphLinks } from "../../lib/admin-data";
 import { storeCollections, storeTrustPoints } from "../../lib/store-catalog";
+import { TurnstileField } from "../../components/turnstile-field";
 
 function BrandMark() {
   return (
     <div className="flex items-center gap-3">
       <div className="relative h-11 w-11 overflow-hidden border border-[#d8d8d3] bg-white">
         <Image
-          src="/brand/gearswipe-cart-logo.jpg"
+          src="/brand/gearswipe-cart-logo.svg"
           alt="Gearswipe cart logo"
           fill
           sizes="44px"
@@ -232,6 +233,7 @@ function MailForms() {
           <p className={`mt-4 border px-3 py-2 text-sm ${statusClass(subscribeState.status)}`}>
             {subscribeState.message || "Clean signup. Fast reward entry."}
           </p>
+          <TurnstileField action="subscribe" />
           <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
             <input
               name="email"
@@ -252,7 +254,7 @@ function MailForms() {
           <SectionLabel>Store snapshot</SectionLabel>
           <div className="mt-4 overflow-hidden border border-[#ededeb] bg-[#fafaf8] p-4">
             <Image
-              src="/brand/gearswipe-logo-dark.jpg"
+              src="/brand/gearswipe-logo-dark.svg"
               alt="Gearswipe logo"
               width={1200}
               height={1200}
@@ -304,12 +306,6 @@ export default function StorePage() {
                 Cart
               </Link>
               <Link
-                href="/login"
-                className="border border-[#deded7] px-3 py-2 text-sm text-[#111111] transition hover:border-[#111111]"
-              >
-                Login
-              </Link>
-              <Link
                 href="/admin"
                 className="border border-[#111111] bg-[#111111] px-3 py-2 text-sm text-white transition hover:bg-[#262626]"
               >
@@ -345,12 +341,6 @@ export default function StorePage() {
                 >
                   Join rewards
                 </Link>
-                <Link
-                  href="/login"
-                  className="border border-[#deded7] px-4 py-3 text-sm text-[#111111] transition hover:border-[#111111]"
-                >
-                  Sign in
-                </Link>
               </div>
             </div>
 
@@ -379,7 +369,7 @@ export default function StorePage() {
 
             <div className="mt-4 overflow-hidden border border-[#ededeb] bg-[#fafaf8]">
               <Image
-                src="/brand/gearswipe-cart-logo.jpg"
+                src="/brand/gearswipe-cart-logo.svg"
                 alt="Gearswipe cart logo"
                 width={1200}
                 height={1200}
@@ -463,7 +453,7 @@ export default function StorePage() {
         <footer className="mt-auto border-t border-[#deded7] py-5 text-sm text-[#5f5f59]">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <p>Gearswipe is a focused tech storefront for practical products.</p>
-            <p className="text-[#111111]">Standalone brand. Clean presentation.</p>
+            <p className="flex gap-4 text-[#111111]"><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/accessibility">Accessibility</Link></p>
           </div>
         </footer>
       </div>

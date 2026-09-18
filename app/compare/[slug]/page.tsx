@@ -16,7 +16,7 @@ interface ComparisonProduct {
   construction?: string;
   warranty?: string;
   heroImage?: string;
-  [key: string]: any;
+  [key: string]: string | number | undefined;
 }
 
 interface ComparisonData {
@@ -41,7 +41,7 @@ export default function ComparisonDetailPage({ params }: { params: { slug: strin
       try {
         const comparisonsRes = await fetch('/api/comparisons?limit=100');
         const comparisons = await comparisonsRes.json();
-        const comp = comparisons.find((c: any) => c.slug === params.slug);
+        const comp = (comparisons as Array<{ id: string; slug: string }>).find((c) => c.slug === params.slug);
 
         if (!comp) {
           setError('Comparison not found');
