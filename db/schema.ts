@@ -11,6 +11,11 @@ export const bountyRevisions = sqliteTable("bounty_revisions", {
   revision: integer("revision").notNull(),
   collisionWindowMs: integer("collision_window_ms").notNull(),
   tiePolicy: text("tie_policy").notNull(),
+  policyInputJson: text("policy_input_json").notNull(),
+  policyDisposition: text("policy_disposition").notNull(),
+  policyReasonCodesJson: text("policy_reason_codes_json").notNull(),
+  policyVersion: text("policy_version").notNull(),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   lockedAt: text("locked_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
@@ -170,18 +175,6 @@ export const intakeAssets = sqliteTable("gearswipe_intake_assets", {
   filename: text("filename").notNull(),
   contentType: text("content_type").notNull().default("application/octet-stream"),
   sizeBytes: integer("size_bytes").notNull().default(0),
-  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-});
-
-/** Immutable bounty revisions include the deterministic policy snapshot used at submission. */
-export const bountyRevisions = sqliteTable("bounty_revisions", {
-  id: text("id").primaryKey(),
-  bountyId: text("bounty_id").notNull(),
-  revision: integer("revision").notNull(),
-  policyInputJson: text("policy_input_json").notNull(),
-  policyDisposition: text("policy_disposition").notNull(),
-  policyReasonCodesJson: text("policy_reason_codes_json").notNull(),
-  policyVersion: text("policy_version").notNull(),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 

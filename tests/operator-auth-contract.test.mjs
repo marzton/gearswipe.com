@@ -3,6 +3,7 @@ import test from "node:test";
 import { authorizeOperator, operatorApiFailure } from "../lib/operator-auth.ts";
 
 const allowedEmail = "admin@gearswipe.com";
+process.env.GEARSWIPE_ADMIN_EMAILS = allowedEmail;
 const assertionHeaders = () => new Headers({ "cf-access-jwt-assertion": "header.payload.signature" });
 const accessVerifier = (email) => async () => ({ valid: true, email });
 

@@ -9,6 +9,8 @@ function accessLoginUrl(requestUrl: string | null): string {
   return `/cdn-cgi/access/login?redirect_url=${encodeURIComponent(returnTo)}`;
 }
 
+const CF_TEAM_NAME = process.env.CLOUDFLARE_TEAM_NAME ?? "gearswipe";
+
 export async function getAdminEmail(): Promise<string | null> {
   const result = await authorizeOperator();
   return result.authorized ? result.identity.email : null;

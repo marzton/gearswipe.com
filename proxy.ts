@@ -15,10 +15,8 @@ export default auth(async (request) => {
   }
 
   if (isAdminPage) {
-    const destination = decision.status === 401
-      ? `/cdn-cgi/access/login?redirect_url=${encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search)}`
-      : "/access-denied";
-    return NextResponse.redirect(new URL(destination, request.nextUrl.origin));
+    // Access challenges anonymous requests at the edge; rejected assertions fail closed.
+    return NextResponse.redirect(new URL("/access-denied", request.nextUrl.origin));
   }
 
   return NextResponse.next();
