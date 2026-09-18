@@ -1,0 +1,47 @@
+name: Codex Context Validation
+
+on:
+  pull_request:
+    paths:
+      - 'AGENTS.md'
+      - 'docs/agentic-workflows.md'
+      - 'app/**'
+      - 'db/**'
+      - 'package.json'
+      - 'vite.config.ts'
+      - 'wrangler*'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22.13.0'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Verify agent context files
+        run: |
+          test -s AGENTS.md
+          test -s docs/agentic-workflows.md
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build

@@ -41,6 +41,26 @@ export const products = sqliteTable("gearswipe_products", {
   updatedAt: updatedAt(),
 });
 
+/** Canonical object intake. AI and editorial records reference this identity. */
+export const contentObjects = sqliteTable("gearswipe_content_objects", {
+  gsId: text("gs_id").primaryKey(),
+  title: text("title").notNull(),
+  status: text("status").notNull().default("intake"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+/** Metadata for source files stored in the verified R2 intake bucket. */
+export const intakeAssets = sqliteTable("gearswipe_intake_assets", {
+  id: generatedId(),
+  gsId: text("gs_id").notNull(),
+  objectKey: text("object_key").notNull().unique(),
+  filename: text("filename").notNull(),
+  contentType: text("content_type").notNull().default("application/octet-stream"),
+  sizeBytes: integer("size_bytes").notNull().default(0),
+  createdAt: createdAt(),
+});
+
 export const comparisons = sqliteTable("gearswipe_comparisons", {
   id: generatedId(),
   title: text("title").notNull(),
@@ -75,6 +95,21 @@ export const fieldTests = sqliteTable("gearswipe_field_tests", {
   failureCount: integer("failure_count").notNull().default(0),
   heroImage: text("hero_image"),
   content: text("content"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+/** Editorial records remain linked to the canonical object id when one exists. */
+export const articles = sqliteTable("gearswipe_articles", {
+  id: generatedId(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  dek: text("dek"),
+  body: text("body").notNull(),
+  heroImage: text("hero_image"),
+  gsId: text("gs_id"),
+  status: text("status").notNull().default("draft"),
+  publishedAt: integer("published_at", { mode: "timestamp" }),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });

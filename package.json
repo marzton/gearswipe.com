@@ -9,43 +9,46 @@
     "dev": "vinext dev",
     "build": "vinext build",
     "start": "vinext start",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern .wrangler --ignore-pattern .wrangler-dry-run",
     "db:generate": "drizzle-kit generate",
     "deploy": "npm run build && npm run deploy:workers",
-    "deploy:workers": "wrangler deploy && wrangler deploy -c wrangler.quote-api.toml",
+    "deploy:workers": "wrangler deploy",
     "deploy:hostgator": "npm run build && bash scripts/deploy-hostgator.sh",
     "logs": "wrangler tail",
     "logs:api": "wrangler tail -c wrangler.quote-api.toml"
   },
   "dependencies": {
-    "@sanity/client": "^8.0.0",
+    "@sanity/client": "^8.6.1",
     "drizzle-orm": "0.45.2",
-    "next": "16.3.1",
+    "jose": "^6.2.12",
+    "next": "16.3.5",
     "next-auth": "^5.0.0-beta.32",
-    "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "1.52.1",
+    "@cloudflare/vite-plugin": "1.54.8",
     "@tailwindcss/postcss": "4.3.3",
-    "@types/node": "26.2.0",
-    "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.4",
-    "@vitejs/plugin-react": "6.0.5",
+    "@types/node": "26.5.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
     "@vitejs/plugin-rsc": "0.5.34",
     "drizzle-kit": "0.31.10",
-    "eslint": "9.39.4",
-    "eslint-config-next": "16.3.1",
-    "react-server-dom-webpack": "19.2.8",
+    "eslint": "10.10.0",
+    "eslint-config-next": "16.3.5",
+    "react-server-dom-webpack": "19.3.0",
     "tailwindcss": "4.3.3",
-    "typescript": "5.9.3",
-    "vinext": "1.0.0-beta.7",
-    "vite": "8.2.1",
-    "wrangler": "4.123.0"
+    "typescript": "7.0.2",
+    "vinext": "1.0.0-beta.9",
+    "vite": "8.3.0",
+    "wrangler": "4.131.1"
   },
   "overrides": {
-    "esbuild": "0.28.1"
+    "esbuild": "0.28.1",
+    "fast-uri": ">=3.1.6",
+    "fflate": ">=0.7.5"
   },
   "type": "module"
 }

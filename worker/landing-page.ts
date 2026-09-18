@@ -58,10 +58,10 @@ export const LANDING_PAGE_HTML = `<!doctype html>
 <header style="display:flex;align-items:center;justify-content:space-between;padding:26px 48px;border-bottom:1px solid var(--line)">
   <div style="font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:-.01em;text-transform:uppercase;color:var(--ink)">GearSwipe</div>
   <nav style="display:flex;align-items:center;gap:34px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase">
-    <a class="nav-link" href="#search">Search</a>
     <a class="nav-link" href="#field-tests">Field Tests</a>
     <a class="nav-link" href="#compare">Compare</a>
-    <a class="nav-link" href="#shop">Shop</a>
+    <a class="nav-link" href="/blog">Blog</a>
+    <a class="nav-link" href="/shop">Shop</a>
   </nav>
 </header>
 

@@ -1,23 +1,29 @@
 import { auth } from "@/auth";
+import { authorizeOperator, operatorApiFailure } from "@/lib/operator-auth";
 import { NextResponse } from "next/server";
 
-export default auth((request) => {
+export default auth(async (request) => {
   const { pathname } = request.nextUrl;
   const isAdminPage = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");
 
+  // Check CF Access first (production)
+  if (isCFAccessAuthed(request)) {
+    return NextResponse.next();
+  }
+
+  // Fall back to NextAuth session
   if (request.auth) {
     return NextResponse.next();
   }
 
   if (isAdminApi) {
-    return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+    return operatorApiFailure(decision);
   }
 
   if (isAdminPage) {
-    const loginUrl = new URL("/login", request.nextUrl.origin);
-    loginUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(loginUrl);
+    // Access challenges anonymous requests at the edge; rejected assertions fail closed.
+    return NextResponse.redirect(new URL("/access-denied", request.nextUrl.origin));
   }
 
   return NextResponse.next();

@@ -1,0 +1,5 @@
+<svg width="1200" height="1200" viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GearSwipe">
+  <rect width="1200" height="1200" fill="#111111"/>
+  <text x="600" y="640" text-anchor="middle" font-family="Oswald, 'Arial Narrow', Arial, sans-serif" font-weight="700" font-size="360" letter-spacing="-4" fill="#F2F0EA">GS</text>
+  <rect x="480" y="720" width="240" height="14" fill="#FF5A1F"/>
+</svg>

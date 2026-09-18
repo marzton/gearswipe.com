@@ -1,6 +1,6 @@
 import { getDb } from "@/db";
 import { subscribers } from "@/db/gearswipe-schema";
-import { auth } from "@/auth";
+import { authorizeOperator, operatorApiFailure } from "@/lib/operator-auth";
 import { eq, and } from "drizzle-orm";
 
 interface EmailProvider {
@@ -15,10 +15,8 @@ interface EmailProvider {
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "admin") {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authorization = await authorizeOperator();
+  if (!authorization.authorized) return operatorApiFailure(authorization);
 
   try {
     const db = getDb();
@@ -84,7 +82,7 @@ export async function POST(request: Request) {
 
     // Try to send via EMAIL provider (Cloudflare Email API)
     // This will be available if configured in wrangler.toml
-    const env = (globalThis as any).__GEARSWIPE_ENV__;
+    const env = (globalThis as typeof globalThis & { __GEARSWIPE_ENV__?: { EMAIL?: EmailProvider } }).__GEARSWIPE_ENV__;
     let sent = 0;
     let failed = 0;
 
