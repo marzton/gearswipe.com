@@ -7,15 +7,8 @@ export default auth(async (request) => {
   const isAdminPage = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");
 
-  // Check CF Access first (production)
-  if (isCFAccessAuthed(request)) {
-    return NextResponse.next();
-  }
-
-  // Fall back to NextAuth session
-  if (request.auth) {
-    return NextResponse.next();
-  }
+  const decision = await authorizeOperator({ headers: request.headers, session: request.auth });
+  if (decision.authorized) return NextResponse.next();
 
   if (isAdminApi) {
     return operatorApiFailure(decision);
