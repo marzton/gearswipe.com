@@ -2,39 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo, useState } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const nextPath = useMemo(() => {
-    const candidate = searchParams.get("next") || "/admin";
-    return candidate.startsWith("/") ? candidate : "/admin";
-  }, [searchParams]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  async function handleGoogleSignIn() {
-    setLoading(true);
-    setError(null);
-
-    const result = await signIn("google", {
-      redirect: false,
-      callbackUrl: nextPath,
-    });
-
-    if (result?.error) {
-      setError("That username or password did not work.");
-      setLoading(false);
-      return;
-    }
-
-    router.push(nextPath);
-    router.refresh();
-  }
-
   return (
     <main className="min-h-screen bg-[#0b0f14] text-[#f4f7fb]">
       <div className="mx-auto flex min-h-screen w-full max-w-5xl items-center px-4 py-8 sm:px-6 lg:px-8">
@@ -58,26 +27,13 @@ export default function LoginPage() {
               Sign in to Gearswipe
             </h1>
             <p className="mt-4 max-w-xl text-base leading-7 text-[#b4c0cf]">
-              Sign in with an approved Google account to access products, vendor licensing,
-              research, and store operations.
+              Admin access is gated by Cloudflare Access. If you landed here instead of on the
+              Access sign-in prompt, your account has not been granted access yet — request it
+              from the GearSwipe operator.
             </p>
 
             <div className="mt-8 grid gap-4">
-              {error ? (
-                <p className="border border-[#7f2b2b] bg-[#201013] px-4 py-3 text-sm text-[#ffb6b6]">
-                  {error}
-                </p>
-              ) : null}
-
               <div className="flex flex-wrap gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={handleGoogleSignIn}
-                  disabled={loading}
-                  className="border border-[#6bb6ff] bg-[#6bb6ff] px-4 py-3 text-sm font-medium text-[#081018] transition hover:bg-[#89c7ff] disabled:cursor-not-allowed disabled:opacity-70"
-                >
-                  {loading ? "Signing in..." : "Continue with Google"}
-                </button>
                 <Link
                   href="/"
                   className="border border-[#263246] bg-[#0f141c] px-4 py-3 text-sm font-medium text-[#dbe4ee] transition hover:border-[#6bb6ff] hover:text-white"
@@ -88,8 +44,8 @@ export default function LoginPage() {
             </div>
 
             <div className="mt-8 border-t border-[#263246] pt-5 text-sm leading-6 text-[#9aa9bb]">
-              OAuth and administrator allowlisting are required in production. If your account
-              is not approved, request access from the GearSwipe operator.
+              Access is managed through the same Cloudflare Access team as goldshore.ai. If your
+              account is not approved, request access from the GearSwipe operator.
             </div>
           </div>
         </div>

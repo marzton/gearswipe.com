@@ -1,6 +1,6 @@
 import { getDb } from "@/db";
 import { comparisons } from "@/db/gearswipe-schema";
-import { auth } from "@/auth";
+import { auth } from "@/lib/access-auth";
 
 export async function GET(request: Request) {
   const session = await auth();

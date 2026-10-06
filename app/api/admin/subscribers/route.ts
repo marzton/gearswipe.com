@@ -1,6 +1,6 @@
 import { getDb } from "@/db";
 import { subscribers } from "@/db/gearswipe-schema";
-import { auth } from "@/auth";
+import { auth } from "@/lib/access-auth";
 import { eq } from "drizzle-orm";
 
 export async function GET(request: Request) {

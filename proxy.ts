@@ -1,12 +1,22 @@
-import { auth } from "@/auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export default auth((request) => {
+/**
+ * Cheap presence check only — this middleware runs before lib/access-auth's
+ * JWKS-verified check in each route/layout, which is the actual authority.
+ * Its job is just to short-circuit obviously-unauthenticated requests before
+ * they reach a handler, mirroring the edge-level block Cloudflare Access
+ * itself performs in production once the Access Application is configured.
+ */
+export default function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAdminPage = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");
 
-  if (request.auth) {
+  // Only the signed JWT counts here too — see lib/access-auth.ts for why the
+  // authenticated-user-email header alone is not treated as proof of identity.
+  const hasAccessIdentity = request.headers.has("cf-access-jwt-assertion");
+
+  if (hasAccessIdentity) {
     return NextResponse.next();
   }
 
@@ -21,7 +31,7 @@ export default auth((request) => {
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: ["/admin/:path*", "/api/admin/:path*"],

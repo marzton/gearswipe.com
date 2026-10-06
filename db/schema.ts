@@ -50,6 +50,23 @@ export const newsletterSignups = sqliteTable("newsletter_signups", {
   updatedAt: text("updated_at").notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
+/**
+ * Pending signups awaiting an emailed verification code. `payloadJson` holds
+ * the signup form data (name, interest, workspace) collected before the code
+ * was sent, so verify-step doesn't require the user to re-enter it. Codes are
+ * stored as a SHA-256 hash, never plaintext.
+ */
+export const emailVerifications = sqliteTable("email_verifications", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  email: text("email").notNull(),
+  codeHash: text("code_hash").notNull(),
+  payloadJson: text("payload_json").notNull().default("{}"),
+  attempts: integer("attempts").notNull().default(0),
+  expiresAt: text("expires_at").notNull(),
+  consumedAt: text("consumed_at"),
+  createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
+});
+
 export const rewardSignups = sqliteTable("reward_signups", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   workspace: text("workspace").notNull(),

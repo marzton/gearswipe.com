@@ -4,17 +4,20 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 
 export default function SignupPage() {
+  const [stage, setStage] = useState<"form" | "code">("form");
   const [message, setMessage] = useState("Join with email to get 100 points.");
   const [loading, setLoading] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [code, setCode] = useState("");
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submitDetails(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
-    setMessage("Creating your rewards profile...");
+    setMessage("Sending your verification code...");
 
-    const form = event.currentTarget;
-    const formData = new FormData(form);
+    const formData = new FormData(event.currentTarget);
     formData.set("workspace", "Gearswipe");
+    const email = String(formData.get("email") ?? "");
 
     const response = await fetch("/api/signup", {
       method: "POST",
@@ -22,17 +25,46 @@ export default function SignupPage() {
     });
 
     const payload = (await response.json().catch(() => null)) as
-      | { ok?: boolean; message?: string; pointsAwarded?: number }
+      | { ok?: boolean; message?: string }
       | null;
 
     if (!response.ok || !payload?.ok) {
-      setMessage(payload?.message ?? "We could not create the signup.");
+      setMessage(payload?.message ?? "We could not start the signup.");
       setLoading(false);
       return;
     }
 
-    form.reset();
+    setPendingEmail(email);
+    setMessage(payload.message ?? "Check your email for a 6-digit verification code.");
+    setStage("code");
+    setLoading(false);
+  }
+
+  async function submitCode(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    setMessage("Verifying...");
+
+    const response = await fetch("/api/signup/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: pendingEmail, code }),
+    });
+
+    const payload = (await response.json().catch(() => null)) as
+      | { ok?: boolean; message?: string; pointsAwarded?: number }
+      | null;
+
+    if (!response.ok || !payload?.ok) {
+      setMessage(payload?.message ?? "We could not verify that code.");
+      setLoading(false);
+      return;
+    }
+
     setMessage(`${payload.message ?? "Welcome aboard."} ${payload.pointsAwarded ?? 100} points ready.`);
+    setStage("form");
+    setCode("");
+    setPendingEmail("");
     setLoading(false);
   }
 
@@ -63,42 +95,82 @@ export default function SignupPage() {
             </p>
           </div>
 
-          <form onSubmit={submit} className="border border-[#deded7] bg-white p-5 sm:p-6">
-            <label className="grid gap-2">
-              <span className="text-sm text-[#44443f]">Name</span>
-              <input
-                name="name"
-                required
-                className="border border-[#dcdcd6] px-3 py-3 text-[15px] outline-none transition focus:border-[#111111]"
-                placeholder="Your name"
-              />
-            </label>
-            <label className="mt-4 grid gap-2">
-              <span className="text-sm text-[#44443f]">Email</span>
-              <input
-                name="email"
-                type="email"
-                required
-                className="border border-[#dcdcd6] px-3 py-3 text-[15px] outline-none transition focus:border-[#111111]"
-                placeholder="you@example.com"
-              />
-            </label>
-            <label className="mt-4 grid gap-2">
-              <span className="text-sm text-[#44443f]">Primary interest</span>
-              <input
-                name="interest"
-                className="border border-[#dcdcd6] px-3 py-3 text-[15px] outline-none transition focus:border-[#111111]"
-                placeholder="Builds, keys, security, parts..."
-              />
-            </label>
-            <button
-              type="submit"
-              disabled={loading}
-              className="mt-5 border border-[#111111] bg-[#111111] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#262626] disabled:opacity-70"
-            >
-              {loading ? "Joining..." : "Join rewards"}
-            </button>
-          </form>
+          {stage === "form" ? (
+            <form onSubmit={submitDetails} className="border border-[#deded7] bg-white p-5 sm:p-6">
+              <label className="grid gap-2">
+                <span className="text-sm text-[#44443f]">Name</span>
+                <input
+                  name="name"
+                  required
+                  className="border border-[#dcdcd6] px-3 py-3 text-[15px] outline-none transition focus:border-[#111111]"
+                  placeholder="Your name"
+                />
+              </label>
+              <label className="mt-4 grid gap-2">
+                <span className="text-sm text-[#44443f]">Email</span>
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  className="border border-[#dcdcd6] px-3 py-3 text-[15px] outline-none transition focus:border-[#111111]"
+                  placeholder="you@example.com"
+                />
+              </label>
+              <label className="mt-4 grid gap-2">
+                <span className="text-sm text-[#44443f]">Primary interest</span>
+                <input
+                  name="interest"
+                  className="border border-[#dcdcd6] px-3 py-3 text-[15px] outline-none transition focus:border-[#111111]"
+                  placeholder="Builds, keys, security, parts..."
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-5 border border-[#111111] bg-[#111111] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#262626] disabled:opacity-70"
+              >
+                {loading ? "Sending code..." : "Send verification code"}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={submitCode} className="border border-[#deded7] bg-white p-5 sm:p-6">
+              <p className="text-sm text-[#5f5f59]">
+                We sent a 6-digit code to <strong>{pendingEmail}</strong>.
+              </p>
+              <label className="mt-4 grid gap-2">
+                <span className="text-sm text-[#44443f]">Verification code</span>
+                <input
+                  name="code"
+                  inputMode="numeric"
+                  pattern="\d{6}"
+                  maxLength={6}
+                  required
+                  value={code}
+                  onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                  className="border border-[#dcdcd6] px-3 py-3 text-center text-[20px] tracking-[0.5em] outline-none transition focus:border-[#111111]"
+                  placeholder="000000"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={loading || code.length !== 6}
+                className="mt-5 border border-[#111111] bg-[#111111] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#262626] disabled:opacity-70"
+              >
+                {loading ? "Verifying..." : "Verify and join"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStage("form");
+                  setCode("");
+                  setMessage("Join with email to get 100 points.");
+                }}
+                className="mt-3 w-full border border-[#deded7] px-4 py-3 text-sm text-[#5f5f59] transition hover:border-[#111111] hover:text-[#111111]"
+              >
+                Use a different email
+              </button>
+            </form>
+          )}
         </section>
       </div>
     </main>

@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { storeRewardSignup } from "../../../lib/rewards-store";
+import { startEmailVerification } from "../../../lib/email-verification";
 import { resolveMailRoute } from "../../../lib/mail-routing";
 import { sendMailRouteNotification } from "../../../lib/email-service";
 
@@ -32,28 +32,30 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const result = await storeRewardSignup({
-    workspace,
-    name,
-    email,
-    interest,
-  });
+  const verification = await startEmailVerification(email, { workspace, name, interest }).catch(
+    (error: unknown) => {
+      console.error("Failed to start email verification:", error);
+      return { ok: false as const, message: "Signup is temporarily unavailable. Please try again shortly." };
+    },
+  );
+
+  if (!verification.ok) {
+    return Response.json({ ok: false, message: verification.message }, { status: 503 });
+  }
 
   await sendMailRouteNotification({
     route: resolveMailRoute(workspace, "auth"),
-    subject: `${workspace} signup and access`,
+    subject: `${workspace} signup started`,
     name,
     email,
-    message: `Reward signup received.\nInterest: ${interest || "not provided"}`,
+    message: `Signup started, verification code sent.\nInterest: ${interest || "not provided"}`,
     formType: "auth",
   }).catch(() => null);
 
   return Response.json({
     ok: true,
-    message: "Welcome aboard — 100 points added to your account.",
+    message: "Check your email for a 6-digit verification code.",
     workspace,
-    pointsAwarded: result.pointsAwarded,
-    storage: result.source,
   });
 }
 
