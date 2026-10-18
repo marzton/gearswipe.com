@@ -1,19 +1,21 @@
 import { desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { researchEvidence, researchJobs } from "@/db/schema";
-import { requireOperator } from "@/lib/operator-auth";
+import { authorizeOperator, operatorApiFailure } from "@/lib/operator-auth";
 import { searchForResearch } from "@/lib/research/ai-search-agent";
 
 export async function GET() {
-  const operator = await requireOperator();
-  if (operator instanceof Response) return operator;
+  const authorization = await authorizeOperator();
+  if (!authorization.authorized) return operatorApiFailure(authorization);
+  const operator = authorization.identity;
   const jobs = await getDb().select().from(researchJobs).orderBy(desc(researchJobs.updatedAt)).limit(50);
   return Response.json({ jobs });
 }
 
 export async function POST(request: Request) {
-  const operator = await requireOperator();
-  if (operator instanceof Response) return operator;
+  const authorization = await authorizeOperator();
+  if (!authorization.authorized) return operatorApiFailure(authorization);
+  const operator = authorization.identity;
   const body = await request.json() as { title?: string; query?: string; gsId?: string; seedUrls?: string[] };
   const title = body.title?.trim() ?? "";
   const query = body.query?.trim() ?? "";

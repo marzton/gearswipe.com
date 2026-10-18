@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
+import { TurnstileField } from "../../components/turnstile-field";
 
 export default function SignupPage() {
   const [stage, setStage] = useState<"form" | "code">("form");
@@ -124,6 +125,7 @@ export default function SignupPage() {
                   placeholder="Builds, keys, security, parts..."
                 />
               </label>
+              <TurnstileField action="signup" />
               <button
                 type="submit"
                 disabled={loading}

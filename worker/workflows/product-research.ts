@@ -12,7 +12,7 @@ import {
   type ResearchStorageEnv,
 } from "../../lib/research/storage";
 
-interface ResearchWorkflowEnv extends ResearchStorageEnv {}
+type ResearchWorkflowEnv = ResearchStorageEnv;
 
 function slugify(value: string): string {
   return value

@@ -1,14 +1,28 @@
-import { auth } from "@/lib/access-auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { authorizeOperator } from "@/lib/operator-auth";
 
-export async function requireAdminAuth() {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "admin") {
-    redirect("/login");
-  }
-  return session;
+function accessLoginUrl(requestUrl: string | null): string {
+  const configured = process.env.CLOUDFLARE_ACCESS_LOGIN_URL?.trim();
+  if (configured) return configured;
+  const returnTo = requestUrl?.startsWith("/") ? requestUrl : "/admin";
+  return `/cdn-cgi/access/login?redirect_url=${encodeURIComponent(returnTo)}`;
 }
 
-export async function getAdminSession() {
-  return await auth();
+const CF_TEAM_NAME = process.env.CLOUDFLARE_TEAM_NAME ?? "gearswipe";
+
+export async function getAdminEmail(): Promise<string | null> {
+  const result = await authorizeOperator();
+  return result.authorized ? result.identity.email : null;
+}
+
+export async function requireAdminAuth() {
+  const result = await authorizeOperator();
+  if (result.authorized) return result.identity;
+
+  if (result.status === 401) {
+    const request = await headers();
+    redirect(accessLoginUrl(request.get("x-pathname")));
+  }
+  redirect("/access-denied");
 }

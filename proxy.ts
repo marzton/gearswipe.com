@@ -1,37 +1,26 @@
-import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { authorizeOperator, operatorApiFailure } from "@/lib/operator-auth";
+import { NextResponse } from "next/server";
 
-/**
- * Cheap presence check only — this middleware runs before lib/access-auth's
- * JWKS-verified check in each route/layout, which is the actual authority.
- * Its job is just to short-circuit obviously-unauthenticated requests before
- * they reach a handler, mirroring the edge-level block Cloudflare Access
- * itself performs in production once the Access Application is configured.
- */
-export default function proxy(request: NextRequest) {
+export default auth(async (request) => {
   const { pathname } = request.nextUrl;
   const isAdminPage = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");
 
-  // Only the signed JWT counts here too — see lib/access-auth.ts for why the
-  // authenticated-user-email header alone is not treated as proof of identity.
-  const hasAccessIdentity = request.headers.has("cf-access-jwt-assertion");
-
-  if (hasAccessIdentity) {
-    return NextResponse.next();
-  }
+  const decision = await authorizeOperator({ headers: request.headers, session: request.auth });
+  if (decision.authorized) return NextResponse.next();
 
   if (isAdminApi) {
-    return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+    return operatorApiFailure(decision);
   }
 
   if (isAdminPage) {
-    const loginUrl = new URL("/login", request.nextUrl.origin);
-    loginUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(loginUrl);
+    // Access challenges anonymous requests at the edge; rejected assertions fail closed.
+    return NextResponse.redirect(new URL("/access-denied", request.nextUrl.origin));
   }
 
   return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: ["/admin/:path*", "/api/admin/:path*"],
