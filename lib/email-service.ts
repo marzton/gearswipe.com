@@ -149,28 +149,72 @@ export async function sendAutoReply(
   })
 }
 
-// Helper: Send mail route notification for form submissions
-export async function sendMailRouteNotification(
-  to: string,
-  subject: string,
-  body: string,
-  formType: 'contact' | 'quote' | 'signup' | 'subscribe'
-): Promise<SendEmailResult> {
+// Helper: Notify a mail route's internal recipients about a form submission.
+// `route` comes from lib/mail-routing.ts's resolveMailRoute() and carries the
+// `to`/`cc`/`from` addresses for the workspace + form type being notified.
+export async function sendMailRouteNotification(options: {
+  route: { to: string[]; cc: string[]; from: string; subjectPrefix: string }
+  subject: string
+  name: string
+  email: string
+  company?: string
+  message: string
+  formType: 'contact' | 'quote' | 'auth' | 'support' | 'subscribe'
+}): Promise<SendEmailResult> {
+  const { route, subject, name, email, company, message, formType } = options
+
   const typeLabel = {
     contact: 'Contact Form',
     quote: 'Quote Request',
-    signup: 'Signup',
+    auth: 'Access Request',
+    support: 'Support Request',
     subscribe: 'Newsletter Signup',
   }[formType]
 
+  const bodyLines = [
+    name ? `Name: ${name}` : null,
+    email ? `Email: ${email}` : null,
+    company ? `Company: ${company}` : null,
+    '',
+    message,
+  ].filter((line): line is string => line !== null)
+
   return sendEmail({
-    to,
-    subject: `${typeLabel} Submission: ${subject}`,
+    to: route.to,
+    from: route.from,
+    replyTo: email || undefined,
+    subject: `${route.subjectPrefix} ${typeLabel}: ${subject}`,
     html: `
       <h2>${typeLabel} Received</h2>
-      <p>${body}</p>
+      ${bodyLines.map((line) => `<p>${line}</p>`).join('\n')}
       <p>Review this submission in the admin dashboard.</p>
     `,
-    text: `${typeLabel}: ${body}`,
+    text: bodyLines.join('\n'),
+  })
+}
+
+// Helper: Send a signup email-verification code to the person signing up.
+export async function sendVerificationCodeEmail(
+  to: string,
+  code: string,
+  siteName: string
+): Promise<SendEmailResult> {
+  // No email provider configured outside production: log instead of failing
+  // closed, so the verify step stays testable locally without a real key.
+  if (!process.env.RESEND_API_KEY && process.env.NODE_ENV !== 'production') {
+    console.log(`[dev] Verification code for ${to}: ${code}`)
+    return { success: true, messageId: 'dev-console-log' }
+  }
+
+  return sendEmail({
+    to,
+    subject: `Your ${siteName} verification code: ${code}`,
+    html: `
+      <h1>Verify your email</h1>
+      <p>Your verification code is:</p>
+      <p style="font-size: 32px; font-weight: 700; letter-spacing: 4px;">${code}</p>
+      <p>This code expires in 10 minutes. If you didn't request this, you can ignore this email.</p>
+    `,
+    text: `Your ${siteName} verification code is ${code}. It expires in 10 minutes.`,
   })
 }
