@@ -10,6 +10,8 @@ export default auth(async (request) => {
   const decision = await authorizeOperator({ headers: request.headers, session: request.auth });
   if (decision.authorized) return NextResponse.next();
 
+  // Fall back to NextAuth session
+
   if (isAdminApi) {
     return operatorApiFailure(decision);
   }
