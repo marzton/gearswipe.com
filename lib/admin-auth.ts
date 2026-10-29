@@ -22,14 +22,6 @@ export async function getAdminEmail(): Promise<string | null> {
   return session?.user?.email?.toLowerCase() ?? null;
 }
 
-export async function requireAdminAuth() {
-  const email = await getAdminEmail();
-
-  if (!email || !ADMIN_EMAILS.has(email)) {
-    redirect("/");
-  }
-
-  return { email };
 }
 
 export async function requireAdminAuth() {
