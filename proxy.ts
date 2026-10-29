@@ -11,9 +11,6 @@ export default auth(async (request) => {
   if (decision.authorized) return NextResponse.next();
 
   // Fall back to NextAuth session
-  if (request.auth) {
-    return NextResponse.next();
-  }
 
   if (isAdminApi) {
     return operatorApiFailure(decision);
