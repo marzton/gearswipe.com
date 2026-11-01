@@ -1,3 +1,4 @@
+import { auth, getCFAccessEmail } from "@/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { authorizeOperator } from "@/lib/operator-auth";
@@ -12,8 +13,15 @@ function accessLoginUrl(requestUrl: string | null): string {
 const CF_TEAM_NAME = process.env.CLOUDFLARE_TEAM_NAME ?? "gearswipe";
 
 export async function getAdminEmail(): Promise<string | null> {
-  const result = await authorizeOperator();
-  return result.authorized ? result.identity.email : null;
+  // Primary: CF Access email (production, JWT-verified)
+  const cfEmail = await getCFAccessEmail(CF_TEAM_NAME);
+  if (cfEmail) return cfEmail.toLowerCase();
+
+  // Fallback: NextAuth session (local dev)
+  const session = await auth();
+  return session?.user?.email?.toLowerCase() ?? null;
+}
+
 }
 
 export async function requireAdminAuth() {
